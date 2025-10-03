@@ -23,12 +23,42 @@ public class RecipeIngredient {
     private Ingredient ingredient;
 
     @Column(name = "quantity_required")
-    private Float quantityRequired;
+    private Double quantity;
 
     // --- Constructors, Getters, and Setters ---
 
     public RecipeIngredient() {
     }
 
-    // (Thêm getters và setters ở đây)
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Recipe getRecipe() {
+        return recipe;
+    }
+
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
+    }
+
+    public Ingredient getIngredient() {
+        return ingredient;
+    }
+
+    public void setIngredient(Ingredient ingredient) {
+        this.ingredient = ingredient;
+    }
+
+    public Double getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Double quantity) {
+        this.quantity = quantity;
+    }
 }

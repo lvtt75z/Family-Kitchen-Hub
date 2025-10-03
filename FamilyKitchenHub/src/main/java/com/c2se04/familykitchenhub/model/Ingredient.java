@@ -27,5 +27,35 @@ public class Ingredient {
     public Ingredient() {
     }
 
-    // (Thêm getters và setters ở đây)
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public String getNutritionalInfo() {
+        return nutritionalInfo;
+    }
+
+    public void setNutritionalInfo(String nutritionalInfo) {
+        this.nutritionalInfo = nutritionalInfo;
+    }
 }

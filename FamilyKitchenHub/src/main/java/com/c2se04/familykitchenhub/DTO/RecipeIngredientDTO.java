@@ -1,0 +1,25 @@
+package com.c2se04.familykitchenhub.DTO;
+
+public class RecipeIngredientDTO {
+    private Long ingredientId;
+    // Số lượng theo đơn vị cơ sở của Ingredient (ví dụ: gram)
+    private Double quantity;
+
+    public RecipeIngredientDTO() {}
+
+    public Long getIngredientId() {
+        return ingredientId;
+    }
+
+    public void setIngredientId(Long ingredientId) {
+        this.ingredientId = ingredientId;
+    }
+
+    public Double getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Double quantity) {
+        this.quantity = quantity;
+    }
+}
