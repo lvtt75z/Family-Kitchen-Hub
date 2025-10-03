@@ -1,6 +1,7 @@
 package com.c2se04.familykitchenhub.model;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,12 +31,66 @@ public class Recipe {
     private String imageUrl;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<RecipeIngredient> recipeIngredients;
+    private Set<RecipeIngredient> recipeIngredients = new HashSet<>();
 
     // --- Constructors, Getters, and Setters ---
 
     public Recipe() {
     }
 
-    // (Thêm getters và setters ở đây)
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(String instructions) {
+        this.instructions = instructions;
+    }
+
+    public Integer getCookingTimeMinutes() {
+        return cookingTimeMinutes;
+    }
+
+    public void setCookingTimeMinutes(Integer cookingTimeMinutes) {
+        this.cookingTimeMinutes = cookingTimeMinutes;
+    }
+
+    public Integer getServings() {
+        return servings;
+    }
+
+    public void setServings(Integer servings) {
+        this.servings = servings;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public Set<RecipeIngredient> getRecipeIngredients() {
+        return recipeIngredients;
+    }
+
+    public void setRecipeIngredients(Set<RecipeIngredient> recipeIngredients) {
+        this.recipeIngredients = recipeIngredients;
+    }
 }

@@ -1,0 +1,86 @@
+package com.c2se04.familykitchenhub.Controller;
+
+import com.c2se04.familykitchenhub.DTO.RecipeRequestDTO;
+import com.c2se04.familykitchenhub.DTO.RecipeResponseDTO;
+import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
+import com.c2se04.familykitchenhub.model.Recipe;
+import com.c2se04.familykitchenhub.Service.RecipeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/recipes")
+public class RecipeController {
+
+    private final RecipeService recipeService;
+    private final RecipeMapper recipeMapper; // Tiêm Mapper
+
+    @Autowired
+    public RecipeController(RecipeService recipeService, RecipeMapper recipeMapper) {
+        this.recipeService = recipeService;
+        this.recipeMapper = recipeMapper;
+    }
+
+    // POST /api/recipes - CREATE
+    @PostMapping
+    public ResponseEntity<RecipeResponseDTO> createRecipe(@RequestBody RecipeRequestDTO recipeDTO) {
+        // 1. Dùng Mapper: DTO -> Entity
+        Recipe recipeEntity = recipeMapper.toEntity(recipeDTO);
+
+        // 2. Gọi Service
+        Recipe newRecipe = recipeService.createRecipe(recipeEntity);
+
+        // 3. Dùng Mapper: Entity -> Response DTO
+        RecipeResponseDTO responseDTO = recipeMapper.toResponseDTO(newRecipe);
+
+        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED); // 201 Created
+    }
+
+    // GET /api/recipes - READ ALL
+    @GetMapping
+    public ResponseEntity<List<RecipeResponseDTO>> getAllRecipes() {
+        List<Recipe> recipes = recipeService.getAllRecipes();
+
+        // Dùng Mapper để chuyển đổi danh sách Entity -> DTO
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+
+        return ResponseEntity.ok(responseDTOs); // 200 OK
+    }
+
+    // GET /api/recipes/{id} - READ BY ID
+    @GetMapping("/{id}")
+    public ResponseEntity<RecipeResponseDTO> getRecipeById(@PathVariable Long id) {
+        return recipeService.getRecipeById(id)
+                .map(recipeMapper::toResponseDTO) // Chuyển Entity thành DTO
+                .map(ResponseEntity::ok)        // Nếu tìm thấy, trả về 200 OK
+                .orElse(ResponseEntity.notFound().build()); // Nếu không tìm thấy, Exception sẽ không ném ra đây, mà là 404 (do Optional)
+    }
+
+    // PUT /api/recipes/{id} - UPDATE
+    @PutMapping("/{id}")
+    public ResponseEntity<RecipeResponseDTO> updateRecipe(@PathVariable Long id, @RequestBody RecipeRequestDTO recipeDTO) {
+        // 1. Dùng Mapper: DTO -> Entity tạm thời để truyền dữ liệu cập nhật
+        Recipe updateDetails = recipeMapper.toEntity(recipeDTO);
+
+        // 2. Service sẽ ném ResourceNotFoundException (404) nếu không tìm thấy
+        Recipe updatedRecipe = recipeService.updateRecipe(id, updateDetails);
+
+        // 3. Dùng Mapper: Entity -> Response DTO
+        RecipeResponseDTO responseDTO = recipeMapper.toResponseDTO(updatedRecipe);
+
+        return ResponseEntity.ok(responseDTO); // 200 OK (Exception được xử lý tự động)
+    }
+
+    // DELETE /api/recipes/{id} - DELETE
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
+        // Service sẽ ném ResourceNotFoundException (404) nếu không tìm thấy
+        recipeService.deleteRecipe(id);
+
+        return ResponseEntity.noContent().build(); // 204 No Content (Exception được xử lý tự động)
+    }
+}
