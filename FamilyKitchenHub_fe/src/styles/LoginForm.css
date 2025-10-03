@@ -1,0 +1,197 @@
+/* ===== Tabs ===== */
+.tab-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.tab-buttons a {
+  background: none;
+  border: none;
+  padding: 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-buttons a:hover {
+  color: #c2410c;
+}
+
+.tab-buttons .active {
+  color: #c2410c;
+  border-color: #c2410c;
+}
+
+/* ===== Heading & Paragraph ===== */
+h2 {
+  margin: 12px 0 8px;
+  font-size: 24px;
+  color: #111827;
+  text-align: center;
+}
+
+p {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* ===== Form ===== */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+   text-align: left;
+}
+
+.form label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* ===== Input ===== */
+.input-box {
+  position: relative;
+  width: 100%;
+}
+
+.input-box input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 40px 10px 12px; /* để chừa chỗ cho icon */
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  font-size: 14px;
+  background-color: #fff;
+  display: block;
+}
+
+.input-box .toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #9ca3af;
+}
+
+/* ===== Buttons ===== */
+.sign-in-btn {
+  background: #c2410c;
+  border: none;
+  color: #fff;
+  padding: 12px 0;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.sign-in-btn:hover {
+  background: #b45309;
+}
+
+/* ===== Divider ===== */
+.divider {
+  text-align: center;
+  margin: 24px 0;
+  color: #9ca3af;
+  font-size: 14px;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  width: 40%;
+  height: 1px;
+  background: #e5e7eb;
+  top: 50%;
+}
+
+.divider::before {
+  left: 0;
+}
+.divider::after {
+  right: 0;
+}
+
+/* ===== Demo Button ===== */
+.demo-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  padding: 12px 0;
+  width: 100%;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #374151;
+  transition: background 0.2s ease;
+}
+
+.demo-btn:hover {
+  background: #f3f4f6;
+}
+
+/* ===== Links ===== */
+.forgot {
+  display: block;
+  text-align: right;
+  margin-top: 8px;
+  color: #c2410c;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.forgot:hover {
+  text-decoration: underline;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.signup-link a {
+  color: #c2410c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}
+/* .loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-overlay p {
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+} */

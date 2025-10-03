@@ -1,0 +1,101 @@
+.auth-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: #fff;
+  padding: 60px 80px;
+  gap: 80px;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+/* LEFT SIDE */
+.auth-layout__left {
+  flex: 1;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* căn giữa theo chiều dọc */
+}
+
+.auth-layout__join-btn {
+  background: #fde68a;
+  border: none;
+  color: #7a6200;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 6px 14px;
+  margin-bottom: 20px;
+  width: 50%;
+}
+
+.auth-layout__title {
+  font-size: 36px;
+  color: #111827;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.auth-layout__subtitle {
+  color: #4b5563;
+  margin-bottom: 32px;
+  font-size: 16px;
+}
+
+.auth-layout__feature {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+.auth-layout__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 17px;
+}
+
+.auth-layout__icon--green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.auth-layout__icon--blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.auth-layout__icon--yellow {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+
+.auth-layout__feature-title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #111827;
+  line-height: 1.3; /* 👈 giúp text nhìn đều và cân đối hơn */
+}
+
+.auth-layout__feature-desc {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* RIGHT SIDE */
+.auth-layout__right {
+  flex: 1;
+  max-width: 420px;
+  background: #f9fafb;
+  padding: 40px 36px;
+  border-radius: 16px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.05);
+}
