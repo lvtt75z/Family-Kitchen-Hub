@@ -1,97 +1,208 @@
-import React from "react";
+import React, { useState } from "react";
 import "../../styles/FridgeManager.css";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, RefreshCw, Plus } from "lucide-react";
 
 const ingredients = [
   {
-    name: "Ground Beef",
-    quantity: "500 g",
+    name: "Chicken Breast",
+    quantity: "500g",
     category: "Meat",
-    location: "Freezer",
-    expiry: "1/15/2024",
+    location: "Main Fridge",
+    expiry: "Dec 28, 2024",
+    status: "Expiring Soon",
+    icon: "🍗",
+    expiredDays: 286,
+  },
+  {
+    name: "Fresh Milk",
+    quantity: "1L",
+    category: "Dairy",
+    location: "Main Fridge",
+    expiry: "Dec 25, 2024",
     status: "Expired",
+    icon: "🥛",
+    expiredDays: 290,
+  },
+  {
+    name: "Broccoli",
+    quantity: "300g",
+    category: "Vegetables",
+    location: "Crisper Drawer",
+    expiry: "Jan 5, 2025",
+    status: "Fresh",
+    icon: "🥦",
+    expiredDays: 0,
+  },
+  {
+    name: "Eggs",
+    quantity: "12 pcs",
+    category: "Dairy",
+    location: "Main Fridge",
+    expiry: "Jan 10, 2025",
+    status: "Fresh",
+    icon: "🥚",
+    expiredDays: 0,
   },
   {
     name: "Tomatoes",
     quantity: "6 pcs",
     category: "Vegetables",
-    location: "Main compartment",
-    expiry: "1/10/2024",
-    status: "Expired",
+    location: "Main Fridge",
+    expiry: "Jan 2, 2025",
+    status: "Expiring Soon",
+    icon: "🍅",
+    expiredDays: 0,
   },
   {
-    name: "Chicken Eggs",
-    quantity: "12 pcs",
-    category: "Dairy & Eggs",
-    location: "Door",
-    expiry: "1/12/2024",
-    status: "Expired",
-  },
-  {
-    name: "Fresh Milk",
-    quantity: "1 carton",
-    category: "Dairy & Eggs",
-    location: "Main compartment",
-    expiry: "1/13/2024",
-    status: "Expired",
+    name: "Butter",
+    quantity: "200g",
+    category: "Dairy",
+    location: "Main Fridge",
+    expiry: "Jan 20, 2025",
+    status: "Fresh",
+    icon: "🧈",
+    expiredDays: 0,
   },
 ];
 
-export default function FridgeManager() {
-  return (
-    <div className="fridge-manager">
-      <header>
-        <h1>Fridge Manager</h1>
-        <p>Track ingredients and manage expiration dates</p>
-        <h2>Fridge Manager</h2>
-        <p className="subtext">Track food and ingredients in your refrigerator</p>
-      </header>
+const statusInfo = {
+  Fresh: {
+    class: "status-fresh",
+    icon: "✅",
+    text: "Fresh",
+  },
+  "Expiring Soon": {
+    class: "status-expiring",
+    icon: "⚠️",
+    text: "Expiring Soon",
+  },
+  Expired: {
+    class: "status-expired",
+    icon: "⛔",
+    text: "Expired",
+  },
+};
 
-      <div className="alert-box">
-        <AlertTriangle color="#f97316" size={20} />
-        <div>
-          <strong>Expiration Alerts:</strong>{" "}
-          <span className="alert-text">
-            4 ingredients have expired: Ground Beef, Tomatoes, Chicken Eggs, Fresh Milk
-          </span>
+export default function FridgeManager() {
+  const [menuIndex, setMenuIndex] = useState(null);
+
+  // Đóng menu khi click ra ngoài
+  React.useEffect(() => {
+    const close = () => setMenuIndex(null);
+    if (menuIndex !== null) {
+      window.addEventListener("click", close);
+      return () => window.removeEventListener("click", close);
+    }
+  }, [menuIndex]);
+
+  return (
+    <div className="fridge-manager fridge-bg">
+      {/* Header Section */}
+      <div className="fridge-hero-row">
+        <div className="fridge-hero-left">
+          <div className="fridge-hero-title">
+            <span role="img" aria-label="wave" className="fridge-hero-emoji">
+              👋
+            </span>
+            <span className="fridge-hero-hi">
+              Hi Huy! Let's check your fridge today
+            </span>
+          </div>
+          <div className="fridge-hero-desc">
+            Keep your ingredients fresh and reduce food waste
+          </div>
         </div>
-        <button className="add-btn">+ Add Ingredient</button>
+        <div className="fridge-hero-right">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1046/1046857.png"
+            alt="Chibi fridge character"
+            className="fridge-hero-img"
+          />
+        </div>
       </div>
 
-      <div className="ingredient-table">
-        <h3>Ingredient List ({ingredients.length} items)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Ingredient Name</th>
-              <th>Quantity</th>
-              <th>Category</th>
-              <th>Location</th>
-              <th>Expiry Date</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ingredients.map((item, index) => (
-              <tr key={index}>
-                <td>{item.name}</td>
-                <td>{item.quantity}</td>
-                <td>{item.category}</td>
-                <td>{item.location}</td>
-                <td>{item.expiry}</td>
-                <td>
-                  <span className="status-expired">{item.status}</span>
-                </td>
-                <td>
-                  <button className="delete-btn">
-                    <Trash2 size={16} color="#ef4444" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Alert */}
+      <div className="alert-box-card">
+        <span style={{ marginRight: 8 }}>
+          ⚠️<span style={{ color: "#facc15", marginLeft: 2 }}>▲</span>
+        </span>
+        <div>
+          <b>
+            You have 1 expired item.
+            <br />2 items are expiring soon.
+          </b>
+        </div>
+      </div>
+
+      {/* Header row */}
+      <div className="fridge-header-row">
+        <h2>Your Ingredients</h2>
+        <button className="add-btn-card">
+          <Plus size={18} style={{ marginRight: 6 }} /> Add Ingredient
+        </button>
+      </div>
+
+      {/* Card Grid */}
+      <div className="ingredient-card-grid">
+        {ingredients.map((item, idx) => (
+          <div
+            className="ingredient-card styled-card"
+            key={idx}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-top-row">
+              <div className="ingredient-icon-circle">
+                <span className="ingredient-icon">{item.icon || ""}</span>
+              </div>
+              <div className="card-menu-wrap">
+                <button
+                  className="card-menu-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuIndex(menuIndex === idx ? null : idx);
+                  }}
+                >
+                  <MoreVertical size={20} />
+                </button>
+                {menuIndex === idx && (
+                  <div className="card-menu-dropdown styled-dropdown">
+                    <button className="dropdown-item">
+                      <Edit2 size={16} style={{ marginRight: 8 }} /> Edit
+                    </button>
+                    <button className="dropdown-item">
+                      <RefreshCw size={16} style={{ marginRight: 8 }} /> Update
+                      expiry
+                    </button>
+                    <button className="dropdown-item delete">
+                      <Trash2 size={16} style={{ marginRight: 8 }} /> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="ingredient-name">{item.name}</div>
+            <div className="ingredient-qty">{item.quantity}</div>
+            <div className="ingredient-info">
+              <div>
+                <span className="info-label">Category:</span>{" "}
+                <b>{item.category}</b>
+              </div>
+              <div>
+                <span className="info-label">Location:</span>{" "}
+                <b>{item.location}</b>
+              </div>
+              <div className="expiry-row">
+                <span className="info-label">Expires:</span>
+                <span className="expiry-badge">{item.expiry}</span>
+              </div>
+            </div>
+            <div
+              className={`ingredient-status ${statusInfo[item.status].class}`}
+            >
+              {statusInfo[item.status].text}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

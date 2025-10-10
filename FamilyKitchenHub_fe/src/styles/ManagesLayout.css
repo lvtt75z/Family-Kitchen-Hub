@@ -1,6 +1,10 @@
 .manage-layout-flex {
   display: flex;
   min-height: 100vh;
+  justify-content: center; /* căn giữa ngang */
+  align-items: center;     /* căn giữa dọc */
+  background: #f3f4f6;     /* nền nhẹ cho dễ nhìn */
+  gap: 32px;
 }
 
 .manage-main-content {

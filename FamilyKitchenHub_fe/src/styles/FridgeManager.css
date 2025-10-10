@@ -1,94 +1,316 @@
-.fridge-manager {
-  padding: 24px;
-  font-family: sans-serif;
-  background-color: #fff;
+/* ------------------------------ */
+/* 🌿 Fridge Background + Layout */
+/* ------------------------------ */
+.fridge-bg {
+  background: #f7fafd;
+  min-height: 100vh;
+}
+
+/* Alert box */
+.alert-box-card {
+  display: flex;
+  align-items: center;
+  background: #fef6ec;
+  color: #b45309;
+  border-radius: 24px;
+  padding: 24px 32px;
+  margin: 32px auto 24px;
+  max-width: 1200px;
+  font-size: 18px;
+  border: 1px solid #fdebc8;
+  box-shadow: 0 2px 12px rgba(31, 38, 135, 0.06);
+}
+
+/* Header */
+.fridge-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  padding: 0 8px;
+}
+.fridge-header-row h2 {
+  font-size: 2rem;
+  font-weight: 700;
   color: #1f2937;
 }
 
-header h1 {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-header p {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-header h2 {
-  margin-top: 16px;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.subtext {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.alert-box {
+/* Add Button */
+.add-btn-card {
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 28px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
   display: flex;
   align-items: center;
-  gap: 12px;
-  background-color: #fff7ed;
-  border: 1px solid #f97316;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 16px;
+  transition: background 0.18s;
+}
+.add-btn-card:hover {
+  background: #0369a1;
 }
 
-.alert-text {
-  color: #b45309;
+/* ------------------------------ */
+/* 🍎 Ingredient Card Grid */
+/* ------------------------------ */
+.ingredient-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto 40px;
 }
 
-.add-btn {
-  margin-left: auto;
-  background-color: #f97316;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
+/* Card */
+.ingredient-card {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 4px 24px rgba(31, 38, 135, 0.08);
+  padding: 28px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  position: relative;
+  transition: box-shadow 0.18s;
+}
+.ingredient-card:hover {
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.14);
 }
 
-.ingredient-table {
-  margin-top: 24px;
+/* Top row */
+.card-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.ingredient-table h3 {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 12px;
+/* Icon */
+.ingredient-icon-circle {
+  width: 48px;
+  height: 48px;
+  background: #fff7e6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
+}
+.ingredient-icon {
+  font-size: 2rem;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+/* ------------------------------ */
+/* ⋮ Card Menu */
+/* ------------------------------ */
+.card-menu-wrap {
+  position: relative;
 }
-
-thead th {
-  text-align: left;
-  padding: 8px;
-  background-color: #f3f4f6;
-  font-size: 14px;
-}
-
-tbody td {
-  padding: 8px;
-  font-size: 13px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.status-expired {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-}
-
-.delete-btn {
+.card-menu-btn {
   background: none;
   border: none;
   cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  transition: background 0.18s;
+}
+.card-menu-btn:hover {
+  background: #f3f4f6;
+}
+.card-menu-dropdown,
+.styled-dropdown {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: #fff;
+  border-radius: 16px;
+  min-width: 160px;
+  padding: 8px 0;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.14);
+  z-index: 10;
+}
+.styled-dropdown {
+  border: 2px solid #2563eb;
+}
+.dropdown-item {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 12px 20px;
+  font-size: 15px;
+  color: #1f2937;
+  cursor: pointer;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.dropdown-item:hover {
+  background: #f3f4f6;
+}
+.dropdown-item.delete {
+  color: #ef4444;
+}
+.dropdown-item.delete:hover {
+  background: #fee2e2;
+}
+
+/* ------------------------------ */
+/* 🧾 Card Content */
+/* ------------------------------ */
+.ingredient-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+.ingredient-qty {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+.ingredient-info {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 18px;
+}
+.info-label {
+  color: #6b7280;
+  margin-right: 2px;
+}
+
+/* ------------------------------ */
+/* 🕒 Expiry Info */
+/* ------------------------------ */
+.expiry-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.expiry-badge {
+  background: #fff8e1;
+  color: #b45309;
+  border-radius: 8px;
+  padding: 2px 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.expired-days {
+  color: #b45309;
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+/* ------------------------------ */
+/* ✅ Status Bar (bottom badge) */
+/* ------------------------------ */
+.ingredient-status {
+  width: 100%;
+  border-radius: 0 0 16px 16px;
+  padding: 18px;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+.status-icon {
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+}
+.status-fresh {
+  background: #e6f9f0;
+  color: #059669;
+}
+.status-expiring {
+  background: #fff8e1;
+  color: #b45309;
+}
+.status-expired {
+  background: #ffeaea;
+  color: #b91c1c;
+}
+
+/* ------------------------------ */
+/* 🌤️ Hero Section */
+/* ------------------------------ */
+.fridge-hero-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding-top: 48px;
+  gap: 32px;
+}
+.fridge-hero-left {
+  flex: 1;
+  min-width: 260px;
+}
+.fridge-hero-title {
+  display: flex;
+  align-items: center;
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #18181b;
+  margin-bottom: 10px;
+  gap: 16px;
+}
+.fridge-hero-emoji {
+  font-size: 2.8rem;
+}
+.fridge-hero-hi {
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+.fridge-hero-desc {
+  font-size: 1.2rem;
+  color: #6b7280;
+}
+.fridge-hero-right {
+  min-width: 120px;
+  display: flex;
+  justify-content: flex-end;
+}
+.fridge-hero-img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  margin-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .fridge-hero-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding-top: 24px;
+  }
+  .fridge-hero-right {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 700px) {
+  .ingredient-card-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .alert-box-card,
+  .fridge-header-row {
+    padding: 0 8px;
+  }
 }
