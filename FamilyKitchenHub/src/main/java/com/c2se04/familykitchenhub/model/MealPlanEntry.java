@@ -1,5 +1,6 @@
 package com.c2se04.familykitchenhub.model;
 
+import com.c2se04.familykitchenhub.Entity.User;
 import com.c2se04.familykitchenhub.enums.MealType;
 import jakarta.persistence.*;
 import java.time.LocalDate;

@@ -1,5 +1,6 @@
 package com.c2se04.familykitchenhub.model;
 
+import com.c2se04.familykitchenhub.Entity.User;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;

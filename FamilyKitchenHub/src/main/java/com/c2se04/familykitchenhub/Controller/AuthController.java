@@ -42,7 +42,7 @@ public class AuthController {
      * Resend OTP code
      * POST /api/auth/resend-otp
      */
-    @PostMapping("/resend-otp")
+        @PostMapping("/resend-otp")
     public ResponseEntity<MessageResponse> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
         MessageResponse response = authService.resendOtp(request);
         return ResponseEntity.ok(response);

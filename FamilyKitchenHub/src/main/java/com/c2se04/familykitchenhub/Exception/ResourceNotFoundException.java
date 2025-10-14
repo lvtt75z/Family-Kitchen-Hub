@@ -1,12 +1,5 @@
 package com.c2se04.familykitchenhub.Exception;
 
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String message) {
-        super(message);
-    }
-}
-
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -17,9 +10,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.NOT_FOUND)
 public class ResourceNotFoundException extends RuntimeException {
 
-    private String resourceName;
-    private String fieldName;
-    private Object fieldValue;
+    private final String resourceName;
+    private final String fieldName;
+    private final Object fieldValue;
 
     public ResourceNotFoundException(String resourceName, String fieldName, Object fieldValue) {
         super(String.format("%s không tìm thấy với %s: '%s'", resourceName, fieldName, fieldValue));
@@ -28,5 +21,10 @@ public class ResourceNotFoundException extends RuntimeException {
         this.fieldValue = fieldValue;
     }
 
-    // Bạn có thể thêm Getters nếu cần
+    public ResourceNotFoundException(String message) {
+        super(message);
+        this.resourceName = null;
+        this.fieldName = null;
+        this.fieldValue = null;
+    }
 }
