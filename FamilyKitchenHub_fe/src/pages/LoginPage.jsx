@@ -2,31 +2,53 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "./AuthLayout";
 import Lottie from "lottie-react";
-import loadingAnimation from "../assets/cooking animation.json"; // 👈 file animation JSON
+import loadingAnimation from "../assets/cooking animation.json";
 import "../styles/LoginForm.css";
+import axios from "../hooks/axios";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    setIsLoading(true); // bật loading
+    try {
+      const res = await axios.post("/auth/login", {
+        usernameOrEmail: email,
+        password: password,
+      });
 
-    // Giả lập login API delay
-    setTimeout(() => {
+      console.log(" Login success:", res.data);
+
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+      }
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+      navigate("/home");
+    } catch (err) {
+      console.error("Login failed:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Login failed, please try again!");
+    } finally {
       setIsLoading(false);
-      navigate("/home"); // 👈 chuyển hướng sang trang home
-    }, 2000); // 2 giây loading
+    }
   };
 
   return (
     <AuthLayout>
       {isLoading ? (
         <div className="loading-overlay">
-          <Lottie animationData={loadingAnimation} loop={true} style={{ width: 150, height: 150 }} />
+          <Lottie
+            animationData={loadingAnimation}
+            loop={true}
+            style={{ width: 150, height: 150 }}
+          />
           <p>Signing in...</p>
         </div>
       ) : (
@@ -42,9 +64,14 @@ export default function LoginPage() {
           <p>Enter your email and password to access your account</p>
 
           <form className="form" onSubmit={handleLogin}>
-            <label>Email</label>
+            <label>Email or Username</label>
             <div className="input-box">
-              <input type="email" placeholder="Enter your email" />
+              <input
+                type="text"
+                placeholder="Enter your email or username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
 
             <label>Password</label>
@@ -52,6 +79,9 @@ export default function LoginPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
               <span
                 className="toggle"
@@ -72,10 +102,7 @@ export default function LoginPage() {
             Forgot your password?
           </a>
           <p className="signup-link">
-            Don't have an account?{" "}
-            <Link to="/register">
-              Sign up here
-            </Link>
+            Don't have an account? <Link to="/register">Sign up here</Link>
           </p>
         </>
       )}

@@ -1,16 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/Header.css";
 import { Link } from "react-router-dom";
+
 export default function Header() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   return (
     <>
-      {/* Thanh đen mảnh trên cùng */}
       <div className="top-strip" aria-hidden="true"></div>
 
-      {/* Header chính */}
       <header className="site-header" role="banner">
         <div className="nav-inner">
-          {/* Logo + Tên */}
           <div className="brand">
             <div className="logo" aria-hidden="true">
               <svg
@@ -43,27 +50,21 @@ export default function Header() {
 
           <div className="spacer"></div>
 
-          {/* Menu */}
-          <nav
-            className="site-nav"
-            role="navigation"
-            aria-label="Main navigation"
-          >
-            <Link to="/home">
-              <a href="#" className="active">
-                Home
-              </a>
-            </Link>
-            <Link to="/manage">
-              <a href="#">Feature</a>
-            </Link> 
+          <nav className="site-nav" role="navigation" aria-label="Main navigation">
+            <Link to="/home">Home</Link>
+            <Link to="/manage">Feature</Link>
             <a href="#">Tools</a>
             <a href="#">Get Started</a>
-            <Link to={"/login"}>
-              <a href="#" className="btn-signin" role="button">
+
+            {user ? (
+              <div className="user-info">
+                👋 Hi, {user.fullName || user.username}
+              </div>
+            ) : (
+              <Link to="/login" className="btn-signin">
                 Sign In
-              </a>
-            </Link>
+              </Link>
+            )}
           </nav>
         </div>
       </header>
