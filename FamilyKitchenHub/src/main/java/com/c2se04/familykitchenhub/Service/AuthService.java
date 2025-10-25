@@ -4,7 +4,7 @@ import com.c2se04.familykitchenhub.DTO.Request.*;
 import com.c2se04.familykitchenhub.DTO.Response.AuthResponse;
 import com.c2se04.familykitchenhub.DTO.Response.MessageResponse;
 import com.c2se04.familykitchenhub.DTO.Response.UserResponse;
-import com.c2se04.familykitchenhub.Entity.User;
+import com.c2se04.familykitchenhub.model.User;
 import com.c2se04.familykitchenhub.Enum.Role;
 import com.c2se04.familykitchenhub.Exception.BadRequestException;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;

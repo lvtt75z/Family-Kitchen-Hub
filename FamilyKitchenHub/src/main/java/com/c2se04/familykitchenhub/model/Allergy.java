@@ -1,6 +1,7 @@
 package com.c2se04.familykitchenhub.model;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -17,10 +18,12 @@ public class Allergy {
     @Column(name = "name", unique = true, nullable = false)
     private String name;
 
-    // This field represents the other side of the many-to-many relationship
-    // It is not a column in the 'allergies' table
-    @ManyToMany(mappedBy = "allergies")
-    private Set<FamilyMember> members;
+    /**
+     * One-to-Many relationship with MemberAllergy entity.
+     * This represents all family members who have this allergy.
+     */
+    @OneToMany(mappedBy = "allergy", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<MemberAllergy> memberAllergies = new HashSet<>();
 
     // --- Constructors, Getters, and Setters ---
 
@@ -43,11 +46,11 @@ public class Allergy {
         this.name = name;
     }
 
-    public Set<FamilyMember> getMembers() {
-        return members;
+    public Set<MemberAllergy> getMemberAllergies() {
+        return memberAllergies;
     }
 
-    public void setMembers(Set<FamilyMember> members) {
-        this.members = members;
+    public void setMemberAllergies(Set<MemberAllergy> memberAllergies) {
+        this.memberAllergies = memberAllergies;
     }
 }

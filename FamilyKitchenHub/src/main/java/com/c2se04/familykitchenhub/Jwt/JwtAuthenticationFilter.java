@@ -1,6 +1,6 @@
 package com.c2se04.familykitchenhub.Jwt;
 
-import com.c2se04.familykitchenhub.Entity.User;
+import com.c2se04.familykitchenhub.model.User;
 import com.c2se04.familykitchenhub.Repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

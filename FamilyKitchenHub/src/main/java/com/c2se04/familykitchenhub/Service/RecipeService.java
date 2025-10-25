@@ -96,4 +96,92 @@ public class RecipeService {
         }
         recipeRepository.deleteById(id);
     }
+
+    // SEARCH BY TITLE
+    public List<Recipe> searchRecipesByTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            return recipeRepository.findAll();
+        }
+        return recipeRepository.findByTitleContainingIgnoreCase(title.trim());
+    }
+
+    // FILTER BY MAX COOKING TIME
+    public List<Recipe> filterByMaxCookingTime(Integer maxMinutes) {
+        if (maxMinutes == null || maxMinutes <= 0) {
+            return recipeRepository.findAll();
+        }
+        return recipeRepository.findByCookingTimeMinutesLessThanEqual(maxMinutes);
+    }
+
+    // FILTER BY SERVINGS
+    public List<Recipe> filterByServings(Integer servings) {
+        if (servings == null || servings <= 0) {
+            return recipeRepository.findAll();
+        }
+        return recipeRepository.findByServings(servings);
+    }
+
+    // FILTER BY SERVINGS RANGE
+    public List<Recipe> filterByServingsRange(Integer minServings, Integer maxServings) {
+        if (minServings == null) minServings = 0;
+        if (maxServings == null) maxServings = Integer.MAX_VALUE;
+        return recipeRepository.findByServingsBetween(minServings, maxServings);
+    }
+
+    // SEARCH BY INGREDIENT NAME
+    public List<Recipe> searchByIngredientName(String ingredientName) {
+        if (ingredientName == null || ingredientName.trim().isEmpty()) {
+            return recipeRepository.findAll();
+        }
+        return recipeRepository.findByIngredientName(ingredientName.trim());
+    }
+
+    // SEARCH BY INGREDIENT ID
+    public List<Recipe> searchByIngredientId(Long ingredientId) {
+        if (ingredientId == null) {
+            return recipeRepository.findAll();
+        }
+        // Validate ingredient exists
+        if (!ingredientRepository.existsById(ingredientId)) {
+            throw new ResourceNotFoundException("Ingredient", "id", ingredientId);
+        }
+        return recipeRepository.findByIngredientId(ingredientId);
+    }
+
+    // ADVANCED SEARCH WITH MULTIPLE FILTERS
+    public List<Recipe> advancedSearch(String title, Integer maxCookingTime, 
+                                      Integer minServings, Integer maxServings) {
+        return recipeRepository.searchRecipes(
+            (title != null && !title.trim().isEmpty()) ? title.trim() : null,
+            maxCookingTime,
+            minServings,
+            maxServings
+        );
+    }
+
+    // FIND RECIPES CONTAINING ALL SPECIFIED INGREDIENTS
+    public List<Recipe> findRecipesWithAllIngredients(List<Long> ingredientIds) {
+        if (ingredientIds == null || ingredientIds.isEmpty()) {
+            return recipeRepository.findAll();
+        }
+        
+        // Validate all ingredients exist
+        for (Long ingredientId : ingredientIds) {
+            if (!ingredientRepository.existsById(ingredientId)) {
+                throw new ResourceNotFoundException("Ingredient", "id", ingredientId);
+            }
+        }
+        
+        return recipeRepository.findByAllIngredients(ingredientIds, (long) ingredientIds.size());
+    }
+
+    // QUICK RECIPES (30 minutes or less)
+    public List<Recipe> getQuickRecipes() {
+        return recipeRepository.findByCookingTimeMinutesLessThanEqual(30);
+    }
+
+    // RECIPES FOR GROUPS (6+ servings)
+    public List<Recipe> getGroupRecipes() {
+        return recipeRepository.findByServingsBetween(6, Integer.MAX_VALUE);
+    }
 }

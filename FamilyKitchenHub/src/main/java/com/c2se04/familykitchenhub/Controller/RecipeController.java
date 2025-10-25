@@ -83,4 +83,91 @@ public class RecipeController {
 
         return ResponseEntity.noContent().build(); // 204 No Content (Exception được xử lý tự động)
     }
+
+    // GET /api/recipes/search?title={title} - SEARCH BY TITLE
+    @GetMapping("/search")
+    public ResponseEntity<List<RecipeResponseDTO>> searchRecipesByTitle(@RequestParam String title) {
+        List<Recipe> recipes = recipeService.searchRecipesByTitle(title);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/filter/cooking-time?max={maxMinutes} - FILTER BY MAX COOKING TIME
+    @GetMapping("/filter/cooking-time")
+    public ResponseEntity<List<RecipeResponseDTO>> filterByMaxCookingTime(@RequestParam Integer max) {
+        List<Recipe> recipes = recipeService.filterByMaxCookingTime(max);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/filter/servings?servings={servings} - FILTER BY EXACT SERVINGS
+    @GetMapping("/filter/servings")
+    public ResponseEntity<List<RecipeResponseDTO>> filterByServings(@RequestParam Integer servings) {
+        List<Recipe> recipes = recipeService.filterByServings(servings);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/filter/servings-range?min={min}&max={max} - FILTER BY SERVINGS RANGE
+    @GetMapping("/filter/servings-range")
+    public ResponseEntity<List<RecipeResponseDTO>> filterByServingsRange(
+            @RequestParam(required = false) Integer min,
+            @RequestParam(required = false) Integer max) {
+        List<Recipe> recipes = recipeService.filterByServingsRange(min, max);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/search/ingredient?name={name} - SEARCH BY INGREDIENT NAME
+    @GetMapping("/search/ingredient")
+    public ResponseEntity<List<RecipeResponseDTO>> searchByIngredientName(@RequestParam String name) {
+        List<Recipe> recipes = recipeService.searchByIngredientName(name);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/search/ingredient/{id} - SEARCH BY INGREDIENT ID
+    @GetMapping("/search/ingredient/{id}")
+    public ResponseEntity<List<RecipeResponseDTO>> searchByIngredientId(@PathVariable Long id) {
+        List<Recipe> recipes = recipeService.searchByIngredientId(id);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/advanced-search - ADVANCED SEARCH WITH MULTIPLE FILTERS
+    @GetMapping("/advanced-search")
+    public ResponseEntity<List<RecipeResponseDTO>> advancedSearch(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) Integer maxCookingTime,
+            @RequestParam(required = false) Integer minServings,
+            @RequestParam(required = false) Integer maxServings) {
+        List<Recipe> recipes = recipeService.advancedSearch(title, maxCookingTime, minServings, maxServings);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // POST /api/recipes/search/with-ingredients - FIND RECIPES WITH ALL SPECIFIED INGREDIENTS
+    @PostMapping("/search/with-ingredients")
+    public ResponseEntity<List<RecipeResponseDTO>> findRecipesWithAllIngredients(
+            @RequestBody List<Long> ingredientIds) {
+        List<Recipe> recipes = recipeService.findRecipesWithAllIngredients(ingredientIds);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/quick - GET QUICK RECIPES (30 minutes or less)
+    @GetMapping("/quick")
+    public ResponseEntity<List<RecipeResponseDTO>> getQuickRecipes() {
+        List<Recipe> recipes = recipeService.getQuickRecipes();
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // GET /api/recipes/group - GET RECIPES FOR GROUPS (6+ servings)
+    @GetMapping("/group")
+    public ResponseEntity<List<RecipeResponseDTO>> getGroupRecipes() {
+        List<Recipe> recipes = recipeService.getGroupRecipes();
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs);
+    }
 }

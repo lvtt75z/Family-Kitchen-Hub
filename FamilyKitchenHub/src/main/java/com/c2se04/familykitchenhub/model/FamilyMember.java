@@ -38,17 +38,12 @@ public class FamilyMember {
     private String notes;
 
     /**
-     * Many-to-Many relationship with the Allergy entity.
-     * A family member can have multiple allergies.
-     * This relationship is managed by the 'member_allergies' junction table.
+     * One-to-Many relationship with MemberAllergy entity.
+     * A family member can have multiple allergy associations.
+     * This relationship is managed through the explicit MemberAllergy entity.
      */
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "member_allergies",
-            joinColumns = @JoinColumn(name = "member_id"),
-            inverseJoinColumns = @JoinColumn(name = "allergy_id")
-    )
-    private Set<Allergy> allergies = new HashSet<>();
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<MemberAllergy> memberAllergies = new HashSet<>();
 
     // --- Constructors, Getters, and Setters ---
 
@@ -104,11 +99,11 @@ public class FamilyMember {
         this.notes = notes;
     }
 
-    public Set<Allergy> getAllergies() {
-        return allergies;
+    public Set<MemberAllergy> getMemberAllergies() {
+        return memberAllergies;
     }
 
-    public void setAllergies(Set<Allergy> allergies) {
-        this.allergies = allergies;
+    public void setMemberAllergies(Set<MemberAllergy> memberAllergies) {
+        this.memberAllergies = memberAllergies;
     }
 }

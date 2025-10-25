@@ -1,7 +1,7 @@
 package com.c2se04.familykitchenhub.Mapper;
 
 import com.c2se04.familykitchenhub.DTO.Response.UserResponse;
-import com.c2se04.familykitchenhub.Entity.User;
+import com.c2se04.familykitchenhub.model.User;
 import org.springframework.stereotype.Component;
 
 @Component
