@@ -1,6 +1,7 @@
 import React from "react";
 import "../styles/Header.css";
 import { Link } from "react-router-dom";
+import { Link as MuiLink } from "@mui/material";
 export default function Header() {
   return (
     <>
@@ -49,19 +50,15 @@ export default function Header() {
             role="navigation"
             aria-label="Main navigation"
           >
-            <Link to="/home">
-              <a href="#" className="active">
-                Home
-              </a>
-            </Link>
+            <MuiLink component={Link} to="/home" className="active">
+              Home
+            </MuiLink>
             <a href="#">Features</a>
             <a href="#">Tools</a>
             <a href="#">Get Started</a>
-            <Link to={"/login"}>
-              <a href="#" className="btn-signin" role="button">
-                Sign In
-              </a>
-            </Link>
+            <MuiLink component={Link} to="/login" className="btn-signin" role="button">
+              Sign In
+            </MuiLink>
           </nav>
         </div>
       </header>

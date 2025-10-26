@@ -59,7 +59,8 @@
   flex: 0 0 auto;
 }
 
-.site-nav a {
+.site-nav a,
+.site-nav .MuiLink-root {
   text-decoration: none;
   font-weight: 600;
   font-size: 15px;
@@ -68,11 +69,13 @@
   transition: color 0.15s ease;
 }
 
-.site-nav a:hover {
+.site-nav a:hover,
+.site-nav .MuiLink-root:hover {
   color: #111827;
 }
 
-.site-nav a.active {
+.site-nav a.active,
+.site-nav .MuiLink-root.active {
   color: var(--accent);
 }
 
