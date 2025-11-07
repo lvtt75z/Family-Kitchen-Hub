@@ -7,5 +7,13 @@ const instance = axios.create({
     "Content-Type": "application/json",
   },
 });
+// Tự động thêm token vào header Authorization (nếu có trong localStorage)
+instance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token"); // chỗ này lấy token bạn lưu sau khi login
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export default instance;

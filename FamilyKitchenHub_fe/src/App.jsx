@@ -38,7 +38,7 @@ function App() {
           <Route path="Dashboard" element={<IngredientListScreen />} />
           <Route path="fridge" element={<Fridge />} />
           <Route path="recipes" element={<Recipes/>} />
-          <Route path="detailRecipes" element={<DetailRecipes />} />
+          <Route path="recipes/:id" element={<DetailRecipes />} />
           <Route path="familyProfile" element={<FamilyProfiles/>} />
            <Route path="mealPlaner" element={<MealPlanner/>} />
           <Route path="editprofile" element={<EditProfile />} />

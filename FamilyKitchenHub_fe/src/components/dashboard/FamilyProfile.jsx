@@ -3,21 +3,6 @@ import axios from "../../hooks/axios";
 import "./../../styles/FamilyProfile.css";
 import { Pen, Trash2, PlusCircle } from "lucide-react";
 
-function calcBMI(weightKg, heightCm) {
-  if (!weightKg || !heightCm) return null;
-  const h = heightCm / 100;
-  const bmi = weightKg / (h * h);
-  return Math.round(bmi * 10) / 10;
-}
-
-function bmiCategory(bmi) {
-  if (bmi == null) return "";
-  if (bmi < 18.5) return { label: "Underweight", color: "blue" };
-  if (bmi < 25) return { label: "Normal", color: "green" };
-  if (bmi < 30) return { label: "Overweight", color: "orange" };
-  return { label: "Obesity", color: "red" };
-}
-
 export default function FamilyProfiles() {
   const [members, setMembers] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -32,9 +17,8 @@ export default function FamilyProfiles() {
   // Fetch API thật khi load trang
   useEffect(() => {
     const token = localStorage.getItem("token");
-    
     if (!token) {
-      console.warn(" Chưa có token, vui lòng đăng nhập!");
+      console.warn("Chưa có token, vui lòng đăng nhập!");
       return;
     }
 
@@ -45,7 +29,6 @@ export default function FamilyProfiles() {
         },
       })
       .then((res) => {
-        console.log(" Family members:", res.data);
         setMembers(res.data);
       })
       .catch((err) => {
@@ -88,6 +71,34 @@ export default function FamilyProfiles() {
       });
   }
 
+  function handleEditSubmit(e) {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) return alert("Chưa đăng nhập!");
+
+    const payload = {
+      name: form.name,
+      age: parseInt(form.age) || null,
+      healthGoals: form.healthGoals,
+      notes: form.notes,
+    };
+
+    axios
+      .put(`/family-members/${editing.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setMembers((prev) =>
+          prev.map((m) => (m.id === editing.id ? res.data : m))
+        );
+        closeModal();
+      })
+      .catch((err) => {
+        console.error("Lỗi khi cập nhật:", err);
+        alert("Không thể cập nhật thành viên!");
+      });
+  }
+
   function handleDelete(id) {
     const token = localStorage.getItem("token");
     if (!token) return alert("Chưa đăng nhập!");
@@ -99,18 +110,30 @@ export default function FamilyProfiles() {
       })
       .then(() => setMembers((prev) => prev.filter((m) => m.id !== id)))
       .catch((err) => {
-        console.error(" Lỗi khi xóa:", err);
+        console.error("Lỗi khi xóa:", err);
         alert("Không thể xóa!");
       });
   }
 
-  function openModal() {
-    setForm({ name: "", age: "", healthGoals: "", notes: "" });
+  function openModal(member = null) {
+    if (member) {
+      setEditing(member);
+      setForm({
+        name: member.name,
+        age: member.age || "",
+        healthGoals: member.healthGoals || "",
+        notes: member.notes || "",
+      });
+    } else {
+      setEditing(null);
+      setForm({ name: "", age: "", healthGoals: "", notes: "" });
+    }
     setIsOpen(true);
   }
 
   function closeModal() {
     setIsOpen(false);
+    setEditing(null);
   }
 
   return (
@@ -120,7 +143,7 @@ export default function FamilyProfiles() {
           <h1>Family Members</h1>
           <p className="muted">Manage your family members' info</p>
         </div>
-        <button className="btn primary" onClick={openModal}>
+        <button className="btn primary" onClick={() => openModal()}>
           <PlusCircle size={16} /> Add Member
         </button>
       </div>
@@ -133,7 +156,11 @@ export default function FamilyProfiles() {
             <div key={m.id} className="profile-card">
               <div className="card-top">
                 <div className="avatar">
-                  {m.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                  {m.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()}
                 </div>
                 <div className="meta">
                   <h3>{m.name}</h3>
@@ -142,6 +169,12 @@ export default function FamilyProfiles() {
                   </p>
                 </div>
                 <div className="actions">
+                  <button
+                    onClick={() => openModal(m)}
+                    className="icon-btn edit"
+                  >
+                    <Pen size={14} />
+                  </button>
                   <button
                     onClick={() => handleDelete(m.id)}
                     className="icon-btn delete"
@@ -165,79 +198,81 @@ export default function FamilyProfiles() {
         )}
       </div>
 
-{isOpen && (
-  <div className={`modal-overlay ${isOpen ? "active" : ""}`}>
-    <div className="modal">
-      <div className="modal-header">
-        <h3>Add Member</h3>
-        <button className="icon-btn" onClick={closeModal}>
-          ✕
-        </button>
-      </div>
+      {isOpen && (
+        <div className={`modal-overlay ${isOpen ? "active" : ""}`}>
+          <div className="modal">
+            <div className="modal-header">
+              <h3>{editing ? "Edit Member" : "Add Member"}</h3>
+              <button className="icon-btn" onClick={closeModal}>
+                ✕
+              </button>
+            </div>
 
-      <form className="modal-form" onSubmit={handleAdd}>
-        <label>
-          Name
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="e.g. Huy Vo"
-            required
-          />
-        </label>
+            <form
+              className="modal-form"
+              onSubmit={editing ? handleEditSubmit : handleAdd}
+            >
+              <label>
+                Name
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="e.g. Huy Vo"
+                  required
+                />
+              </label>
 
-        <div className="form-grid">
-          <label>
-            Age
-            <input
-              type="number"
-              name="age"
-              value={form.age}
-              onChange={handleChange}
-              placeholder="e.g. 25"
-            />
-          </label>
-          <label>
-            Health Goals
-            <input
-              type="text"
-              name="healthGoals"
-              value={form.healthGoals}
-              onChange={handleChange}
-              placeholder="e.g. Lose weight"
-            />
-          </label>
+              <div className="form-grid">
+                <label>
+                  Age
+                  <input
+                    type="number"
+                    name="age"
+                    value={form.age}
+                    onChange={handleChange}
+                    placeholder="e.g. 25"
+                  />
+                </label>
+                <label>
+                  Health Goals
+                  <input
+                    type="text"
+                    name="healthGoals"
+                    value={form.healthGoals}
+                    onChange={handleChange}
+                    placeholder="e.g. Lose weight"
+                  />
+                </label>
+              </div>
+
+              <label>
+                Notes
+                <textarea
+                  name="notes"
+                  value={form.notes}
+                  onChange={handleChange}
+                  placeholder="e.g. Allergic to dairy"
+                />
+              </label>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn primary">
+                  {editing ? "Update Member" : "Save Member"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <label>
-          Notes
-          <textarea
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            placeholder="e.g. Allergic to dairy"
-          />
-        </label>
-
-        <div className="modal-actions">
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={closeModal}
-          >
-            Cancel
-          </button>
-          <button type="submit" className="btn primary">
-            Save Member
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
+      )}
     </div>
   );
 }

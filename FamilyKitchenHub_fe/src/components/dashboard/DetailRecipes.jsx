@@ -1,39 +1,73 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "../../hooks/axios";
 import "./../../styles/DetailRecipes.css";
 import { Clock, Users } from "lucide-react";
 
 export default function RecipeDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRecipeDetail = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`/recipes/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setRecipe(response.data);
+      } catch (err) {
+        console.error("Error fetching recipe:", err);
+        setError(err.response?.data?.message || "Could not load recipe");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchRecipeDetail();
+    }
+  }, [id]);
+
+  if (loading) return <div className="loading">Loading...</div>;
+  if (error) return <div className="error">{error}</div>;
+  if (!recipe) return <div className="not-found">Recipe not found</div>;
+
   return (
     <div className="recipe-detail-page">
-      <button className="back-btn">← Back to Recipes</button>
+      <button className="back-btn" onClick={() => navigate(-1)}>
+        ← Back to Recipes
+      </button>
 
       {/* Hero Section */}
       <div className="recipe-hero">
         <img
-          src="https://th.bing.com/th/id/OIP.vlctIg_WmoleoAiv6jgb6wHaE8?w=347&h=189&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3"
-          alt="Creamy Mushroom Pasta"
+          src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+          alt={recipe.title}
           className="recipe-image"
         />
         <div className="recipe-overlay">
-          <span className="recipe-tag">Dinner</span>
-          <h1>Creamy Mushroom Pasta</h1>
+          <span className="recipe-tag">Recipe</span>
+          <h1>{recipe.title}</h1>
           <div className="recipe-meta">
-            <span><Clock size={16} /> 25 min</span>
-            <span><Users size={16} /> 4 servings</span>
+            <span>
+              <Clock size={16} /> {recipe.cookingTimeMinutes} min
+            </span>
+            <span>
+              <Users size={16} /> {recipe.servings} servings
+            </span>
           </div>
         </div>
       </div>
 
       {/* Description */}
-      <p className="recipe-desc">
-        A rich and creamy pasta dish with sautéed mushrooms, garlic, and parmesan cheese.
-      </p>
-
-      {/* Action Buttons */}
-      <div className="recipe-actions">
-        <button className="btn-primary">🍳 Cook Now</button>
-        <button className="btn-secondary">🛒 Add to Shopping List</button>
-      </div>
+      <p className="recipe-desc">{recipe.instructions}</p>
 
       {/* Content Section */}
       <div className="recipe-content">
@@ -41,12 +75,14 @@ export default function RecipeDetail() {
         <div className="ingredients-card">
           <h2>Ingredients</h2>
           <ul>
-            <li><span>Pasta</span> <span className="in-fridge">In Fridge</span></li>
-            <li><span>Mushrooms</span> <span className="in-fridge">In Fridge</span></li>
-            <li><span>Garlic</span> <span className="in-fridge">In Fridge</span></li>
-            <li><span>Heavy Cream</span> <span className="in-fridge">In Fridge</span></li>
-            <li><span>Parmesan Cheese</span> <span className="in-fridge">In Fridge</span></li>
-            <li><span>Butter</span> <span className="in-fridge">In Fridge</span></li>
+            {recipe.ingredients?.map((ingredient) => (
+              <li key={ingredient.ingredientId}>
+                <span>
+                  {ingredient.ingredientName} ({ingredient.quantity} {ingredient.unit})
+                </span>
+                <span className="in-fridge">In Fridge</span>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -54,26 +90,9 @@ export default function RecipeDetail() {
         <div className="instructions-card">
           <h2>Instructions</h2>
           <ol>
-            <li>
-              Cook pasta according to package instructions until al dente.
-              Reserve 1 cup of pasta water before draining.
-            </li>
-            <li>
-              While pasta cooks, heat olive oil and butter in a large pan over medium heat.
-            </li>
-            <li>
-              Add sliced mushrooms and cook for 5–7 minutes until golden brown.
-              Add minced garlic and cook for 1 minute.
-            </li>
-            <li>
-              Pour in heavy cream and bring to a gentle simmer. Cook 3–4 minutes until slightly thickened.
-            </li>
-            <li>
-              Add cooked pasta to the sauce with grated parmesan. Toss to combine.
-            </li>
-            <li>
-              Season with salt and pepper. Serve with extra parmesan on top.
-            </li>
+            {recipe.instructions.split('\n').map((instruction, index) => (
+              <li key={index}>{instruction}</li>
+            ))}
           </ol>
         </div>
       </div>
