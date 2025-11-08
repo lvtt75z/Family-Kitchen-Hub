@@ -3,6 +3,7 @@ package com.c2se04.familykitchenhub.Controller;
 import com.c2se04.familykitchenhub.DTO.RecipeRequestDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeResponseDTO;
 import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
+import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Recipe;
 import com.c2se04.familykitchenhub.Service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,22 @@ public class RecipeController {
                 .map(recipeMapper::toResponseDTO) // Chuyển Entity thành DTO
                 .map(ResponseEntity::ok)        // Nếu tìm thấy, trả về 200 OK
                 .orElse(ResponseEntity.notFound().build()); // Nếu không tìm thấy, Exception sẽ không ném ra đây, mà là 404 (do Optional)
+    }
+
+    // GET /api/recipes/meal-type/{mealType} - READ BY MEAL TYPE
+    @GetMapping("/meal-type/{mealType}")
+    public ResponseEntity<List<RecipeResponseDTO>> getRecipesByMealType(@PathVariable MealType mealType) {
+        List<Recipe> recipes = recipeService.getRecipesByMealType(mealType);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs); // 200 OK
+    }
+
+    // GET /api/recipes/search?name={name} - SEARCH BY TITLE
+    @GetMapping("/search")
+    public ResponseEntity<List<RecipeResponseDTO>> searchRecipesByName(@RequestParam String name) {
+        List<Recipe> recipes = recipeService.searchRecipesByTitle(name);
+        List<RecipeResponseDTO> responseDTOs = recipeMapper.toResponseDTOList(recipes);
+        return ResponseEntity.ok(responseDTOs); // 200 OK
     }
 
     // PUT /api/recipes/{id} - UPDATE

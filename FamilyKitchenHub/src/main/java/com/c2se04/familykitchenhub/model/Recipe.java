@@ -1,5 +1,6 @@
 package com.c2se04.familykitchenhub.model;
 
+import com.c2se04.familykitchenhub.enums.MealType;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +30,10 @@ public class Recipe {
 
     @Column(name = "image_url")
     private String imageUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "meal_type")
+    private MealType mealType;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecipeIngredient> recipeIngredients = new HashSet<>();
@@ -84,6 +89,14 @@ public class Recipe {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public MealType getMealType() {
+        return mealType;
+    }
+
+    public void setMealType(MealType mealType) {
+        this.mealType = mealType;
     }
 
     public Set<RecipeIngredient> getRecipeIngredients() {
