@@ -35,6 +35,11 @@ public class IngredientService {
         return ingredientRepository.findById(id);
     }
 
+    // SEARCH BY NAME
+    public List<Ingredient> searchIngredients(String keyword) {
+        return ingredientRepository.findByNameContainingIgnoreCase(keyword);
+    }
+
     // UPDATE: Cập nhật thành phần
     @Transactional
     public Ingredient updateIngredient(Long id, Ingredient updatedDetails) {

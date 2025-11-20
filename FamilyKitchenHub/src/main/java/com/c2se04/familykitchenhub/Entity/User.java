@@ -48,6 +48,34 @@ public class User {
     
     @Column(name = "reset_token_expiry")
     private LocalDateTime resetTokenExpiry;
+    
+    // Profile fields
+    @Column(name = "gender")
+    private String gender;
+    
+    @Column(name = "pathology")
+    private String pathology; // allergy, diabetes, hypertension, none
+    
+    @Column(name = "number_of_family_members")
+    private Integer numberOfFamilyMembers;
+    
+    @Column(name = "country")
+    private String country;
+    
+    @Column(name = "favorite")
+    private String favorite; // Vegetarian, Vegan, Meat Lover, Balanced
+    
+    @Column(name = "age_groups_children")
+    private Boolean ageGroupsChildren = false;
+    
+    @Column(name = "age_groups_teenagers")
+    private Boolean ageGroupsTeenagers = false;
+    
+    @Column(name = "age_groups_adult")
+    private Boolean ageGroupsAdult = false;
+    
+    @Column(name = "age_groups_old_person")
+    private Boolean ageGroupsOldPerson = false;
 
     // Constructors
     public User() {
@@ -165,5 +193,78 @@ public class User {
 
     public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) {
         this.resetTokenExpiry = resetTokenExpiry;
+    }
+    
+    // Profile getters and setters
+    public String getGender() {
+        return gender;
+    }
+    
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+    
+    public String getPathology() {
+        return pathology;
+    }
+    
+    public void setPathology(String pathology) {
+        this.pathology = pathology;
+    }
+    
+    public Integer getNumberOfFamilyMembers() {
+        return numberOfFamilyMembers;
+    }
+    
+    public void setNumberOfFamilyMembers(Integer numberOfFamilyMembers) {
+        this.numberOfFamilyMembers = numberOfFamilyMembers;
+    }
+    
+    public String getCountry() {
+        return country;
+    }
+    
+    public void setCountry(String country) {
+        this.country = country;
+    }
+    
+    public String getFavorite() {
+        return favorite;
+    }
+    
+    public void setFavorite(String favorite) {
+        this.favorite = favorite;
+    }
+    
+    public Boolean getAgeGroupsChildren() {
+        return ageGroupsChildren;
+    }
+    
+    public void setAgeGroupsChildren(Boolean ageGroupsChildren) {
+        this.ageGroupsChildren = ageGroupsChildren;
+    }
+    
+    public Boolean getAgeGroupsTeenagers() {
+        return ageGroupsTeenagers;
+    }
+    
+    public void setAgeGroupsTeenagers(Boolean ageGroupsTeenagers) {
+        this.ageGroupsTeenagers = ageGroupsTeenagers;
+    }
+    
+    public Boolean getAgeGroupsAdult() {
+        return ageGroupsAdult;
+    }
+    
+    public void setAgeGroupsAdult(Boolean ageGroupsAdult) {
+        this.ageGroupsAdult = ageGroupsAdult;
+    }
+    
+    public Boolean getAgeGroupsOldPerson() {
+        return ageGroupsOldPerson;
+    }
+    
+    public void setAgeGroupsOldPerson(Boolean ageGroupsOldPerson) {
+        this.ageGroupsOldPerson = ageGroupsOldPerson;
     }
 }

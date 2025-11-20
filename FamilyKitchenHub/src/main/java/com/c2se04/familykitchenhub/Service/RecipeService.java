@@ -3,6 +3,7 @@ import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
 import com.c2se04.familykitchenhub.Repository.IngredientRepository;
 import com.c2se04.familykitchenhub.Repository.RecipeRepository;
+import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Ingredient;
 import com.c2se04.familykitchenhub.model.Recipe;
 import com.c2se04.familykitchenhub.model.RecipeIngredient;
@@ -53,6 +54,16 @@ public class RecipeService {
         return recipeRepository.findById(id);
     }
 
+    // READ BY MEAL TYPE
+    public List<Recipe> getRecipesByMealType(MealType mealType) {
+        return recipeRepository.findByMealType(mealType);
+    }
+
+    // READ BY TITLE (SEARCH)
+    public List<Recipe> searchRecipesByTitle(String title) {
+        return recipeRepository.findByTitleContainingIgnoreCase(title);
+    }
+
     // UPDATE
     @Transactional
     public Recipe updateRecipe(Long id, Recipe updatedRecipeDetails) {
@@ -66,6 +77,7 @@ public class RecipeService {
         existingRecipe.setCookingTimeMinutes(updatedRecipeDetails.getCookingTimeMinutes());
         existingRecipe.setServings(updatedRecipeDetails.getServings());
         existingRecipe.setImageUrl(updatedRecipeDetails.getImageUrl());
+        existingRecipe.setMealType(updatedRecipeDetails.getMealType());
 
         // Cập nhật danh sách thành phần nếu có
         if (updatedRecipeDetails.getRecipeIngredients() != null) {
