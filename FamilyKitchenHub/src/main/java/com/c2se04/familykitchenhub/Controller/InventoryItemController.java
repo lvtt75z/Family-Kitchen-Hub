@@ -1,16 +1,17 @@
 package com.c2se04.familykitchenhub.Controller;
 
 import com.c2se04.familykitchenhub.DTO.InventoryItemDTO;
+import com.c2se04.familykitchenhub.DTO.InventoryItemResponseDTO;
 import com.c2se04.familykitchenhub.model.InventoryItem;
 import com.c2se04.familykitchenhub.Service.InventoryItemService;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/inventory")
@@ -25,40 +26,42 @@ public class InventoryItemController {
 
     // POST /api/inventory - CREATE
     @PostMapping
-    public ResponseEntity<InventoryItem> createItem(@RequestBody InventoryItemDTO itemDTO) {
+    public ResponseEntity<InventoryItemResponseDTO> createItem(@RequestBody InventoryItemDTO itemDTO) {
         InventoryItem item = new InventoryItem();
-        // Item entity cần có User và Ingredient được thiết lập trong Service
+        // Thiết lập các trường đơn giản trước khi lưu
+        item.setQuantity(itemDTO.getQuantity());
+        item.setExpirationDate(itemDTO.getExpirationDate());
 
+        // Item entity cần có User và Ingredient được thiết lập trong Service
         InventoryItem newItem = inventoryItemService.createInventoryItem(
                 item,
                 itemDTO.getUserId(),
                 itemDTO.getIngredientId()
         );
 
-        // Copy các trường còn lại (quantity, expirationDate)
-        newItem.setQuantity(itemDTO.getQuantity());
-        newItem.setExpirationDate(itemDTO.getExpirationDate());
-
-        return new ResponseEntity<>(newItem, HttpStatus.CREATED); // 201 Created
+        return new ResponseEntity<>(convertToResponseDTO(newItem), HttpStatus.CREATED); // 201 Created
     }
 
     // GET /api/inventory/user/{userId} - READ ALL by User ID
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<InventoryItem>> getInventoryForUser(@PathVariable Long userId) {
-        List<InventoryItem> items = inventoryItemService.getInventoryByUserId(userId);
+    public ResponseEntity<List<InventoryItemResponseDTO>> getInventoryForUser(@PathVariable Long userId) {
+        List<InventoryItemResponseDTO> items = inventoryItemService.getInventoryByUserId(userId)
+                .stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(items);
     }
 
     // GET /api/inventory/{id} - READ BY ID
     @GetMapping("/{id}")
-    public ResponseEntity<InventoryItem> getItemById(@PathVariable Long id) {
+    public ResponseEntity<InventoryItemResponseDTO> getItemById(@PathVariable Long id) {
         InventoryItem item = inventoryItemService.getInventoryItemById(id);
-        return ResponseEntity.ok(item);
+        return ResponseEntity.ok(convertToResponseDTO(item));
     }
 
     // PUT /api/inventory/{id} - UPDATE
     @PutMapping("/{id}")
-    public ResponseEntity<InventoryItem> updateItem(@PathVariable Long id, @RequestBody InventoryItemDTO itemDTO) {
+    public ResponseEntity<InventoryItemResponseDTO> updateItem(@PathVariable Long id, @RequestBody InventoryItemDTO itemDTO) {
         InventoryItem updateDetails = new InventoryItem();
 
         // Chỉ copy các trường cần cập nhật (quantity và expirationDate)
@@ -66,7 +69,7 @@ public class InventoryItemController {
         updateDetails.setExpirationDate(itemDTO.getExpirationDate());
 
         InventoryItem updatedItem = inventoryItemService.updateInventoryItem(id, updateDetails);
-        return ResponseEntity.ok(updatedItem); // 200 OK
+        return ResponseEntity.ok(convertToResponseDTO(updatedItem)); // 200 OK
     }
 
     // DELETE /api/inventory/{id} - DELETE
@@ -92,5 +95,18 @@ public class InventoryItemController {
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private InventoryItemResponseDTO convertToResponseDTO(InventoryItem item) {
+        InventoryItemResponseDTO dto = new InventoryItemResponseDTO();
+        dto.setId(item.getId());
+        dto.setQuantity(item.getQuantity());
+        dto.setExpirationDate(item.getExpirationDate());
+        if (item.getIngredient() != null) {
+            dto.setIngredientId(item.getIngredient().getId());
+            dto.setIngredientName(item.getIngredient().getName());
+            dto.setUnit(item.getIngredient().getUnit());
+        }
+        return dto;
     }
 }

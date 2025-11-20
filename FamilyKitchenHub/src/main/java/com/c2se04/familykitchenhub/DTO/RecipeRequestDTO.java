@@ -1,5 +1,6 @@
 package com.c2se04.familykitchenhub.DTO;
 
+import com.c2se04.familykitchenhub.enums.MealType;
 import java.util.Set;
 
 public class RecipeRequestDTO {
@@ -8,6 +9,7 @@ public class RecipeRequestDTO {
     private Integer cookingTimeMinutes;
     private Integer servings;
     private String imageUrl;
+    private MealType mealType;
     private Set<RecipeIngredientDTO> ingredients;
     public RecipeRequestDTO() {}
     public Set<RecipeIngredientDTO> getIngredients() { return ingredients; }
@@ -26,4 +28,7 @@ public class RecipeRequestDTO {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public MealType getMealType() { return mealType; }
+    public void setMealType(MealType mealType) { this.mealType = mealType; }
 }

@@ -61,6 +61,50 @@ public class UserService {
         return userRepository.save(existingUser);
     }
 
+    // UPDATE PROFILE: Cập nhật thông tin profile người dùng
+    @Transactional
+    public User updateProfile(Long id, User profileDetails) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+        // Cập nhật các trường profile
+        if (profileDetails.getFullName() != null) {
+            existingUser.setFullName(profileDetails.getFullName());
+        }
+        if (profileDetails.getGender() != null) {
+            existingUser.setGender(profileDetails.getGender());
+        }
+        if (profileDetails.getPathology() != null) {
+            existingUser.setPathology(profileDetails.getPathology());
+        }
+        if (profileDetails.getEmail() != null) {
+            existingUser.setEmail(profileDetails.getEmail());
+        }
+        if (profileDetails.getNumberOfFamilyMembers() != null) {
+            existingUser.setNumberOfFamilyMembers(profileDetails.getNumberOfFamilyMembers());
+        }
+        if (profileDetails.getCountry() != null) {
+            existingUser.setCountry(profileDetails.getCountry());
+        }
+        if (profileDetails.getFavorite() != null) {
+            existingUser.setFavorite(profileDetails.getFavorite());
+        }
+        if (profileDetails.getAgeGroupsChildren() != null) {
+            existingUser.setAgeGroupsChildren(profileDetails.getAgeGroupsChildren());
+        }
+        if (profileDetails.getAgeGroupsTeenagers() != null) {
+            existingUser.setAgeGroupsTeenagers(profileDetails.getAgeGroupsTeenagers());
+        }
+        if (profileDetails.getAgeGroupsAdult() != null) {
+            existingUser.setAgeGroupsAdult(profileDetails.getAgeGroupsAdult());
+        }
+        if (profileDetails.getAgeGroupsOldPerson() != null) {
+            existingUser.setAgeGroupsOldPerson(profileDetails.getAgeGroupsOldPerson());
+        }
+
+        return userRepository.save(existingUser);
+    }
+
     // DELETE: Xóa người dùng
     @Transactional
     public void deleteUser(Long id) {

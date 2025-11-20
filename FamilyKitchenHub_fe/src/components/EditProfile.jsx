@@ -13,7 +13,10 @@ import {
     Avatar,
     Card,
     CardContent,
-    Grid
+    Grid,
+    CircularProgress,
+    Alert,
+    Snackbar
 } from '@mui/material';
 import { Edit, Email } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +24,9 @@ import '../styles/EditProfile.css';
 
 const EditProfile = () => {
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    
     const [formData, setFormData] = useState({
         fullName: 'Pk',
         email: 'pk@gmail.com',
@@ -54,10 +60,72 @@ const EditProfile = () => {
         }));
     };
 
-    const handleSubmit = () => {
-        console.log('Save profile:', formData);
-        alert('Profile updated successfully!');
-        navigate('/manage/Dashboard');
+    const handleSubmit = async () => {
+        // Get user ID from localStorage or use a default value
+        // You may need to adjust this based on how user ID is stored in your app
+        const userId = localStorage.getItem('userId') || '1'; // Default to '1' if not found
+        
+        // Prepare request body according to API specification
+        const requestBody = {
+            fullName: formData.fullName,
+            gender: formData.gender,
+            pathology: formData.pathology,
+            email: formData.email,
+            numberOfFamilyMembers: parseInt(formData.numberOfFamilyMembers, 10),
+            country: formData.country,
+            favorite: formData.favorite,
+            ageGroups: {
+                children: formData.ageGroups.children,
+                teenagers: formData.ageGroups.teenagers,
+                adult: formData.ageGroups.adult,
+                oldPerson: formData.ageGroups.oldPerson
+            }
+        };
+
+        setIsLoading(true);
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/users/${userId}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Profile updated successfully:', data);
+            
+            setSnackbar({
+                open: true,
+                message: 'Profile updated successfully!',
+                severity: 'success'
+            });
+
+            // Navigate after a short delay to show success message
+            setTimeout(() => {
+                navigate('/manage/Dashboard');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            setSnackbar({
+                open: true,
+                message: error.message || 'Failed to update profile. Please try again.',
+                severity: 'error'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
     };
 
     return (
@@ -82,10 +150,11 @@ const EditProfile = () => {
                     <Button
                         variant="contained"
                         className="save-button"
-                        startIcon={<Edit />}
+                        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Edit />}
                         onClick={handleSubmit}
+                        disabled={isLoading}
                     >
-                        Save
+                        {isLoading ? 'Saving...' : 'Save'}
                     </Button>
                 </Box>
 
@@ -283,6 +352,18 @@ const EditProfile = () => {
                 </CardContent>
             </Card>
             </Box>
+
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

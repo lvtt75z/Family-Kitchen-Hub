@@ -1,6 +1,8 @@
 package com.c2se04.familykitchenhub.Controller;
 
+import com.c2se04.familykitchenhub.DTO.Request.EditProfileRequestDTO;
 import com.c2se04.familykitchenhub.DTO.Request.UserRequestDTO;
+import com.c2se04.familykitchenhub.DTO.Response.EditProfileResponseDTO;
 import com.c2se04.familykitchenhub.DTO.Response.UserResponseDTO;
 import com.c2se04.familykitchenhub.Entity.User;
 import com.c2se04.familykitchenhub.Service.UserService;
@@ -30,6 +32,49 @@ public class UserController {
         BeanUtils.copyProperties(user, dto);
         // KHÔNG copy trường password
         return dto;
+    }
+
+    // Helper method để chuyển đổi EditProfileRequestDTO -> User Entity
+    private User convertEditProfileRequestToUser(EditProfileRequestDTO requestDTO) {
+        User user = new User();
+        user.setFullName(requestDTO.getFullName());
+        user.setGender(requestDTO.getGender());
+        user.setPathology(requestDTO.getPathology());
+        user.setEmail(requestDTO.getEmail());
+        user.setNumberOfFamilyMembers(requestDTO.getNumberOfFamilyMembers());
+        user.setCountry(requestDTO.getCountry());
+        user.setFavorite(requestDTO.getFavorite());
+        
+        if (requestDTO.getAgeGroups() != null) {
+            user.setAgeGroupsChildren(requestDTO.getAgeGroups().getChildren());
+            user.setAgeGroupsTeenagers(requestDTO.getAgeGroups().getTeenagers());
+            user.setAgeGroupsAdult(requestDTO.getAgeGroups().getAdult());
+            user.setAgeGroupsOldPerson(requestDTO.getAgeGroups().getOldPerson());
+        }
+        
+        return user;
+    }
+
+    // Helper method để chuyển đổi User Entity -> EditProfileResponseDTO
+    private EditProfileResponseDTO convertUserToEditProfileResponse(User user) {
+        EditProfileResponseDTO responseDTO = new EditProfileResponseDTO();
+        responseDTO.setId(user.getId());
+        responseDTO.setFullName(user.getFullName());
+        responseDTO.setGender(user.getGender());
+        responseDTO.setPathology(user.getPathology());
+        responseDTO.setEmail(user.getEmail());
+        responseDTO.setNumberOfFamilyMembers(user.getNumberOfFamilyMembers());
+        responseDTO.setCountry(user.getCountry());
+        responseDTO.setFavorite(user.getFavorite());
+        
+        EditProfileResponseDTO.AgeGroupsDTO ageGroups = new EditProfileResponseDTO.AgeGroupsDTO();
+        ageGroups.setChildren(user.getAgeGroupsChildren());
+        ageGroups.setTeenagers(user.getAgeGroupsTeenagers());
+        ageGroups.setAdult(user.getAgeGroupsAdult());
+        ageGroups.setOldPerson(user.getAgeGroupsOldPerson());
+        responseDTO.setAgeGroups(ageGroups);
+        
+        return responseDTO;
     }
 
     // POST /api/users - CREATE
@@ -77,5 +122,22 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
+    // PUT /api/users/{id}/profile - UPDATE PROFILE
+    @PutMapping("/{id}/profile")
+    public ResponseEntity<EditProfileResponseDTO> updateProfile(
+            @PathVariable Long id,
+            @RequestBody EditProfileRequestDTO profileDTO) {
+        // Chuyển đổi DTO -> Entity
+        User profileDetails = convertEditProfileRequestToUser(profileDTO);
+        
+        // Cập nhật profile
+        User updatedUser = userService.updateProfile(id, profileDetails);
+        
+        // Chuyển đổi Entity -> Response DTO
+        EditProfileResponseDTO responseDTO = convertUserToEditProfileResponse(updatedUser);
+        
+        return ResponseEntity.ok(responseDTO); // 200 OK
     }
 }
