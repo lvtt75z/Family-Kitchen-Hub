@@ -1,6 +1,7 @@
 package com.c2se04.familykitchenhub.Controller;
 
 import com.c2se04.familykitchenhub.DTO.IngredientDTO;
+import com.c2se04.familykitchenhub.DTO.Response.IngredientWithTagsDTO;
 import com.c2se04.familykitchenhub.model.Ingredient;
 import com.c2se04.familykitchenhub.Service.IngredientService;
 import org.springframework.beans.BeanUtils;
@@ -64,5 +65,16 @@ public class IngredientController {
     public ResponseEntity<Void> deleteIngredient(@PathVariable Long id) {
         ingredientService.deleteIngredient(id);
         return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
+    // GET /api/ingredients/with-tags (GET ALL WITH TAGS)
+    /**
+     * Get all ingredients with their tags
+     * Useful for inventory form dropdown where users need to see ingredient characteristics
+     */
+    @GetMapping("/with-tags")
+    public ResponseEntity<List<IngredientWithTagsDTO>> getIngredientsWithTags() {
+        List<IngredientWithTagsDTO> ingredients = ingredientService.getAllIngredientsWithTags();
+        return ResponseEntity.ok(ingredients);
     }
 }

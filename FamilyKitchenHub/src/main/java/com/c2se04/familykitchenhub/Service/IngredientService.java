@@ -1,4 +1,6 @@
 package com.c2se04.familykitchenhub.Service;
+import com.c2se04.familykitchenhub.DTO.Response.IngredientWithTagsDTO;
+import com.c2se04.familykitchenhub.DTO.TagDTO;
 import com.c2se04.familykitchenhub.model.Ingredient;
 import com.c2se04.familykitchenhub.Repository.IngredientRepository;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException; // Cần thiết cho các thao tác tìm kiếm
@@ -8,11 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class IngredientService {
 
     private final IngredientRepository ingredientRepository;
+
+    @Autowired
+    private TagService tagService;
 
     @Autowired
     public IngredientService(IngredientRepository ingredientRepository) {
@@ -56,5 +62,22 @@ public class IngredientService {
             throw new ResourceNotFoundException("Ingredient", "id", id);
         }
         ingredientRepository.deleteById(id);
+    }
+
+    // GET ALL WITH TAGS: Lấy tất cả thành phần kèm tags
+    public List<IngredientWithTagsDTO> getAllIngredientsWithTags() {
+        List<Ingredient> ingredients = ingredientRepository.findAll();
+        
+        return ingredients.stream().map(ingredient -> {
+            // Get tags for this ingredient
+            List<TagDTO> tags = tagService.getTagsForIngredient(ingredient.getId());
+            
+            return new IngredientWithTagsDTO(
+                ingredient.getId(),
+                ingredient.getName(),
+                ingredient.getUnit(),
+                tags
+            );
+        }).collect(Collectors.toList());
     }
 }
