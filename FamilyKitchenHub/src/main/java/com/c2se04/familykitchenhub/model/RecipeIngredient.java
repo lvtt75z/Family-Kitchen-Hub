@@ -22,8 +22,17 @@ public class RecipeIngredient {
     @JoinColumn(name = "ingredient_id")
     private Ingredient ingredient;
 
+    // [GIỮ NGUYÊN] Tên cột và kiểu dữ liệu cũ
     @Column(name = "quantity_required")
     private Double quantity;
+
+    // [MỚI] Thêm đơn vị tính
+    @Column(name = "unit", nullable = false)
+    private String unit;
+
+    // [MỚI] Thêm cờ đánh dấu nguyên liệu chính (cho AI)
+    @Column(name = "is_main_ingredient")
+    private Boolean isMainIngredient = false;
 
     // --- Constructors, Getters, and Setters ---
 
@@ -60,5 +69,23 @@ public class RecipeIngredient {
 
     public void setQuantity(Double quantity) {
         this.quantity = quantity;
+    }
+
+    // --- Getter & Setter cho các trường MỚI ---
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public Boolean getIsMainIngredient() {
+        return isMainIngredient;
+    }
+
+    public void setIsMainIngredient(Boolean mainIngredient) {
+        isMainIngredient = mainIngredient;
     }
 }
