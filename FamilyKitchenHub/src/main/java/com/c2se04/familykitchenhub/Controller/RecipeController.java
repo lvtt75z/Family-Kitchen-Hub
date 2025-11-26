@@ -1,9 +1,14 @@
 package com.c2se04.familykitchenhub.Controller;
 
+import com.c2se04.familykitchenhub.DTO.CategoryTreeDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeRequestDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeResponseDTO;
+import com.c2se04.familykitchenhub.DTO.Request.SetRecipeCategoriesDTO;
+import com.c2se04.familykitchenhub.DTO.SimilarRecipeDTO;
 import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
 import com.c2se04.familykitchenhub.model.Recipe;
+import com.c2se04.familykitchenhub.Service.RecipeCategoryService;
+import com.c2se04.familykitchenhub.Service.RecipeRecommendationService;
 import com.c2se04.familykitchenhub.Service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +23,12 @@ public class RecipeController {
 
     private final RecipeService recipeService;
     private final RecipeMapper recipeMapper; // Tiêm Mapper
+
+    @Autowired
+    private RecipeCategoryService categoryService;
+
+    @Autowired
+    private RecipeRecommendationService recommendationService;
 
     @Autowired
     public RecipeController(RecipeService recipeService, RecipeMapper recipeMapper) {
@@ -82,5 +93,52 @@ public class RecipeController {
         recipeService.deleteRecipe(id);
 
         return ResponseEntity.noContent().build(); // 204 No Content (Exception được xử lý tự động)
+    }
+
+    // ========== CATEGORY ENDPOINTS (7.6) ==========
+
+    /**
+     * GET /api/recipes/{id}/categories
+     * Get categories for a recipe
+     */
+    @GetMapping("/{id}/categories")
+    public ResponseEntity<List<CategoryTreeDTO>> getRecipeCategories(@PathVariable Long id) {
+        List<CategoryTreeDTO> categories = categoryService.getCategoriesForRecipe(id);
+        return ResponseEntity.ok(categories);
+    }
+
+    /**
+     * POST /api/recipes/{id}/categories
+     * Update recipe categories
+     * MATCHES YOUR DOCUMENT ✅
+     * Body: { "categoryIds": [1, 5, 8] }
+     */
+    @PostMapping("/{id}/categories")
+    public ResponseEntity<Void> setRecipeCategories(
+            @PathVariable Long id,
+            @RequestBody SetRecipeCategoriesDTO requestDTO) {
+        categoryService.setRecipeCategories(id, requestDTO.getCategoryIds());
+        return ResponseEntity.ok().build();
+    }
+
+    // ========== SIMILAR RECIPES ENDPOINT (7.2) ==========
+
+    /**
+     * GET /api/recipes/{id}/similar?limit=10
+     * Get similar recipes based on categories, ingredients, and cooking time
+     *
+     * Similarity Algorithm:
+     * - Shared Categories: +5 points each
+     * - Shared Ingredients: +2 points each
+     * - Similar Cooking Time (≤15 min): +1 point
+     *
+     * MATCHES YOUR DOCUMENT ✅
+     */
+    @GetMapping("/{id}/similar")
+    public ResponseEntity<List<SimilarRecipeDTO>> getSimilarRecipes(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "10") Integer limit) {
+        List<SimilarRecipeDTO> similar = recommendationService.findSimilarRecipes(id, limit);
+        return ResponseEntity.ok(similar);
     }
 }

@@ -10,27 +10,27 @@ import java.util.stream.Collectors;
 
 @Component
 public class TagMapper {
-    
+
     // Entity to DTO
     public TagDTO toDTO(Tag tag) {
         if (tag == null) {
             return null;
         }
         return new TagDTO(
-            tag.getId(),
-            tag.getName(),
-            tag.getType(),
-            tag.getDescription()
+                tag.getId(),
+                tag.getName(),
+                tag.getType(),
+                tag.getDescription()
         );
     }
-    
+
     // List of entities to DTOs
     public List<TagDTO> toDTOList(List<Tag> tags) {
         return tags.stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
-    
+
     // Request DTO to Entity
     public Tag toEntity(TagRequestDTO dto) {
         if (dto == null) {
@@ -43,9 +43,3 @@ public class TagMapper {
         return tag;
     }
 }
-
-
-
-
-
-

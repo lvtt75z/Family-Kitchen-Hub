@@ -6,9 +6,3 @@ public enum TagType {
     NUTRITION,          // Giá trị dinh dưỡng
     USAGE               // Công dụng nấu nướng
 }
-
-
-
-
-
-

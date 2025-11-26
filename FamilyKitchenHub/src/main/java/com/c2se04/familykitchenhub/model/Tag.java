@@ -5,17 +5,17 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tags", 
-    indexes = {
-        @Index(name = "idx_type", columnList = "type"),
-        @Index(name = "idx_name", columnList = "name")
-    },
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_name_type", columnNames = {"name", "type"})
-    }
+@Table(name = "tags",
+        indexes = {
+                @Index(name = "idx_type", columnList = "type"),
+                @Index(name = "idx_name", columnList = "name")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_name_type", columnNames = {"name", "type"})
+        }
 )
 public class Tag {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -83,9 +83,4 @@ public class Tag {
         this.createdAt = createdAt;
     }
 }
-
-
-
-
-
 

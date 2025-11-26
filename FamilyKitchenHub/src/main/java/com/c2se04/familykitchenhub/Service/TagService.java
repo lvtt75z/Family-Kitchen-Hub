@@ -57,7 +57,8 @@ public class TagService {
     public TagDTO createTag(TagRequestDTO requestDTO) {
         // Check if tag already exists
         if (tagRepository.findByNameAndType(requestDTO.getName(), requestDTO.getType()).isPresent()) {
-            throw new BadRequestException("Tag with name '" + requestDTO.getName() + "' and type '" + requestDTO.getType() + "' already exists");
+            throw new BadRequestException("Tag with name '" + requestDTO.getName() + "' and type '"
+                    + requestDTO.getType() + "' already exists");
         }
 
         Tag tag = tagMapper.toEntity(requestDTO);
@@ -145,9 +146,3 @@ public class TagService {
         ingredientTagRepository.deleteByIngredientIdAndTagId(ingredientId, tagId);
     }
 }
-
-
-
-
-
-

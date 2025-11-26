@@ -5,17 +5,17 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ingredient_tags",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_ingredient_tag",
-        columnNames = {"ingredient_id", "tag_id"}
-    ),
-    indexes = {
-        @Index(name = "idx_ingredient", columnList = "ingredient_id"),
-        @Index(name = "idx_tag", columnList = "tag_id")
-    }
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_ingredient_tag",
+                columnNames = {"ingredient_id", "tag_id"}
+        ),
+        indexes = {
+                @Index(name = "idx_ingredient", columnList = "ingredient_id"),
+                @Index(name = "idx_tag", columnList = "tag_id")
+        }
 )
 public class IngredientTag {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -72,9 +72,3 @@ public class IngredientTag {
         this.createdAt = createdAt;
     }
 }
-
-
-
-
-
-

@@ -27,3 +27,315 @@ public class AddTagsToIngredientDTO {
 
 
 
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+import java.util.List;
+
+public class AddTagsToIngredientDTO {
+    private List<Long> tagIds;
+
+    // Constructors
+    public AddTagsToIngredientDTO() {}
+
+    public AddTagsToIngredientDTO(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
+    // Getters and Setters
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+}
+
+
+
+
+
+
+
+
+
+

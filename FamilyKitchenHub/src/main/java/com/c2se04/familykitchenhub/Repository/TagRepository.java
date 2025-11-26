@@ -10,22 +10,18 @@ import java.util.Optional;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Long> {
-    
+
     // Find tags by type
     List<Tag> findByType(TagType type);
-    
+
     // Find by name and type
     Optional<Tag> findByNameAndType(String name, TagType type);
-    
+
     // Search by name containing
     List<Tag> findByNameContainingIgnoreCase(String keyword);
-    
+
     // Find by type and name containing
     List<Tag> findByTypeAndNameContainingIgnoreCase(TagType type, String keyword);
 }
-
-
-
-
 
 

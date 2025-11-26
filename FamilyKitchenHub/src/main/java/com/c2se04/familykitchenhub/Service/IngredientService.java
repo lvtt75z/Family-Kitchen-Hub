@@ -67,16 +67,16 @@ public class IngredientService {
     // GET ALL WITH TAGS: Lấy tất cả thành phần kèm tags
     public List<IngredientWithTagsDTO> getAllIngredientsWithTags() {
         List<Ingredient> ingredients = ingredientRepository.findAll();
-        
+
         return ingredients.stream().map(ingredient -> {
             // Get tags for this ingredient
             List<TagDTO> tags = tagService.getTagsForIngredient(ingredient.getId());
-            
+
             return new IngredientWithTagsDTO(
-                ingredient.getId(),
-                ingredient.getName(),
-                ingredient.getUnit(),
-                tags
+                    ingredient.getId(),
+                    ingredient.getName(),
+                    ingredient.getUnit(),
+                    tags
             );
         }).collect(Collectors.toList());
     }
