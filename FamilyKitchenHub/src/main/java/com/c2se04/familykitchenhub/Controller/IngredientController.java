@@ -40,6 +40,13 @@ public class IngredientController {
         return ResponseEntity.ok(ingredients);
     }
 
+    // GET /api/ingredients/search?keyword=... (SEARCH BY NAME)
+    @GetMapping("/search")
+    public ResponseEntity<List<Ingredient>> searchIngredients(@RequestParam String keyword) {
+        List<Ingredient> ingredients = ingredientService.searchIngredients(keyword);
+        return ResponseEntity.ok(ingredients);
+    }
+
     // GET /api/ingredients/{id} (READ BY ID)
     @GetMapping("/{id}")
     public ResponseEntity<Ingredient> getIngredientById(@PathVariable Long id) {
