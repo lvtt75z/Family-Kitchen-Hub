@@ -3,6 +3,7 @@ package com.c2se04.familykitchenhub.model;
 import com.c2se04.familykitchenhub.Entity.User;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Represents the 'inventory_items' table, an item in a user's pantry.
@@ -28,6 +29,18 @@ public class InventoryItem {
 
     @Column(name = "expiration_date")
     private LocalDate expirationDate;
+
+    @Column(name = "purchased_at")
+    private LocalDate purchasedAt;
+
+    @Column(name = "expiration_notified")
+    private Boolean expirationNotified = false;
+
+    @Column(name = "expiration_notified_at")
+    private LocalDateTime expirationNotifiedAt;
+
+    @Column(name = "expiration_acknowledged_at")
+    private LocalDateTime expirationAcknowledgedAt;
 
     // --- Constructors, Getters, and Setters ---
 
@@ -72,5 +85,37 @@ public class InventoryItem {
 
     public void setExpirationDate(LocalDate expirationDate) {
         this.expirationDate = expirationDate;
+    }
+
+    public LocalDate getPurchasedAt() {
+        return purchasedAt;
+    }
+
+    public void setPurchasedAt(LocalDate purchasedAt) {
+        this.purchasedAt = purchasedAt;
+    }
+
+    public Boolean getExpirationNotified() {
+        return expirationNotified;
+    }
+
+    public void setExpirationNotified(Boolean expirationNotified) {
+        this.expirationNotified = expirationNotified;
+    }
+
+    public LocalDateTime getExpirationNotifiedAt() {
+        return expirationNotifiedAt;
+    }
+
+    public void setExpirationNotifiedAt(LocalDateTime expirationNotifiedAt) {
+        this.expirationNotifiedAt = expirationNotifiedAt;
+    }
+
+    public LocalDateTime getExpirationAcknowledgedAt() {
+        return expirationAcknowledgedAt;
+    }
+
+    public void setExpirationAcknowledgedAt(LocalDateTime expirationAcknowledgedAt) {
+        this.expirationAcknowledgedAt = expirationAcknowledgedAt;
     }
 }
