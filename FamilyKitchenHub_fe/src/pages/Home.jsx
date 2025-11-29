@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/Home.css";
 import {
   Calendar,
@@ -9,13 +9,53 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import cookingAnimation from "../assets/kitchen_cooking.mp4";
+
 function Home() {
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch 6 random meals from TheMealDB
+  useEffect(() => {
+    const fetchRandomMeals = async () => {
+      setLoading(true);
+      try {
+        const requests = Array.from({ length: 10 }, () =>
+          fetch("https://www.themealdb.com/api/json/v1/1/random.php").then(
+            (res) => res.json()
+          )
+        );
+
+        const results = await Promise.all(requests);
+        const randomMeals = results
+          .map((res) => res.meals && res.meals[0])
+          .filter(Boolean);
+        setMeals(randomMeals);
+      } catch (error) {
+        console.error("Error fetching meals:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRandomMeals();
+  }, []);
+
+
+  // Mock categories
+  const categories = [
+    { id: 1, name: "Breakfast", emoji: "🍳" },
+    { id: 2, name: "Vegan", emoji: "🥗" },
+    { id: 3, name: "Meat", emoji: "🍖" },
+    { id: 4, name: "Dessert", emoji: "🍰" },
+    { id: 5, name: "Lunch", emoji: "🍱" },
+    { id: 6, name: "Chocolate", emoji: "🍫" },
+  ];
+
   return (
     <div className="home">
       {/* ===== HERO SECTION ===== */}
       <section className="hero">
         <div className="hero-container">
-          {/* Left content */}
           <div className="hero-left">
             <span className="badge">
               🌟 New with AI-powered meal suggestions
@@ -27,45 +67,79 @@ function Home() {
             <p className="hero-text">
               Transform your family's eating habits with intelligent meal
               planning, automated grocery lists, and personalized nutrition
-              tracking. Join over 50,000 families eating healthier together.
+              tracking.
             </p>
 
             <div className="hero-buttons">
               <button className="btn-primary">Get Started Free</button>
               <button className="btn-outline">See Demo</button>
             </div>
-
-            <div className="hero-stats">
-              <div className="stat-item">
-                {/* ⭐ icon */}
-                <span className="icon">★</span> 4.9/5 rating
-              </div>
-              <div className="stat-item">
-                {/* 👨‍👩‍👧 icon */}
-                <span className="icon">👨‍👩‍👧</span> 50,000+ families
-              </div>
-              <div className="stat-item">
-                {/* ⏰ icon */}
-                <span className="icon">⏰</span> Free 30-day trial
-              </div>
-            </div>
           </div>
 
-          {/* Right image */}
           <div className="hero-right">
-            
-              <video
-                src={cookingAnimation}
-                autoPlay
-                loop
-                muted
-                playsInline
-                style={{ width: "100%", borderRadius: "12px" }}
-              />
-            
-            <div className="hero-image"></div>
+            <video
+              src={cookingAnimation}
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{ width: "100%", borderRadius: "12px" }}
+            />
           </div>
         </div>
+      </section>
+
+      {/* ===== CATEGORIES SECTION ===== */}
+      <section className="categories-section">
+        <div className="categories-header">
+          <h2>Categories</h2>
+          <a href="#" className="view-all-link">
+            View all Categories →
+          </a>
+        </div>
+
+        <div className="categories-grid">
+          {categories.map((cat) => (
+            <div key={cat.id} className="category-card">
+              <div className="category-icon">{cat.emoji}</div>
+              <p className="category-name">{cat.name}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== MEAL SUGGESTIONS (Dynamic) ===== */}
+      <section className="suggestions-section">
+        <div className="suggestions-header">
+          <h2>Random Meal Suggestions (via TheMealDB)</h2>
+          <p>
+            Freshly fetched from TheMealDB API every time you load the page.
+          </p>
+        </div>
+
+        {loading ? (
+          <p>Loading random meals...</p>
+        ) : (
+          <div className="suggestions-grid">
+            {meals.map((meal) => (
+              <div key={meal.idMeal} className="suggestion-card">
+                <div className="suggestion-image">
+                  <img src={meal.strMealThumb} alt={meal.strMeal} />
+                  <button className="heart-btn" aria-label="Add to favorites">
+                    ♡
+                  </button>
+                </div>
+                <div className="suggestion-content">
+                  <h3>{meal.strMeal}</h3>
+                  <div className="suggestion-meta">
+                    <span className="time">🍽 {meal.strCategory}</span>
+                    <span className="area">🌎 {meal.strArea}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ===== FEATURES SECTION ===== */}
@@ -73,84 +147,55 @@ function Home() {
         <div className="features-header">
           <span className="badge badge-blue">Features</span>
           <h2>Everything your family needs for healthy eating</h2>
-          <p>
-            From intelligent meal planning to nutrition tracking, our
-            comprehensive platform makes healthy family eating effortless and
-            enjoyable.
-          </p>
         </div>
 
         <div className="features-grid">
-          {/* Feature 1 */}
           <div className="feature-card">
             <div className="feature-icon">
-              <Calendar size={24} color="#f97316" /> {/* cam tươi */}
+              <Calendar size={24} color="#f97316" />
             </div>
             <h3>Smart Menu Planning</h3>
-            <p>
-              AI-powered suggestions based on family preferences, dietary
-              restrictions, and nutritional goals.
-            </p>
+            <p>AI-powered meal planning for the whole family.</p>
           </div>
 
-          {/* Feature 2 */}
           <div className="feature-card">
             <div className="feature-icon">
-              <Snowflake size={24} color="#3b82f6" /> {/* xanh dương */}
+              <Snowflake size={24} color="#3b82f6" />
             </div>
             <h3>Fridge Management</h3>
-            <p>
-              Track ingredients, monitor expiration dates, and reduce food waste
-              with smart inventory management.
-            </p>
+            <p>Track ingredients and avoid waste.</p>
           </div>
 
-          {/* Feature 3 */}
           <div className="feature-card">
             <div className="feature-icon">
-              <BookOpen size={24} color="#10b981" /> {/* xanh ngọc */}
+              <BookOpen size={24} color="#10b981" />
             </div>
             <h3>Recipe Collection</h3>
-            <p>
-              Organize, search, and discover recipes with advanced filtering and
-              personalized recommendations.
-            </p>
+            <p>Organize and search recipes easily.</p>
           </div>
 
-          {/* Feature 4 */}
           <div className="feature-card">
             <div className="feature-icon">
-              <HeartPulse size={24} color="#ef4444" /> {/* đỏ tươi */}
+              <HeartPulse size={24} color="#ef4444" />
             </div>
             <h3>Family Health Profiles</h3>
-            <p>
-              AI-powered suggestions based on family preferences, dietary
-              restrictions, and nutritional goals.
-            </p>
+            <p>Customized nutrition tracking per family member.</p>
           </div>
 
-          {/* Feature 5 */}
           <div className="feature-card">
             <div className="feature-icon">
-              <Apple size={24} color="#84cc16" /> {/* xanh lá */}
+              <Apple size={24} color="#84cc16" />
             </div>
             <h3>Nutrition Tracking</h3>
-            <p>
-              Track ingredients, monitor expiration dates, and reduce food waste
-              with smart inventory management.
-            </p>
+            <p>Stay on top of calories and nutrients.</p>
           </div>
 
-          {/* Feature 6 */}
           <div className="feature-card">
             <div className="feature-icon">
-              <ShoppingCart size={24} color="#a855f7" /> {/* tím sáng */}
+              <ShoppingCart size={24} color="#a855f7" />
             </div>
             <h3>Smart Shopping Lists</h3>
-            <p>
-              Organize, search, and discover recipes with advanced filtering and
-              personalized recommendations.
-            </p>
+            <p>Auto-generate shopping lists from meal plans.</p>
           </div>
         </div>
       </section>

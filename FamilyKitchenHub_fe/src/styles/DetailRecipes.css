@@ -1,0 +1,90 @@
+.recipe-detail-hl {
+  padding: 40px 80px;
+  font-family: "Inter", sans-serif;
+  color: #b60000;
+}
+
+.top-nav button {
+  background: none;
+  border: none;
+  color: #b60000;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.detail-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.left-content {
+  width: 30%;
+}
+.instructions-section {
+  width: 40%;
+  margin-top: 30px;
+}
+.instruction-title h2 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+/* .signature-tag span {
+  font-size: 18px;
+  font-weight: 600;
+  border-bottom: 2px solid #b60000;
+} */
+
+.title_recipe {
+  font-size: 48px;
+  font-weight: 800;
+  margin: 20px 0;
+  line-height: 1.1;
+  border-bottom: 2px solid red; /* viền dưới màu đỏ, dày 4px */
+  padding-bottom: 10px; /* khoảng cách giữa chữ và viền */
+}
+
+.subtitle {
+  margin-top: 10px;
+  color: #b60000;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+/* TABLE */
+.ingredients-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+}
+
+.ingredient-name {
+  flex: 1;
+}
+
+.ingredient-quantity {
+  color: #e91b1b;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+
+
+/* IMAGE */
+.right-image img {
+  width: 420px;
+  height: auto;
+  border-radius: 10%;
+  object-fit: cover;
+}

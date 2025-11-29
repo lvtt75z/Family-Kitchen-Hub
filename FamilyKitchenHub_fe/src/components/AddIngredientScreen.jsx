@@ -1,329 +1,179 @@
-import React, { useState } from 'react';
-import {
-    Box, 
-    Button, 
-    Card, 
-    CardContent, 
-    Grid, 
-    TextField, 
-    Typography, 
-    MenuItem, 
-    Select, 
-    FormControl, 
-    InputLabel,
-    IconButton,
-    Autocomplete
-} from '@mui/material';
-import { Add, Quickreply, MoreVert, Close } from '@mui/icons-material';
-import '../styles/AddIngredientScreen.css';
+import React, { useState, useEffect } from "react";
+import axios from "../hooks/axios"; // axios đã config baseURL + token
+import "./../styles/AddIngredientScreen.css";
+import { X, Search } from "lucide-react";
 
-const AddIngredientScreen = ({ onClose }) => {
-    // State cho form
-    const [formData, setFormData] = useState({
-        ingredientName: '',
-        category: '',
-        quantity: '0.1',
-        unit: '',
-        storageLocation: '',
-        expiryDate: ''
-    });
+export default function AddIngredientModal({ onClose, onSelect }) {
+  const [tab, setTab] = useState("quick");
+  const [ingredients, setIngredients] = useState([]);
+  const [search, setSearch] = useState("");
 
-    // Dữ liệu giả định cho Select
-    const categories = ['Meat', 'Vegetables', 'Dairy & Eggs', 'Other'];
-    const units = ['gram', 'ml', 'lát', 'unit'];
-    const locations = ['Freezer', 'Main Compartment', 'Door'];
-
-    // Dữ liệu nguyên liệu theo category
-    const ingredientSuggestions = {
-        'Meat': ['Ground Beef', 'Chicken Breast', 'Pork Chop', 'Lamb', 'Turkey', 'Bacon', 'Sausage', 'Ham'],
-        'Vegetables': ['Tomatoes', 'Carrots', 'Onions', 'Potatoes', 'Broccoli', 'Spinach', 'Lettuce', 'Bell Peppers', 'Cucumber', 'Celery'],
-        'Dairy & Eggs': ['Fresh Milk', 'Chicken Eggs', 'Cheese', 'Yogurt', 'Butter', 'Cream', 'Cottage Cheese'],
-        'Other': ['Rice', 'Pasta', 'Bread', 'Flour', 'Sugar', 'Salt', 'Oil', 'Vinegar']
+  // Load ingredients từ backend
+  useEffect(() => {
+    const loadIngredients = async () => {
+      try {
+        const res = await axios.get("/ingredients");
+        setIngredients(res.data);
+      } catch (err) {
+        console.error("Error loading ingredients:", err);
+      }
     };
+    loadIngredients();
+  }, []);
 
-    // Lấy danh sách gợi ý theo category đã chọn
-    const getSuggestions = () => {
-        return formData.category ? ingredientSuggestions[formData.category] || [] : [];
-    };
+  const filteredIngredients = ingredients.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-    // Xử lý thay đổi form
-    const handleChange = (field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
+  return (
+    <div className="ai-overlay">
+      <div className="ai-modal">
+        {/* Header */}
+        <div className="ai-header">
+          <h2>Add Ingredient</h2>
+          <button className="ai-close-btn" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
 
-    // Xử lý submit form
-    const handleSubmit = () => {
-        console.log('Form data:', formData);
-        // TODO: Gọi API để lưu nguyên liệu
-        alert('Nguyên liệu đã được thêm thành công!');
-        if (onClose) {
-            onClose(); // Đóng overlay
-        }
-    };
+        {/* Tabs */}
+        <div className="ai-tabs">
+          <button
+            className={tab === "quick" ? "active" : ""}
+            onClick={() => setTab("quick")}
+          >
+            Quick Add
+          </button>
+          <button
+            className={tab === "custom" ? "active" : ""}
+            onClick={() => setTab("custom")}
+          >
+            Custom Entry
+          </button>
+        </div>
 
-    return (
-        <Box>
-            {/* Top Action Bar */}
-            <Box className="top-action-bar">
-                <Box className="action-buttons-group">
-                    <IconButton>
-                        <MoreVert />
-                    </IconButton>
-                    <Button 
-                        variant="contained" 
-                        className="add-btn"
-                        startIcon={<Add />}
-                    >
-                        Add Ingredient
-                    </Button>
-                    <Button 
-                        variant="contained" 
-                        className="quick-add-btn"
-                        startIcon={<Quickreply />}
-                    >
-                        Quick Add
-                    </Button>
-                </Box>
-                <IconButton onClick={onClose}>
-                    <Close />
-                </IconButton>
-            </Box>
+        {/* QUICK ADD */}
+        {tab === "quick" && (
+          <>
+            <div className="ai-search-wrapper">
+              <Search size={18} className="ai-search-icon" />
+              <input
+                type="text"
+                className="ai-search"
+                placeholder="Search ingredient..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
-            {/* Main Form Card */}
-            <Box className="form-container">
-                <Card className="main-form-card">
-                    <CardContent className="form-card-content">
-                        <Grid container spacing={3}>
-                            {/* Basic Information Section */}
-                            <Grid item xs={12}>
-                                <Typography variant="h6" className="section-title">
-                                    Basic Information
-                                </Typography>
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={7}>
-                                        <Autocomplete
-                                            freeSolo
-                                            options={getSuggestions()}
-                                            value={formData.ingredientName}
-                                            onChange={(event, newValue) => {
-                                                handleChange('ingredientName', newValue || '');
-                                            }}
-                                            onInputChange={(event, newInputValue) => {
-                                                handleChange('ingredientName', newInputValue);
-                                            }}
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    label="Ingredient Name *"
-                                                    placeholder="E.g, Pork, Egg Fire"
-                                                    variant="outlined"
-                                                    sx={{ 
-                                                        width: '480px',
-                                                        height: '64px',
-                                                        '& .MuiOutlinedInput-root': {
-                                                            height: '64px'
-                                                        },
-                                                        '& .MuiInputLabel-root': { 
-                                                            fontSize: '14px',
-                                                            fontWeight: 500
-                                                        },
-                                                        '& .MuiInputBase-input': { 
-                                                            fontSize: '14px',
-                                                            padding: '20px 14px',
-                                                            height: '24px'
-                                                        }
-                                                    }}
-                                                />
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={5}>
-                                        <FormControl fullWidth variant="outlined" sx={{ height: '64px', width: 300 }}>
-                                            <InputLabel sx={{ fontSize: '14px', fontWeight: 500 }}>Category</InputLabel>
-                                            <Select 
-                                                label="Category" 
-                                                value={formData.category}
-                                                onChange={(e) => handleChange('category', e.target.value)}
-                                                sx={{ 
-                                                    height: '64px',
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        height: '64px'
-                                                    },
-                                                    '& .MuiSelect-select': { 
-                                                        fontSize: '14px',
-                                                        padding: '20px 14px',
-                                                        height: '24px',
-                                                        display: 'flex',
-                                                        alignItems: 'center'
-                                                    }
-                                                }}
-                                            >
-                                                <MenuItem value="">
-                                                    <em>Select Category</em>
-                                                </MenuItem>
-                                                {categories.map(cat => (
-                                                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                </Grid>
-                            </Grid>
+            <h4 className="ai-title">Common Ingredients</h4>
 
-                            {/* Quantity & Unit Section */}
-                            <Grid item xs={12}>
-                                <Typography variant="h6" className="section-title">
-                                    Quantity & Unit
-                                </Typography>
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={7}>
-                                        <TextField
-                                            fullWidth
-                                            label="Quantity*"
-                                            value={formData.quantity}
-                                            onChange={(e) => handleChange('quantity', e.target.value)}
-                                            variant="outlined"
-                                            sx={{ 
-                                                height: '64px',
-                                                '& .MuiOutlinedInput-root': {
-                                                    height: '64px'
-                                                },
-                                                '& .MuiInputLabel-root': { 
-                                                    fontSize: '14px',
-                                                    fontWeight: 500
-                                                },
-                                                '& .MuiInputBase-input': { 
-                                                    fontSize: '14px',
-                                                    padding: '20px 14px',
-                                                    height: '24px'
-                                                }
-                                            }}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={5}>
-                                        <FormControl fullWidth variant="outlined" sx={{ height: '64px', width: 300 }}>
-                                            <InputLabel sx={{ fontSize: '14px', fontWeight: 500 }}>Unit*</InputLabel>
-                                            <Select 
-                                                label="Unit*" 
-                                                value={formData.unit}
-                                                onChange={(e) => handleChange('unit', e.target.value)}
-                                                sx={{ 
-                                                    height: '64px',
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        height: '64px'
-                                                    },
-                                                    '& .MuiSelect-select': { 
-                                                        fontSize: '14px',
-                                                        padding: '20px 14px',
-                                                        height: '24px',
-                                                        display: 'flex',
-                                                        alignItems: 'center'
-                                                    }
-                                                }}
-                                            >
-                                                <MenuItem value="">
-                                                    <em>Select Unit</em>
-                                                </MenuItem>
-                                                {units.map(unit => (
-                                                    <MenuItem key={unit} value={unit}>{unit}</MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                </Grid>
-                            </Grid>
+            <div className="ai-suggestions">
+              {filteredIngredients.map((item) => {
+                let nutrition = {};
+                try {
+                  nutrition = JSON.parse(item.nutritionalInfo);
+                } catch {}
 
-                            {/* Storage Information Section */}
-                            <Grid item xs={12}>
-                                <Typography variant="h6" className="section-title">
-                                    Storage Information
-                                </Typography>
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={7}>
-                                        <FormControl fullWidth variant="outlined" sx={{ height: '64px', width: 300 }}>
-                                            <InputLabel sx={{ fontSize: '14px', fontWeight: 500 }}>Storage Location</InputLabel>
-                                            <Select 
-                                                label="Storage Location" 
-                                                value={formData.storageLocation}
-                                                onChange={(e) => handleChange('storageLocation', e.target.value)}
-                                                sx={{ 
-                                                    height: '64px',
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        height: '64px'
-                                                    },
-                                                    '& .MuiSelect-select': { 
-                                                        fontSize: '14px',
-                                                        padding: '20px 14px',
-                                                        height: '24px',
-                                                        display: 'flex',
-                                                        alignItems: 'center'
-                                                    }
-                                                }}
-                                            >
-                                                <MenuItem value="">
-                                                    <em>Select Location</em>
-                                                </MenuItem>
-                                                {locations.map(loc => (
-                                                    <MenuItem key={loc} value={loc}>{loc}</MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12} sm={5}>
-                                        <TextField
-                                            fullWidth
-                                            label="Expiry Date *"
-                                            type="date"
-                                            value={formData.expiryDate}
-                                            onChange={(e) => handleChange('expiryDate', e.target.value)}
-                                            variant="outlined"
-                                            InputLabelProps={{ shrink: true }}
-                                            sx={{ 
-                                                height: '64px',
-                                                width: 300,
-                                                '& .MuiOutlinedInput-root': {
-                                                    height: '64px'
-                                                },
-                                                '& .MuiInputLabel-root': { 
-                                                    fontSize: '14px',
-                                                    fontWeight: 500
-                                                },
-                                                '& .MuiInputBase-input': { 
-                                                    fontSize: '14px',
-                                                    padding: '20px 14px',
-                                                    cursor: 'pointer'
-                                                }
-                                            }}
-                                            InputProps={{
-                                                // Đảm bảo Input type="date" hoạt động
-                                            }}
-                                        />
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-                        </Grid>
-                    </CardContent>
-                </Card>
+                return (
+                  <div
+                    key={item.id}
+                    className="ai-card"
+                    onClick={() => {
+                      if (onSelect) {
+                        onSelect({
+                          ingredientId: item.id,
+                          ingredientName: item.name,
+                          unit: item.unit,
+                          nutrition,
+                        });
+                      }
+                      if (onClose) onClose();
+                    }}
+                  >
+                    <h5>{item.name}</h5>
+                    <p>{item.unit}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
 
-                {/* Bottom Action Button */}
-                <Box className="bottom-action-button">
-                    <Button 
-                        variant="contained" 
-                        className="submit-btn"
-                        startIcon={<Add />}
-                        onClick={handleSubmit}
-                    >
-                        Add Ingredient
-                    </Button>
-                </Box>
+        {/* CUSTOM ENTRY */}
+        {tab === "custom" && (
+          <form
+            className="ai-form"
+            onSubmit={async (e) => {
+              e.preventDefault();
 
-                
-            </Box>
-        </Box>
-    );
-};
+              const newIngredient = {
+                name: e.target.name.value,
+                unit: e.target.unit.value,
+                nutritionalInfo: {
+                  protein: e.target.protein?.value || "0g",
+                  fat: e.target.fat?.value || "0g",
+                  calories: parseInt(e.target.calories?.value) || 0,
+                  day: parseInt(e.target.day?.value) || 0,
+                },
+              };
 
-export default AddIngredientScreen;
+              try {
+                const res = await axios.post("/ingredients", newIngredient);
+                console.log("Ingredient added:", res.data);
+
+                if (onSelect) {
+                  onSelect({
+                    ingredientId: res.data.id,
+                    ingredientName: res.data.name,
+                    unit: res.data.unit,
+                    nutrition: res.data.nutritionalInfo,
+                  });
+                }
+
+                if (onClose) onClose();
+              } catch (err) {
+                console.error("Error adding ingredient:", err);
+                alert("Failed to add ingredient. Please check your input.");
+              }
+            }}
+          >
+            <label>
+              Ingredient Name
+              <input name="name" required />
+            </label>
+
+            <label>
+              Unit
+              <input name="unit" required />
+            </label>
+
+            <label>
+              Protein (g)
+              <input name="protein" type="number" />
+            </label>
+
+            <label>
+              Fat (g)
+              <input name="fat" type="number" />
+            </label>
+
+            <label>
+              Calories
+              <input name="calories" type="number" />
+            </label>
+
+            <label>
+              Day
+              <input name="day" type="number" />
+            </label>
+
+            <button type="submit" className="ai-submit">
+              Add Ingredient
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}

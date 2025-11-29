@@ -1,209 +1,260 @@
-import React, { useState } from "react";
-import "../../styles/FridgeManager.css";
-import { MoreVertical, Edit2, Trash2, RefreshCw, Plus } from "lucide-react";
-
-const ingredients = [
-  {
-    name: "Chicken Breast",
-    quantity: "500g",
-    category: "Meat",
-    location: "Main Fridge",
-    expiry: "Dec 28, 2024",
-    status: "Expiring Soon",
-    icon: "🍗",
-    expiredDays: 286,
-  },
-  {
-    name: "Fresh Milk",
-    quantity: "1L",
-    category: "Dairy",
-    location: "Main Fridge",
-    expiry: "Dec 25, 2024",
-    status: "Expired",
-    icon: "🥛",
-    expiredDays: 290,
-  },
-  {
-    name: "Broccoli",
-    quantity: "300g",
-    category: "Vegetables",
-    location: "Crisper Drawer",
-    expiry: "Jan 5, 2025",
-    status: "Fresh",
-    icon: "🥦",
-    expiredDays: 0,
-  },
-  {
-    name: "Eggs",
-    quantity: "12 pcs",
-    category: "Dairy",
-    location: "Main Fridge",
-    expiry: "Jan 10, 2025",
-    status: "Fresh",
-    icon: "🥚",
-    expiredDays: 0,
-  },
-  {
-    name: "Tomatoes",
-    quantity: "6 pcs",
-    category: "Vegetables",
-    location: "Main Fridge",
-    expiry: "Jan 2, 2025",
-    status: "Expiring Soon",
-    icon: "🍅",
-    expiredDays: 0,
-  },
-  {
-    name: "Butter",
-    quantity: "200g",
-    category: "Dairy",
-    location: "Main Fridge",
-    expiry: "Jan 20, 2025",
-    status: "Fresh",
-    icon: "🧈",
-    expiredDays: 0,
-  },
-];
-
-const statusInfo = {
-  Fresh: {
-    class: "status-fresh",
-    icon: "✅",
-    text: "Fresh",
-  },
-  "Expiring Soon": {
-    class: "status-expiring",
-    icon: "⚠️",
-    text: "Expiring Soon",
-  },
-  Expired: {
-    class: "status-expired",
-    icon: "⛔",
-    text: "Expired",
-  },
-};
+// ...existing code...
+import React, { useState, useEffect } from "react";
+import axios from "../../hooks/axios"; // file cấu hình axios riêng
+import "./../../styles/FridgeManager.css";
+import bgIngredients from "../../assets/bgIg3.jpg";
+import { Plus, MoreVertical } from "lucide-react";
 
 export default function FridgeManager() {
-  const [menuIndex, setMenuIndex] = useState(null);
+  const [ingredients, setIngredients] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newIngredient, setNewIngredient] = useState({
+    ingredientId: "",
+    ingredientName: "",
+    quantity: "",
+    unit: "",
+    expirationDate: "",
+  });
 
-  // Đóng menu khi click ra ngoài
-  React.useEffect(() => {
-    const close = () => setMenuIndex(null);
-    if (menuIndex !== null) {
-      window.addEventListener("click", close);
-      return () => window.removeEventListener("click", close);
+  // Lấy token từ localStorage
+  const token = localStorage.getItem("token");
+
+  // GET nguyên liệu từ /api/inventory
+useEffect(() => {
+  const fetchIngredients = async () => {
+    try {
+      // Lấy object từ localStorage
+      const userDataString = localStorage.getItem("user"); // key lưu object JSON
+      if (!userDataString) {
+        console.error("User data not found in localStorage");
+        return;
+      }
+
+      const userData = JSON.parse(userDataString);
+
+      const userId = userData.id;
+      console.log(userId); // hoặc userData.user.id nếu lưu như bạn gửi
+      if (!userId) {
+        console.error("User ID not found in localStorage");
+        return;
+      }
+
+      const res = await axios.get(`http://localhost:8080/api/inventory/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setIngredients(res.data);
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
     }
-  }, [menuIndex]);
+  };
+
+  fetchIngredients();
+}, [token]);
+
+
+
+
+// POST thêm nguyên liệu vào /api/inventory 
+const handleAddIngredient = async (e) => {
+  e.preventDefault();
+  try {
+    // Lấy userId từ localStorage
+    const userDataString = localStorage.getItem("user");
+    const userData = JSON.parse(userDataString);
+    const userId = userData.user?.id || userData.id; // tùy cấu trúc lưu trong storage
+
+    // chuẩn hóa dữ liệu trước gửi
+    const payload = {
+      userId: userId, // thêm userId vào payload nếu backend cần
+      ingredientId: newIngredient.ingredientId || undefined,
+      ingredientName: newIngredient.ingredientName || undefined,
+      quantity: newIngredient.quantity ? parseFloat(newIngredient.quantity) : 0,
+      unit: newIngredient.unit || undefined,
+      expirationDate: newIngredient.expirationDate || undefined,
+    };
+
+    await axios.post("http://localhost:8080/api/inventory", payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setShowModal(false);
+    setNewIngredient({
+      ingredientId: "",
+      ingredientName: "",
+      quantity: "",
+      unit: "",
+      expirationDate: "",
+    });
+
+    // refresh list theo userId
+    const res = await axios.get(`http://localhost:8080/api/inventory/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setIngredients(res.data);
+  } catch (error) {
+    console.error("Error adding ingredient:", error);
+  }
+};
+
+
+  const getStatus = (expDate) => {
+    if (!expDate) return "Fresh";
+    const today = new Date();
+    const expiry = new Date(expDate);
+    const diffDays = (expiry - today) / (1000 * 60 * 60 * 24);
+    if (diffDays < 0) return "Expired";
+    if (diffDays <= 3) return "Expiring Soon";
+    return "Fresh";
+  };
+
+  // helper format date
+  const formatDate = (d) => {
+    if (!d) return "N/A";
+    const dt = new Date(d);
+    return dt.toLocaleDateString();
+  };
 
   return (
-    <div className="fridge-manager fridge-bg">
-      {/* Header Section */}
-      <div className="fridge-hero-row">
-        <div className="fridge-hero-left">
-          <div className="fridge-hero-title">
-            <span role="img" aria-label="wave" className="fridge-hero-emoji">
-              👋
-            </span>
-            <span className="fridge-hero-hi">
-              Hi Huy! Let's check your fridge today
-            </span>
-          </div>
-          <div className="fridge-hero-desc">
-            Keep your ingredients fresh and reduce food waste
-          </div>
-        </div>
-        <div className="fridge-hero-right">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/1046/1046857.png"
-            alt="Chibi fridge character"
-            className="fridge-hero-img"
-          />
+    <div className="fridge-manager">
+      {/* Welcome Section */}
+      <div className="welcome-section"
+      style={{
+        backgroundImage: `url(${bgIngredients})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        height: "110vh",
+      }}>
+        <div className="welcome-text">
+          <h1>Welcome to Fridge Manager! Let’s check your fridge today</h1>
+          <p>Keep your ingredients fresh and reduce food waste</p>
         </div>
       </div>
 
-      {/* Alert */}
-      <div className="alert-box-card">
-        <span style={{ marginRight: 8 }}>
-          ⚠️<span style={{ color: "#facc15", marginLeft: 2 }}>▲</span>
-        </span>
-        <div>
-          <b>
-            You have 1 expired item.
-            <br />2 items are expiring soon.
-          </b>
-        </div>
-      </div>
-
-      {/* Header row */}
-      <div className="fridge-header-row">
+      {/* Header */}
+      <div className="header-fridge">
         <h2>Your Ingredients</h2>
-        <button className="add-btn-card">
-          <Plus size={18} style={{ marginRight: 6 }} /> Add Ingredient
+        <button className="btn primary" onClick={() => setShowModal(true)}>
+          <Plus size={18} /> Add Ingredient
         </button>
       </div>
 
-      {/* Card Grid */}
-      <div className="ingredient-card-grid">
-        {ingredients.map((item, idx) => (
-          <div
-            className="ingredient-card styled-card"
-            key={idx}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="card-top-row">
-              <div className="ingredient-icon-circle">
-                <span className="ingredient-icon">{item.icon || ""}</span>
-              </div>
-              <div className="card-menu-wrap">
-                <button
-                  className="card-menu-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuIndex(menuIndex === idx ? null : idx);
-                  }}
-                >
-                  <MoreVertical size={20} />
-                </button>
-                {menuIndex === idx && (
-                  <div className="card-menu-dropdown styled-dropdown">
-                    <button className="dropdown-item">
-                      <Edit2 size={16} style={{ marginRight: 8 }} /> Edit
-                    </button>
-                    <button className="dropdown-item">
-                      <RefreshCw size={16} style={{ marginRight: 8 }} /> Update
-                      expiry
-                    </button>
-                    <button className="dropdown-item delete">
-                      <Trash2 size={16} style={{ marginRight: 8 }} /> Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="ingredient-name">{item.name}</div>
-            <div className="ingredient-qty">{item.quantity}</div>
-            <div className="ingredient-info">
-              <div>
-                <span className="info-label">Category:</span>{" "}
-                <b>{item.category}</b>
-              </div>
-              <div>
-                <span className="info-label">Location:</span>{" "}
-                <b>{item.location}</b>
-              </div>
-              <div className="expiry-row">
-                <span className="info-label">Expires:</span>
-                <span className="expiry-badge">{item.expiry}</span>
-              </div>
-            </div>
+      {/* Ingredient Grid */}
+      <div className="ingredient-grid">
+        {ingredients.map((item) => {
+          const status = getStatus(item.expirationDate);
+
+          return (
             <div
-              className={`ingredient-status ${statusInfo[item.status].class}`}
+              key={item.id}
+              className={`ingredient-card ${status.toLowerCase().replace(" ", "-")}`}
             >
-              {statusInfo[item.status].text}
+              <div className="card-header">
+                <h3>{item.ingredientName}</h3>
+                <MoreVertical size={16} />
+              </div>
+
+              <p className="info">
+                <strong>Số lượng:</strong> {item.quantity ?? "-"}
+              </p>
+
+              <p className="info">
+                <strong>Đơn vị:</strong> {item.unit || "-"}
+              </p>
+
+              <p className="info">
+                <strong>Mã nguyên liệu:</strong> {item.ingredientId ?? "-"}
+              </p>
+
+              <div className="nutrition">
+                <p className="nutrition-title">Hạn sử dụng:</p>
+                <p className="nutrition-value">{formatDate(item.expirationDate)}</p>
+              </div>
+
+              <div className={`status ${status.toLowerCase().replace(" ", "-")}`}>
+                {status}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay active">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Add Inventory Item</h3>
+              <button className="icon-btn" onClick={() => setShowModal(false)}>
+                ✖
+              </button>
+            </div>
+
+            <form className="modal-form" onSubmit={handleAddIngredient}>
+              <label>
+                Ingredient ID
+                <input
+                  type="text"
+                  value={newIngredient.ingredientId}
+                  onChange={(e) =>
+                    setNewIngredient({ ...newIngredient, ingredientId: e.target.value })
+                  }
+                  placeholder="e.g. 1"
+                />
+              </label>
+
+              <label>
+                Quantity
+                <input
+                  type="number"
+                  step="any"
+                  value={newIngredient.quantity}
+                  onChange={(e) =>
+                    setNewIngredient({ ...newIngredient, quantity: e.target.value })
+                  }
+                  required
+                  placeholder="e.g. 15"
+                />
+              </label>
+
+              <label>
+                Unit
+                <input
+                  type="text"
+                  value={newIngredient.unit}
+                  onChange={(e) =>
+                    setNewIngredient({ ...newIngredient, unit: e.target.value })
+                  }
+                  placeholder="e.g. cái, kg"
+                  required
+                />
+              </label>
+
+              <label>
+                Expiration Date
+                <input
+                  type="date"
+                  value={newIngredient.expirationDate}
+                  onChange={(e) =>
+                    setNewIngredient({ ...newIngredient, expirationDate: e.target.value })
+                  }
+                />
+              </label>
+
+              <div className="modal-actions">
+                <button type="button" className="btn ghost" onClick={() => setShowModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn primary">
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

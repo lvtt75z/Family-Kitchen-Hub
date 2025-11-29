@@ -70,14 +70,22 @@ p {
 .input-box input {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 40px 10px 12px; /* để chừa chỗ cho icon */
+  padding: 10px 40px 10px 12px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   outline: none;
   font-size: 14px;
   background-color: #fff;
+  color: #111827; /* 👈 Thêm dòng này để chữ luôn hiển thị rõ */
   display: block;
 }
+/* @media (prefers-color-scheme: dark) {
+  .input-box input {
+    background-color: #1f2937;
+    color: #f9fafb;
+    border-color: #374151;
+  }
+} */
 
 .input-box .toggle {
   position: absolute;
@@ -178,6 +186,87 @@ p {
 .signup-link a:hover {
   text-decoration: underline;
 }
+/* Gui lai ma OTP */
+.resend-btn {
+  background: none;
+  border: none;
+  color: #e76f00;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.resend-btn:hover {
+  color: #ff8b00;
+}
+
+.info-msg {
+  margin-top: 10px;
+  color: #16a34a;
+  font-size: 14px;
+}
+.otp-box {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.otp-input-box {
+  width: 45px;
+  height: 55px;
+  font-size: 22px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff; /* ✅ nền trắng */
+  color: #000;
+  transition: all 0.2s ease;
+}
+
+.otp-input-box:focus {
+  border-color: #e76f00;
+  box-shadow: 0 0 4px rgba(231, 111, 0, 0.4);
+  outline: none;
+}
+
+.resend-btn {
+  background: none;
+  border: none;
+  color: #e76f00;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.resend-btn:hover {
+  text-decoration: underline;
+}
+.verify-email-btn {
+  background: #c2410c;
+  border: none;
+  color: #fff;
+  padding: 12px 0;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+  width: 50%;
+
+  /* căn giữa */
+  display: block;
+  margin: 20px auto 0; /* trên - auto trái phải - dưới */
+  text-align: center;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
 /* .loading-overlay {
   position: fixed;
   inset: 0;

@@ -1,113 +1,242 @@
-.add-ingredient-container {
-  /* Main container styles */
+.ai-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+}
+.ai-search {
+  width: 60%;
+  padding: 10px 12px 10px 36px; /* chừa chỗ cho icon */
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+  font-size: 15px;
+  color: black;
+  background-color: whitesmoke;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='gray' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M10 2a8 8 0 015.29 13.71l4 4a1 1 0 01-1.42 1.42l-4-4A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px;
+}
+/* Modal card */
+.ai-modal {
+  width: 540px;
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(2,6,23,0.25);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.top-action-bar {
+/* header (title + small image + close) */
+.ai-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  gap: 12px;
 }
 
-.action-buttons-group {
+.ai-title-wrap {
   display: flex;
+  gap: 12px;
   align-items: center;
-  gap: 16px;
 }
 
-.add-btn {
-  background-color: #ff6b35;
-  text-transform: none;
-  font-weight: bold;
+.ai-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
 }
 
-.add-btn:hover {
-  background-color: #e55a2b;
+.ai-sub {
+  color: #6b7280;
+  font-size: 13px;
+  margin: 2px 0 0 0;
 }
 
-.quick-add-btn {
-  background-color: #87ceeb;
-  text-transform: none;
-  font-weight: bold;
-}
-
-.quick-add-btn:hover {
-  background-color: #7bc4dc;
-}
-
-.form-container {
-  padding: 24px;
-}
-
-.main-form-card {
-  max-width: 800px;
-  margin: 0 auto;
+.ai-chibi {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.form-card-content {
-  padding: 32px;
+/* close btn */
+.ai-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 18px;
+  padding: 6px;
+  border-radius: 8px;
 }
+.ai-close-btn:hover { background: #f3f4f6; color: #111827; }
 
-.section-title {
-  font-weight: bold;
-  margin-bottom: 16px;
-}
-
-.input-field {
-  width: 480px;
-  height: 64px;
-}
-
-.input-field .MuiOutlinedInput-root {
-  height: 64px;
-}
-
-.input-field .MuiInputLabel-root {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.input-field .MuiInputBase-input {
-  font-size: 14px;
-  padding: 20px 14px;
-  height: 24px;
-}
-
-.select-field {
-  height: 64px;
-  width: 300px;
-}
-
-.select-field .MuiOutlinedInput-notchedOutline {
-  height: 64px;
-}
-
-.select-field .MuiSelect-select {
-  font-size: 14px;
-  padding: 20px 14px;
-  height: 24px;
+/* tabs */
+.ai-tabs {
   display: flex;
-  align-items: center;
+  gap: 10px;
+  background: transparent;
+  margin-top: 4px;
 }
 
-.bottom-action-button {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
+.ai-tabs button {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: #374151;
+}
+.ai-tabs button.active {
+  background: #0ea5a0; /* teal-like active */
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(14,165,160,0.14);
+  border-color: rgba(14,165,160,0.12);
 }
 
-.submit-btn {
-  background-color: #ff6b35;
-  padding: 12px 32px;
-  text-transform: none;
-  font-weight: bold;
+/* form layout */
+.ai-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
+  align-items: start;
+}
+
+/* single-column full width rows (use class .full) */
+.ai-form .full {
+  grid-column: 1 / -1;
+}
+
+/* labels + inputs */
+.ai-form label {
+  display: block;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ai-form input,
+.ai-form select,
+.ai-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e6e9ee;
+  background: #fbfbfb;
+  font-size: 14px;
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.ai-form input:focus,
+.ai-form select:focus,
+.ai-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.08);
+  background: #fff;
+}
+
+/* select arrow spacing */
+.ai-form .select {
+  position: relative;
+}
+
+/* expiry/date control small calendar icon */
+.ai-form .date-row {
+  position: relative;
+}
+.ai-form .date-row input[type="date"] {
+  padding-right: 38px;
+}
+.ai-form .date-row::after {
+  content: "📅";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
   font-size: 16px;
 }
 
-.submit-btn:hover {
-  background-color: #e55a2b;
+/* quantity + unit row style */
+.ai-quantity {
+  display: flex;
+  gap: 8px;
+}
+.ai-quantity input:first-child { flex: 1; }
+.ai-quantity select { width: 110px; }
+
+/* location + category small selects */
+.ai-small-select {
+  width: 100%;
 }
 
+/* nutrition inputs row (Protein / Fat / Calories) */
+.ai-nutrition {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.ai-nutrition input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* quick add area (suggestions) */
+.ai-suggestions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.ai-card {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #eef2f7;
+  color: black;
+}
+
+/* submit button */
+.ai-submit {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: none;
+  background: #60a5fa; /* blue */
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(96,165,250,0.18);
+}
+.ai-submit:hover { background: #3b82f6; transform: translateY(-2px); }
+
+/* responsive */
+@media (max-width: 640px) {
+  .ai-modal { width: 100%; height: 100%; border-radius: 0; padding: 18px; }
+  .ai-form { grid-template-columns: 1fr; }
+  .ai-nutrition { grid-template-columns: 1fr 1fr 1fr; }
+  .ai-suggestions { grid-template-columns: repeat(2, 1fr); }
+}

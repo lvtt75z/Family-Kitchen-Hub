@@ -1,7 +1,7 @@
 .sidebar-tab-switcher-outer {
   position: fixed;
   left: 50%;
-  bottom: 32px;
+  top: 12px;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -14,14 +14,16 @@
   z-index: 100;
   background: none;
   pointer-events: none;
+  color: #111827;
+  
 }
 
 .sidebar-tab-switcher {
   display: flex;
   gap: 10px;
-  background: rgba(255,255,255,0.18);
+  background: whitesmoke;
   border-radius: 20px;
-  padding: 4px;
+  
   box-shadow: 0 2px 12px 0 rgba(31,38,135,0.10);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -41,17 +43,63 @@
   border: none;
   outline: none;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s;
+  transition: 
+    color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.2s ease;
   text-decoration: none;
   font-weight: 500;
+  position: relative; /* cần cho ::after */
 }
 
-.tab-btn.active {
-  background: #18181b;
+/* hiệu ứng nhấn nhẹ khi click */
+.tab-btn:active {
+  transform: scale(0.94);
+}
+
+/* tạo thanh dưới bằng pseudo-element */
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;               /* cách đáy nút */
+  left: 0;
+  height: 2px;               /* độ dày thanh underline */
+  width: 50%;
+  background-color: #e25813; /* màu thanh */
+  transform: scaleX(0);      /* ban đầu ẩn */
+  transform-origin: left;    /* scale từ trái sang phải */
+  transition: transform 0.5s ease;
+  border-radius: 2px; 
+  margin-left: 20px;       /* thanh cũng bo tròn nhẹ */
+}
+
+/* hover effect */
+.tab-btn:hover::after {
+  transform: scaleX(1);
+}
+
+/* đổi màu chữ khi hover (giữ như cũ) */
+.tab-btn:hover {
+  color: #000000;
+}
+
+/* hiệu ứng chuyển tab mượt */
+/* .tab-btn.active {
+  background: linear-gradient(90deg,#fb923c,#f97316);
   color: #fff;
-  box-shadow: 0 0 0 2px #2563eb;
+  /* box-shadow: 0 0 0 2px #000000; */
+  /* transition-delay: 0.05s; /* 👈 thêm delay nhỏ để cảm giác “pop” */
+
+.tab-content {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+.tab-content.active {
+  opacity: 1;
+  transform: translateY(0);
+}
 /* Logout button fixed bottom left */
 .sidebar-tab-switcher,
 .tab-logout-btn {
@@ -62,3 +110,101 @@
   background: #fee2e2;
   color: #b91c1c;
 }
+.tab-logout-btn {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #fff5ef;
+  color: #e76f00;
+  border: none;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: flex-start;
+   width: 50%;    
+}
+
+.tab-logout-btn:hover {
+  background: #ffe9d7;
+  color: var(--accent-dark);
+  transform: translateX(2px);
+}
+
+
+/* DROPDOWN PROFILE */
+/* Wrapper tab có dropdown */
+.pf-tab-wrapper {
+  position: relative;
+  z-index: 2000;
+}
+
+.pf-tab-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.pf-dropdown-menu {
+  position: absolute;
+  top: 64px;
+  background: #ffffff;
+  border-radius: 6px;
+  min-width: 180px;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.5);
+  z-index: 10;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  color: #000000;
+}
+
+.pf-dropdown-menu.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.pf-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pf-dropdown-editprofile {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #000000;
+}
+.pf-dropdown-item:hover {
+  background: #c4c1c1;
+  color: #fff;
+}
+.pf-tab-icon2 {
+  margin-left: 6px;
+  transition: transform 0.25s ease;
+}
+
+/* Xoay icon khi dropdown mở */
+.pf-tab-wrapper.open .pf-tab-icon2 {
+  transform: rotate(180deg);
+}
+
+.pf-logout-btn {
+  color: #f44336;
+}
+
+
+/*  */
