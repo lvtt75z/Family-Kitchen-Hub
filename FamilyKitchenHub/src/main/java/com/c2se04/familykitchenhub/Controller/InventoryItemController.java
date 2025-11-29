@@ -31,6 +31,7 @@ public class InventoryItemController {
         // Thiết lập các trường đơn giản trước khi lưu
         item.setQuantity(itemDTO.getQuantity());
         item.setExpirationDate(itemDTO.getExpirationDate());
+        item.setPurchasedAt(itemDTO.getPurchasedAt());
 
         // Item entity cần có User và Ingredient được thiết lập trong Service
         InventoryItem newItem = inventoryItemService.createInventoryItem(
@@ -67,6 +68,7 @@ public class InventoryItemController {
         // Chỉ copy các trường cần cập nhật (quantity và expirationDate)
         updateDetails.setQuantity(itemDTO.getQuantity());
         updateDetails.setExpirationDate(itemDTO.getExpirationDate());
+        updateDetails.setPurchasedAt(itemDTO.getPurchasedAt());
 
         InventoryItem updatedItem = inventoryItemService.updateInventoryItem(id, updateDetails);
         return ResponseEntity.ok(convertToResponseDTO(updatedItem)); // 200 OK
@@ -77,6 +79,12 @@ public class InventoryItemController {
     public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
         inventoryItemService.deleteInventoryItem(id);
         return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
+    @PatchMapping("/{id}/ack-expiration")
+    public ResponseEntity<InventoryItemResponseDTO> acknowledgeExpiration(@PathVariable Long id) {
+        InventoryItem item = inventoryItemService.acknowledgeExpiration(id);
+        return ResponseEntity.ok(convertToResponseDTO(item));
     }
 
     /**
@@ -102,6 +110,10 @@ public class InventoryItemController {
         dto.setId(item.getId());
         dto.setQuantity(item.getQuantity());
         dto.setExpirationDate(item.getExpirationDate());
+        dto.setPurchasedAt(item.getPurchasedAt());
+        dto.setExpirationNotified(Boolean.TRUE.equals(item.getExpirationNotified()));
+        dto.setExpirationNotifiedAt(item.getExpirationNotifiedAt());
+        dto.setExpirationAcknowledgedAt(item.getExpirationAcknowledgedAt());
         if (item.getIngredient() != null) {
             dto.setIngredientId(item.getIngredient().getId());
             dto.setIngredientName(item.getIngredient().getName());

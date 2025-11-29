@@ -1,11 +1,16 @@
 package com.c2se04.familykitchenhub.DTO;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class InventoryItemResponseDTO {
     private Long id;
     private Float quantity;
     private LocalDate expirationDate;
+    private LocalDate purchasedAt;
+    private boolean expirationNotified;
+    private LocalDateTime expirationNotifiedAt;
+    private LocalDateTime expirationAcknowledgedAt;
     private Long ingredientId;
     private String ingredientName;
     private String unit;
@@ -56,6 +61,38 @@ public class InventoryItemResponseDTO {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public LocalDate getPurchasedAt() {
+        return purchasedAt;
+    }
+
+    public void setPurchasedAt(LocalDate purchasedAt) {
+        this.purchasedAt = purchasedAt;
+    }
+
+    public boolean isExpirationNotified() {
+        return expirationNotified;
+    }
+
+    public void setExpirationNotified(boolean expirationNotified) {
+        this.expirationNotified = expirationNotified;
+    }
+
+    public LocalDateTime getExpirationNotifiedAt() {
+        return expirationNotifiedAt;
+    }
+
+    public void setExpirationNotifiedAt(LocalDateTime expirationNotifiedAt) {
+        this.expirationNotifiedAt = expirationNotifiedAt;
+    }
+
+    public LocalDateTime getExpirationAcknowledgedAt() {
+        return expirationAcknowledgedAt;
+    }
+
+    public void setExpirationAcknowledgedAt(LocalDateTime expirationAcknowledgedAt) {
+        this.expirationAcknowledgedAt = expirationAcknowledgedAt;
     }
 }
 

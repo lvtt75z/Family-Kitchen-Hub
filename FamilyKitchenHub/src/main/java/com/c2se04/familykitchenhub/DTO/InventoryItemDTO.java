@@ -11,6 +11,7 @@ public class InventoryItemDTO {
     private Long ingredientId;    // ID của Ingredient (Thành phần)
     private Float quantity;
     private LocalDate expirationDate;
+    private LocalDate purchasedAt;
 
     // --- Constructors, Getters, and Setters ---
     public InventoryItemDTO() {}
@@ -26,4 +27,12 @@ public class InventoryItemDTO {
 
     public LocalDate getExpirationDate() { return expirationDate; }
     public void setExpirationDate(LocalDate expirationDate) { this.expirationDate = expirationDate; }
+
+    public LocalDate getPurchasedAt() {
+        return purchasedAt;
+    }
+
+    public void setPurchasedAt(LocalDate purchasedAt) {
+        this.purchasedAt = purchasedAt;
+    }
 }

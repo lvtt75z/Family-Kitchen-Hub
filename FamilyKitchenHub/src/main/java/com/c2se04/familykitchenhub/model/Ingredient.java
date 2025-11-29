@@ -16,9 +16,15 @@ public class Ingredient {
     @Column(name = "name", unique = true, nullable = false)
     private String name;
 
-    @Column(name = "unit")
+    // Mapping biến 'unit' vào cột 'default_unit' của Database mới
+    @Column(name = "default_unit")
     private String unit;
 
+    // [MỚI] Thêm trường này để hỗ trợ tính toán Calo cho Recipe và Health Goals
+    @Column(name = "calories_per_100g")
+    private Integer caloriesPer100g;
+
+    // [GIỮ NGUYÊN] Vẫn giữ trường JSON cũ của bạn để lưu chi tiết khác (Fat, Protein...)
     @Column(name = "nutritional_info", columnDefinition = "JSON")
     private String nutritionalInfo;
 
@@ -49,6 +55,14 @@ public class Ingredient {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public Integer getCaloriesPer100g() {
+        return caloriesPer100g;
+    }
+
+    public void setCaloriesPer100g(Integer caloriesPer100g) {
+        this.caloriesPer100g = caloriesPer100g;
     }
 
     public String getNutritionalInfo() {

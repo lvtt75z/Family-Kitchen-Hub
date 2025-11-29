@@ -9,11 +9,11 @@ import com.c2se04.familykitchenhub.Repository.InventoryItemRepository;
 import com.c2se04.familykitchenhub.Repository.UserRepository;
 import com.c2se04.familykitchenhub.Repository.IngredientRepository;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
-import com.c2se04.familykitchenhub.Service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -88,6 +88,23 @@ public class InventoryItemService {
             throw new ResourceNotFoundException("InventoryItem", "id", id);
         }
         inventoryItemRepository.deleteById(id);
+    }
+
+    @Transactional
+    public InventoryItem markExpirationNotified(Long id) {
+        InventoryItem item = inventoryItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("InventoryItem", "id", id));
+        item.setExpirationNotified(true);
+        item.setExpirationNotifiedAt(LocalDateTime.now());
+        return inventoryItemRepository.save(item);
+    }
+
+    @Transactional
+    public InventoryItem acknowledgeExpiration(Long id) {
+        InventoryItem item = inventoryItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("InventoryItem", "id", id));
+        item.setExpirationAcknowledgedAt(LocalDateTime.now());
+        return inventoryItemRepository.save(item);
     }
 
     /**

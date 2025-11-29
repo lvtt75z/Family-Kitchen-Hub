@@ -200,6 +200,12 @@ Tài liệu này tổng hợp tất cả các API endpoints trong hệ thống F
   - `recipeId` (Long) - ID công thức nấu ăn
 - **Response:** Thông báo thành công (200 OK) hoặc lỗi thiếu nguyên liệu (400 Bad Request) hoặc không tìm thấy (404 Not Found)
 
+### 4.7. Xác nhận đã xử lý nguyên liệu sắp hết hạn
+- **Link API:** `PATCH http://localhost:8080/api/inventory/{id}/ack-expiration`
+- **Chức năng:** Khi người dùng xử lý xong nguyên liệu được cảnh báo sắp hết hạn, endpoint này đánh dấu item đã acknowledge để worker không gửi lại thông báo.
+- **Path Parameters:** `id` (Long) - ID của inventory item
+- **Response:** `InventoryItemResponseDTO` cập nhật, trong đó có `expirationNotified`, `expirationAcknowledgedAt` (200 OK)
+
 > **Lưu ý:** Các API Inventory hiện trả về `InventoryItemResponseDTO`, trong đó bao gồm sẵn `ingredientName`, `unit`, `quantity` và `expirationDate` để giao diện hiển thị trực tiếp.
 
 ---
@@ -397,19 +403,49 @@ Tài liệu này tổng hợp tất cả các API endpoints trong hệ thống F
 
 ---
 
+## 9. Engagement & Notification APIs
+
+### 9.1. Feed bài viết theo tương tác
+- **Link API:** `GET http://localhost:8080/api/posts?sort=engagement&page={page}&size={size}`
+- **Chức năng:** Trả về danh sách recipe/post được xếp hạng theo điểm tương tác (comments, ảnh, bookmarks) để FE hiển thị thẻ “🔥 Tương tác cao”.
+- **Query Parameters:**
+  - `sort` (String, default `engagement`) – hiện chỉ chấp nhận `engagement`, nếu giá trị khác sẽ trả về 400.
+  - `page` (Integer, default 0) – trang phân trang (0-based).
+  - `size` (Integer, default 10) – số item mỗi trang (1–50).
+- **Response:** `EngagementFeedResponse` chứa `items` (recipeId, title, imageUrl, engagementScore, rankBucket, highEngagement) cùng tổng trang, tổng phần tử và flag `cacheable`.
+
+### 9.2. Tạo thông báo hết hạn nguyên liệu
+- **Link API:** `POST http://localhost:8080/api/users/{userId}/notifications`
+- **Chức năng:** Worker hoặc hệ thống gọi API này để ghi nhận thông báo “{ingredient} sắp hết hạn ngày {expirationDate}”. Inventory item tương ứng được đánh dấu `expirationNotified=true`.
+- **Path Parameters:** `userId` (Long)
+- **Request Body:** `NotificationRequestDTO` gồm:
+  - `inventoryItemId` (Long) – bắt buộc.
+  - `type` (String) – optional, mặc định `INVENTORY_EXPIRING`.
+  - `message` (String) – optional, để trống thì backend tự sinh message chuẩn.
+- **Response:** `UserNotificationResponseDTO` (201 Created)
+
+### 9.3. Lấy danh sách thông báo của người dùng
+- **Link API:** `GET http://localhost:8080/api/users/{userId}/notifications`
+- **Chức năng:** Trả về danh sách thông báo (mới nhất trước) để FE hiển thị center thông báo hoặc badge tủ lạnh ảo.
+- **Path Parameters:** `userId` (Long)
+- **Response:** `List<UserNotificationResponseDTO>` (200 OK)
+
+---
+
 ## Tổng Kết
 
 ### Số lượng API theo module:
 - **Authentication (Xác thực):** 6 APIs
 - **User (Người dùng):** 6 APIs
 - **Ingredient (Nguyên liệu):** 5 APIs
-- **Inventory (Tủ lạnh ảo):** 6 APIs
+- **Inventory (Tủ lạnh ảo):** 7 APIs
 - **Recipe (Công thức):** 7 APIs
 - **Allergy (Dị ứng):** 6 APIs
 - **Family Member (Thành viên gia đình):** 8 APIs
 - **Member Allergy (Quan hệ thành viên-dị ứng):** 6 APIs
+- **Engagement & Notification:** 3 APIs
 
-**Tổng cộng: 50 API endpoints**
+**Tổng cộng: 54 API endpoints**
 
 ### HTTP Methods sử dụng:
 - **POST:** Tạo mới dữ liệu (Create)
