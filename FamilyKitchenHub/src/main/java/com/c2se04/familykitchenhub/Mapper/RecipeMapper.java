@@ -31,6 +31,7 @@ public interface RecipeMapper {
     @Mapping(target = "recipe", ignore = true)
     @Mapping(source = "ingredientId", target = "ingredient.id")
     @Mapping(source = "quantity", target = "quantity")
+    @Mapping(source = "unit", target = "unit")
     RecipeIngredient toRecipeIngredient(RecipeIngredientDTO dto);
 
     Set<RecipeIngredient> toRecipeIngredientSet(Set<RecipeIngredientDTO> dtos);
