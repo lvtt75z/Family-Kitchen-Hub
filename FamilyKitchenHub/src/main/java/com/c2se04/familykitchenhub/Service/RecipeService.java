@@ -39,6 +39,10 @@ public class RecipeService {
                         .orElseThrow(() -> new ResourceNotFoundException("Ingredient", "id", recipeIngredient.getIngredient().getId()));
                 recipeIngredient.setIngredient(ingredient);
                 recipeIngredient.setRecipe(recipe);
+                // Nếu unit chưa được set, lấy từ Ingredient.defaultUnit
+                if (recipeIngredient.getUnit() == null || recipeIngredient.getUnit().trim().isEmpty()) {
+                    recipeIngredient.setUnit(ingredient.getUnit() != null ? ingredient.getUnit() : "gram");
+                }
             }
         }
         return recipeRepository.save(recipe);
@@ -92,6 +96,10 @@ public class RecipeService {
                         .orElseThrow(() -> new ResourceNotFoundException("Ingredient", "id", newIngredient.getIngredient().getId()));
                 newIngredient.setRecipe(existingRecipe);
                 newIngredient.setIngredient(ingredient);
+                // Nếu unit chưa được set, lấy từ Ingredient.defaultUnit
+                if (newIngredient.getUnit() == null || newIngredient.getUnit().trim().isEmpty()) {
+                    newIngredient.setUnit(ingredient.getUnit() != null ? ingredient.getUnit() : "gram");
+                }
                 existingRecipe.getRecipeIngredients().add(newIngredient);
             }
         }
