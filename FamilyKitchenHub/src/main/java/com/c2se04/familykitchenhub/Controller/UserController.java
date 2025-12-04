@@ -104,6 +104,21 @@ public class UserController {
         return ResponseEntity.ok(convertToDto(user));
     }
 
+    // GET /api/users/{id}/profile - READ PROFILE DETAILS
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<EditProfileResponseDTO> getProfile(@PathVariable Long id) {
+        User user = userService.getUserById(id);
+        EditProfileResponseDTO responseDTO = convertUserToEditProfileResponse(user);
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    // GET /api/users/{id}/username - PUBLIC: get username only
+    @GetMapping("/{id}/username")
+    public ResponseEntity<String> getUsernameById(@PathVariable Long id) {
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(user.getUsername());
+    }
+
     // PUT /api/users/{id} - UPDATE
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @RequestBody UserRequestDTO userDTO) {

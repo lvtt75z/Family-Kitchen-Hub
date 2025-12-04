@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 import {
   Calendar,
@@ -9,35 +10,28 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import cookingAnimation from "../assets/kitchen_cooking.mp4";
+import axios from "../hooks/axios";
 
 function Home() {
-  const [meals, setMeals] = useState([]);
+  const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Fetch 6 random meals from TheMealDB
+  // 5.2 – Xem danh sách tất cả công thức: GET /api/recipes
   useEffect(() => {
-    const fetchRandomMeals = async () => {
+    const fetchRecipes = async () => {
       setLoading(true);
       try {
-        const requests = Array.from({ length: 10 }, () =>
-          fetch("https://www.themealdb.com/api/json/v1/1/random.php").then(
-            (res) => res.json()
-          )
-        );
-
-        const results = await Promise.all(requests);
-        const randomMeals = results
-          .map((res) => res.meals && res.meals[0])
-          .filter(Boolean);
-        setMeals(randomMeals);
+        const res = await axios.get("/recipes");
+        setRecipes(res.data || []);
       } catch (error) {
-        console.error("Error fetching meals:", error);
+        console.error("Error fetching recipes:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRandomMeals();
+    fetchRecipes();
   }, []);
 
 
@@ -108,32 +102,43 @@ function Home() {
         </div>
       </section>
 
-      {/* ===== MEAL SUGGESTIONS (Dynamic) ===== */}
+      {/* ===== RECIPE SUGGESTIONS (From backend) ===== */}
       <section className="suggestions-section">
         <div className="suggestions-header">
-          <h2>Random Meal Suggestions (via TheMealDB)</h2>
-          <p>
-            Freshly fetched from TheMealDB API every time you load the page.
-          </p>
+          <h2>Recipe Suggestions</h2>
+          <p>Danh sách công thức từ hệ thống của bạn.</p>
         </div>
 
         {loading ? (
-          <p>Loading random meals...</p>
+          <p>Đang tải danh sách công thức...</p>
+        ) : recipes.length === 0 ? (
+          <p>Chưa có công thức nào.</p>
         ) : (
           <div className="suggestions-grid">
-            {meals.map((meal) => (
-              <div key={meal.idMeal} className="suggestion-card">
+            {recipes.map((recipe) => (
+              <div
+                key={recipe.id}
+                className="suggestion-card"
+                onClick={() => navigate(`/manage/recipesdetails/${recipe.id}`)}
+              >
                 <div className="suggestion-image">
-                  <img src={meal.strMealThumb} alt={meal.strMeal} />
+                  <img
+                    src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+                    alt={recipe.title}
+                  />
                   <button className="heart-btn" aria-label="Add to favorites">
                     ♡
                   </button>
                 </div>
                 <div className="suggestion-content">
-                  <h3>{meal.strMeal}</h3>
+                  <h3>{recipe.title}</h3>
                   <div className="suggestion-meta">
-                    <span className="time">🍽 {meal.strCategory}</span>
-                    <span className="area">🌎 {meal.strArea}</span>
+                    <span className="time">
+                      ⏱ {recipe.cookingTimeMinutes || "--"} min
+                    </span>
+                    <span className="area">
+                      🍽 {recipe.servings ? `${recipe.servings} servings` : ""}
+                    </span>
                   </div>
                 </div>
               </div>

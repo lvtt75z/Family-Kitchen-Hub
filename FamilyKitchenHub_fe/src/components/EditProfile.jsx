@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -21,6 +21,7 @@ import {
 import { Edit, Email } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import '../styles/EditProfile.css';
+import axios from "../hooks/axios";
 
 const EditProfile = () => {
     const navigate = useNavigate();
@@ -28,20 +29,54 @@ const EditProfile = () => {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     
     const [formData, setFormData] = useState({
-        fullName: 'Pk',
-        email: 'pk@gmail.com',
+        fullName: '',
+        email: '',
         gender: '',
         pathology: '',
         numberOfFamilyMembers: 1,
         country: '',
         favorite: 'Vegetarian',
         ageGroups: {
-            children: true,
-            teenagers: true,
-            adult: false,
+            children: false,
+            teenagers: false,
+            adult: true,
             oldPerson: false
         }
     });
+
+    // Load current profile from backend on mount
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const userDataString = localStorage.getItem("user");
+                const userData = userDataString ? JSON.parse(userDataString) : null;
+                const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
+                if (!userId) return;
+
+                const { data } = await axios.get(`/users/${userId}/profile`);
+
+                setFormData({
+                    fullName: data.fullName || '',
+                    email: data.email || '',
+                    gender: data.gender || '',
+                    pathology: data.pathology || '',
+                    numberOfFamilyMembers: data.numberOfFamilyMembers ?? 1,
+                    country: data.country || '',
+                    favorite: data.favorite || 'Vegetarian',
+                    ageGroups: {
+                        children: data.ageGroups?.children ?? false,
+                        teenagers: data.ageGroups?.teenagers ?? false,
+                        adult: data.ageGroups?.adult ?? true,
+                        oldPerson: data.ageGroups?.oldPerson ?? false
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load profile", err);
+            }
+        };
+
+        fetchProfile();
+    }, []);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({
@@ -61,10 +96,11 @@ const EditProfile = () => {
     };
 
     const handleSubmit = async () => {
-        // Get user ID from localStorage or use a default value
-        // You may need to adjust this based on how user ID is stored in your app
-        const userId = localStorage.getItem('userId') || '1'; // Default to '1' if not found
-        
+        // Lấy userId từ localStorage (theo convention các màn khác)
+        const userDataString = localStorage.getItem("user");
+        const userData = userDataString ? JSON.parse(userDataString) : null;
+        const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId") || '1';
+
         // Prepare request body according to API specification
         const requestBody = {
             fullName: formData.fullName,
@@ -85,20 +121,8 @@ const EditProfile = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`http://localhost:8080/api/users/${userId}/profile`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            // Dùng axios instance với baseURL http://localhost:8080/api
+            const { data } = await axios.put(`/users/${userId}/profile`, requestBody);
             console.log('Profile updated successfully:', data);
             
             setSnackbar({
