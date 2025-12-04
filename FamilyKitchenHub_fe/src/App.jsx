@@ -41,6 +41,8 @@ function App() {
           <Route path="fridge" element={<Fridge />} />
           <Route path="recipes" element={<Recipes/>} />
           <Route path="recipes/:id" element={<DetailRecipes />} />
+          {/* Alias cho trang chi tiết: /manage/recipesdetails/:id */}
+          <Route path="recipesdetails/:id" element={<DetailRecipes />} />
           <Route path="familyProfile" element={<FamilyProfiles/>} />
            <Route path="mealPlaner" element={<MealPlanner/>} />
           <Route path="editprofile" element={<EditProfile />} />

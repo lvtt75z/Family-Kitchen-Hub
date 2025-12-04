@@ -116,6 +116,18 @@ Tài liệu này tổng hợp tất cả các API endpoints trong hệ thống F
 }
 ```
 
+### 2.7. Lấy thông tin profile người dùng
+- **Link API:** `GET http://localhost:8080/api/users/{id}/profile`
+- **Chức năng:** Lấy đầy đủ thông tin profile chi tiết của người dùng để hiển thị trên màn hình edit profile.
+- **Path Parameters:** `id` (Long) - ID của người dùng cần lấy profile
+- **Response:** `EditProfileResponseDTO` chứa thông tin profile hiện tại (200 OK)
+
+### 2.8. Lấy username của người dùng (public)
+- **Link API:** `GET http://localhost:8080/api/users/{id}/username`
+- **Chức năng:** Lấy duy nhất trường `username` của người dùng theo ID. Endpoint này **không yêu cầu JWT token**, dùng cho các màn hình hiển thị tên người dùng đơn giản.
+- **Path Parameters:** `id` (Long) - ID của người dùng
+- **Response:** Chuỗi `username` (200 OK)
+
 ---
 
 ## 3. Ingredient APIs - Quản Lý Nguyên Liệu
@@ -436,7 +448,7 @@ Tài liệu này tổng hợp tất cả các API endpoints trong hệ thống F
 
 ### Số lượng API theo module:
 - **Authentication (Xác thực):** 6 APIs
-- **User (Người dùng):** 6 APIs
+- **User (Người dùng):** 8 APIs
 - **Ingredient (Nguyên liệu):** 5 APIs
 - **Inventory (Tủ lạnh ảo):** 7 APIs
 - **Recipe (Công thức):** 7 APIs
@@ -445,7 +457,7 @@ Tài liệu này tổng hợp tất cả các API endpoints trong hệ thống F
 - **Member Allergy (Quan hệ thành viên-dị ứng):** 6 APIs
 - **Engagement & Notification:** 3 APIs
 
-**Tổng cộng: 54 API endpoints**
+**Tổng cộng: 56 API endpoints**
 
 ### HTTP Methods sử dụng:
 - **POST:** Tạo mới dữ liệu (Create)

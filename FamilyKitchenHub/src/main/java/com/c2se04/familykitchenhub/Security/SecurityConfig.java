@@ -41,7 +41,16 @@ public class SecurityConfig {
                 .sessionManagement(session -> 
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Auth endpoints are public
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Public user info: get username by id
+                        .requestMatchers("/api/users/*/username").permitAll()
+                        // Make recipe comment APIs public
+                        .requestMatchers(
+                                "/api/recipes/*/comments",          // POST/GET comments for a recipe
+                                "/api/recipes/comments/**"          // update status, etc.
+                        ).permitAll()
+                        // Other endpoints require authentication
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 );
