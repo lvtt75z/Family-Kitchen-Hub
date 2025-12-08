@@ -1,7 +1,5 @@
 package com.c2se04.familykitchenhub.Repository;
 
-import com.c2se04.familykitchenhub.model.RecipeCategoryMap;
-import com.c2se04.familykitchenhub.model.RecipeCategoryMapId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

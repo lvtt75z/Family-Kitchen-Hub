@@ -6,8 +6,6 @@ import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import com.c2se04.familykitchenhub.Repository.RecipeCategoryMapRepository;
 import com.c2se04.familykitchenhub.Repository.RecipeCategoryRepository;
 import com.c2se04.familykitchenhub.Repository.RecipeRepository;
-import com.c2se04.familykitchenhub.model.RecipeCategory;
-import com.c2se04.familykitchenhub.model.RecipeCategoryMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

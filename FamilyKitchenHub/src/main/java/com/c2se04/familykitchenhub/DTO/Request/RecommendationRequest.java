@@ -1,32 +1,73 @@
 package com.c2se04.familykitchenhub.DTO.Request;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.Data;
+
 import java.util.List;
 
+@Data
+@Builder
 public class RecommendationRequest {
 
-    @JsonProperty("inventory_ingredient_ids")
-    private List<Long> inventoryIngredientIds;
+    @JsonProperty("current_date")
+    private String currentDate;
+
+    @JsonProperty("inventory_items")
+    private List<InventoryItemDTO> inventoryItems;
 
     @JsonProperty("family_profiles")
-    private List<Object> familyProfiles;
+    private List<FamilyProfileDTO> familyProfiles;
 
     @JsonProperty("all_recipes")
-    private List<Object> allRecipes;
+    private List<RecipeDTO> allRecipes;
 
-    // Constructor bắt buộc
-    public RecommendationRequest(List<Long> inventoryIngredientIds, List<Object> familyProfiles, List<Object> allRecipes) {
-        this.inventoryIngredientIds = inventoryIngredientIds;
-        this.familyProfiles = familyProfiles;
-        this.allRecipes = allRecipes;
+    // --- Inner Static Classes (DTO con) ---
+
+    @Data
+    @Builder
+    public static class InventoryItemDTO {
+        @JsonProperty("ingredient_id")
+        private Long ingredientId;
+        private Float quantity;
+        private String unit;
+        @JsonProperty("expiry_date")
+        private String expiryDate; // Format YYYY-MM-DD
     }
 
-    // Getters và Setters (Rất quan trọng, nếu thiếu Jackson sẽ không hoạt động)
-    public List<Long> getInventoryIngredientIds() { return inventoryIngredientIds; }
-    public void setInventoryIngredientIds(List<Long> inventoryIngredientIds) { this.inventoryIngredientIds = inventoryIngredientIds; }
+    @Data
+    @Builder
+    public static class FamilyProfileDTO {
+        private Integer age;
+        private String gender; // MALE/FEMALE
+        @JsonProperty("height_cm")
+        private Float heightCm;
+        @JsonProperty("weight_kg")
+        private Float weightKg;
+        @JsonProperty("activity_level")
+        private String activityLevel; // ACTIVE/SEDENTARY...
+        private List<Long> allergies;
+        @JsonProperty("taste_preferences")
+        private List<String> tastePreferences; // Thay thế cho health_goals cũ
+    }
 
-    public List<Object> getFamilyProfiles() { return familyProfiles; }
-    public void setFamilyProfiles(List<Object> familyProfiles) { this.familyProfiles = familyProfiles; }
+    @Data
+    @Builder
+    public static class RecipeDTO {
+        private Long id;
+        @JsonProperty("total_calories")
+        private Integer totalCalories;
+        private List<String> categories; // List tên category
+        private List<RecipeIngredientDTO> ingredients;
+    }
 
-    public List<Object> getAllRecipes() { return allRecipes; }
-    public void setAllRecipes(List<Object> allRecipes) { this.allRecipes = allRecipes; }
+    @Data
+    @Builder
+    public static class RecipeIngredientDTO {
+        @JsonProperty("ingredient_id")
+        private Long ingredientId;
+        private Float quantity;
+        @JsonProperty("is_main_ingredient")
+        private Boolean isMainIngredient;
+    }
 }
