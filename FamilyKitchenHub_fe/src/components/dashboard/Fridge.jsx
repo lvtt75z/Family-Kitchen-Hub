@@ -3,11 +3,15 @@ import React, { useState, useEffect } from "react";
 import axios from "../../hooks/axios"; // file cấu hình axios riêng
 import "./../../styles/FridgeManager.css";
 import bgIngredients from "../../assets/bgIg3.jpg";
+import AddIngredientModal from "../AddIngredientScreen";
 import { Plus, MoreVertical } from "lucide-react";
 
 export default function FridgeManager() {
   const [ingredients, setIngredients] = useState([]);
   const [showModal, setShowModal] = useState(false);
+
+  const [showIngredientModal, setShowIngredientModal] = useState(false);
+
   const [newIngredient, setNewIngredient] = useState({
     ingredientId: "",
     ingredientName: "",
@@ -16,101 +20,88 @@ export default function FridgeManager() {
     expirationDate: "",
   });
 
-  // Lấy token từ localStorage
   const token = localStorage.getItem("token");
 
-  // GET nguyên liệu từ /api/inventory
-useEffect(() => {
-  const fetchIngredients = async () => {
-    try {
-      // Lấy object từ localStorage
-      const userDataString = localStorage.getItem("user"); // key lưu object JSON
-      if (!userDataString) {
-        console.error("User data not found in localStorage");
-        return;
+  // GET inventory list
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        const userDataString = localStorage.getItem("user");
+        if (!userDataString) return;
+
+        const userData = JSON.parse(userDataString);
+        const userId = userData.id;
+
+        const res = await axios.get(
+          `http://localhost:8080/api/inventory/user/${userId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setIngredients(res.data);
+      } catch (error) {
+        console.error("Error fetching ingredients:", error);
       }
-
-      const userData = JSON.parse(userDataString);
-
-      const userId = userData.id;
-      console.log(userId); // hoặc userData.user.id nếu lưu như bạn gửi
-      if (!userId) {
-        console.error("User ID not found in localStorage");
-        return;
-      }
-
-      const res = await axios.get(`http://localhost:8080/api/inventory/user/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setIngredients(res.data);
-    } catch (error) {
-      console.error("Error fetching ingredients:", error);
-    }
-  };
-
-  fetchIngredients();
-}, [token]);
-
-
-
-
-// POST thêm nguyên liệu vào /api/inventory 
-const handleAddIngredient = async (e) => {
-  e.preventDefault();
-  try {
-    // Lấy userId từ localStorage
-    const userDataString = localStorage.getItem("user");
-    const userData = JSON.parse(userDataString);
-    const userId = userData.user?.id || userData.id; // tùy cấu trúc lưu trong storage
-
-    // chuẩn hóa dữ liệu trước gửi
-    const payload = {
-      userId: userId, // thêm userId vào payload nếu backend cần
-      ingredientId: newIngredient.ingredientId || undefined,
-      ingredientName: newIngredient.ingredientName || undefined,
-      quantity: newIngredient.quantity ? parseFloat(newIngredient.quantity) : 0,
-      unit: newIngredient.unit || undefined,
-      expirationDate: newIngredient.expirationDate || undefined,
     };
 
-    await axios.post("http://localhost:8080/api/inventory", payload, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    fetchIngredients();
+  }, [token]);
 
-    setShowModal(false);
-    setNewIngredient({
-      ingredientId: "",
-      ingredientName: "",
-      quantity: "",
-      unit: "",
-      expirationDate: "",
-    });
+  // POST add ingredient
+  const handleAddIngredient = async (e) => {
+    e.preventDefault();
+    try {
+      const userDataString = localStorage.getItem("user");
+      const userData = JSON.parse(userDataString);
+      const userId = userData.user?.id || userData.id;
 
-    // refresh list theo userId
-    const res = await axios.get(`http://localhost:8080/api/inventory/user/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setIngredients(res.data);
-  } catch (error) {
-    console.error("Error adding ingredient:", error);
-  }
-};
+      const payload = {
+        userId: userId,
+        ingredientId: newIngredient.ingredientId || undefined,
+        ingredientName: newIngredient.ingredientName || undefined,
+        quantity: newIngredient.quantity
+          ? parseFloat(newIngredient.quantity)
+          : 0,
+        unit: newIngredient.unit || undefined,
+        expirationDate: newIngredient.expirationDate || undefined,
+      };
 
+      await axios.post("http://localhost:8080/api/inventory", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setShowModal(false);
+      setNewIngredient({
+        ingredientId: "",
+        ingredientName: "",
+        quantity: "",
+        unit: "",
+        expirationDate: "",
+      });
+
+      const res = await axios.get(
+        `http://localhost:8080/api/inventory/user/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setIngredients(res.data);
+    } catch (error) {
+      console.error("Error adding ingredient:", error);
+    }
+  };
 
   const getStatus = (expDate) => {
     if (!expDate) return "Fresh";
     const today = new Date();
     const expiry = new Date(expDate);
-    const diffDays = (expiry - today) / (1000 * 60 * 60 * 24);
-    if (diffDays < 0) return "Expired";
-    if (diffDays <= 3) return "Expiring Soon";
+    const diff = (expiry - today) / (1000 * 60 * 60 * 24);
+
+    if (diff < 0) return "Expired";
+    if (diff <= 3) return "Expiring Soon";
     return "Fresh";
   };
 
-  // helper format date
   const formatDate = (d) => {
     if (!d) return "N/A";
     const dt = new Date(d);
@@ -120,13 +111,15 @@ const handleAddIngredient = async (e) => {
   return (
     <div className="fridge-manager">
       {/* Welcome Section */}
-      <div className="welcome-section"
-      style={{
-        backgroundImage: `url(${bgIngredients})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        height: "110vh",
-      }}>
+      <div
+        className="welcome-section"
+        style={{
+          backgroundImage: `url(${bgIngredients})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          height: "110vh",
+        }}
+      >
         <div className="welcome-text">
           <h1>Welcome to Fridge Manager! Let’s check your fridge today</h1>
           <p>Keep your ingredients fresh and reduce food waste</p>
@@ -149,7 +142,9 @@ const handleAddIngredient = async (e) => {
           return (
             <div
               key={item.id}
-              className={`ingredient-card ${status.toLowerCase().replace(" ", "-")}`}
+              className={`ingredient-card ${status
+                .toLowerCase()
+                .replace(" ", "-")}`}
             >
               <div className="card-header">
                 <h3>{item.ingredientName}</h3>
@@ -170,10 +165,14 @@ const handleAddIngredient = async (e) => {
 
               <div className="nutrition">
                 <p className="nutrition-title">Hạn sử dụng:</p>
-                <p className="nutrition-value">{formatDate(item.expirationDate)}</p>
+                <p className="nutrition-value">
+                  {formatDate(item.expirationDate)}
+                </p>
               </div>
 
-              <div className={`status ${status.toLowerCase().replace(" ", "-")}`}>
+              <div
+                className={`status ${status.toLowerCase().replace(" ", "-")}`}
+              >
                 {status}
               </div>
             </div>
@@ -181,12 +180,18 @@ const handleAddIngredient = async (e) => {
         })}
       </div>
 
-      {/* Modal */}
+      {/* Modal 1: Add Inventory Item */}
       {showModal && (
         <div className="modal-overlay active">
           <div className="modal">
             <div className="modal-header">
               <h3>Add Inventory Item</h3>
+
+              {/* Nút mở modal thứ hai */}
+              <button onClick={() => setShowIngredientModal(true)}>
+                Add Ingredients
+              </button>
+
               <button className="icon-btn" onClick={() => setShowModal(false)}>
                 ✖
               </button>
@@ -194,12 +199,15 @@ const handleAddIngredient = async (e) => {
 
             <form className="modal-form" onSubmit={handleAddIngredient}>
               <label>
-                Ingredient ID
+                Ingredient Name
                 <input
                   type="text"
-                  value={newIngredient.ingredientId}
+                  value={newIngredient.ingredientName}
                   onChange={(e) =>
-                    setNewIngredient({ ...newIngredient, ingredientId: e.target.value })
+                    setNewIngredient({
+                      ...newIngredient,
+                      ingredientId: e.target.value,
+                    })
                   }
                   placeholder="e.g. 1"
                 />
@@ -212,7 +220,10 @@ const handleAddIngredient = async (e) => {
                   step="any"
                   value={newIngredient.quantity}
                   onChange={(e) =>
-                    setNewIngredient({ ...newIngredient, quantity: e.target.value })
+                    setNewIngredient({
+                      ...newIngredient,
+                      quantity: e.target.value,
+                    })
                   }
                   required
                   placeholder="e.g. 15"
@@ -238,13 +249,20 @@ const handleAddIngredient = async (e) => {
                   type="date"
                   value={newIngredient.expirationDate}
                   onChange={(e) =>
-                    setNewIngredient({ ...newIngredient, expirationDate: e.target.value })
+                    setNewIngredient({
+                      ...newIngredient,
+                      expirationDate: e.target.value,
+                    })
                   }
                 />
               </label>
 
               <div className="modal-actions">
-                <button type="button" className="btn ghost" onClick={() => setShowModal(false)}>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => setShowModal(false)}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn primary">
@@ -254,6 +272,27 @@ const handleAddIngredient = async (e) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal 2: Add Ingredients Modal */}
+      {showIngredientModal && (
+        <AddIngredientModal
+          onClose={() => {
+            setShowIngredientModal(false);
+            setShowModal(true);
+          }}
+          onSelect={(selected) => {
+            // 🎯 Nhận dữ liệu từ Modal 2
+            setNewIngredient((prev) => ({
+              ...prev,
+              ingredientName: selected.ingredientName,
+              unit: selected.unit,
+            }));
+
+            setShowIngredientModal(false); // đóng modal 2
+            setShowModal(true); // mở modal 1 lại
+          }}
+        />
       )}
     </div>
   );

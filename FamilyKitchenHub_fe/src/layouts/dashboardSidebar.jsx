@@ -15,8 +15,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 const TABS = [
   { label: "Home", path: "/home", icon: <HomeIcon size={18} /> },
   {
-    label: "Dashboard",
-    path: "/manage/Dashboard",
+    label: "MealPlan",
+    path: "/manage/mealPlaner",
     icon: <LayoutDashboard size={18} />,
   },
   { label: "Recipes", path: "/manage/recipes", icon: <BookOpen size={18} /> },

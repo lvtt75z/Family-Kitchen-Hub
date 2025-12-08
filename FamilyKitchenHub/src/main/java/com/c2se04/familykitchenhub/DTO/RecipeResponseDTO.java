@@ -6,7 +6,7 @@ import java.util.Set;
 public class RecipeResponseDTO {
     private Long id;
     private String title;
-    private String instructions;   // ✅ thêm vào để đầy đủ dữ liệu
+    private String instructions;   // thêm vào để đầy đủ dữ liệu
     private Integer cookingTimeMinutes;
     private Integer servings;
     private String imageUrl;

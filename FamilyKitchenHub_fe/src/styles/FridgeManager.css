@@ -68,13 +68,13 @@
 }
 
 .btn.primary {
-  background-color: #007bff;
+  background-color: rgb(255, 149, 79);
   color: white;
   transition: 0.2s;
 }
 
 .btn.primary:hover {
-  background-color: #005fcc;
+  background-color: rgb(255, 149, 79);
 }
 
 /* Ingredient cards */
@@ -105,7 +105,7 @@
 }
 
 .card-header h3 {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 600;
 }
 

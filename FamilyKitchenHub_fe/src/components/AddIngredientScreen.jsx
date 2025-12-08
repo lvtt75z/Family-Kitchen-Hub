@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "../hooks/axios"; // axios đã config baseURL + token
 import "./../styles/AddIngredientScreen.css";
 import { X, Search } from "lucide-react";
+import bgFooter from "../assets/bgfooter.png";
 
 export default function AddIngredientModal({ onClose, onSelect }) {
   const [tab, setTab] = useState("quick");
@@ -27,10 +28,19 @@ export default function AddIngredientModal({ onClose, onSelect }) {
 
   return (
     <div className="ai-overlay">
-      <div className="ai-modal">
+      <div
+        className="ai-modal"
+        style={{
+          backgroundImage: `url(${bgFooter})`,
+          backgroundPosition: "bottom",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "100% auto",
+          paddingBottom: "50px",
+        }}
+      >
         {/* Header */}
         <div className="ai-header">
-          <h2>Add Ingredient</h2>
+          <h2 className="ai-title">Add Ingredient</h2>
           <button className="ai-close-btn" onClick={onClose}>
             <X size={20} />
           </button>
@@ -72,7 +82,7 @@ export default function AddIngredientModal({ onClose, onSelect }) {
               {filteredIngredients.map((item) => {
                 let nutrition = {};
                 try {
-                  nutrition = JSON.parse(item.nutritionalInfo);
+                  nutrition = JSON.parse(item.nutritionalInfo || "{}");
                 } catch {}
 
                 return (
@@ -107,65 +117,99 @@ export default function AddIngredientModal({ onClose, onSelect }) {
             onSubmit={async (e) => {
               e.preventDefault();
 
+              // Parse nutritional info từ form fields
+              const nutritionalInfo = {
+                protein: e.target.protein?.value || "0g",
+                fat: e.target.fat?.value || "0g",
+                calories: e.target.calories?.value || "0",
+              };
+
               const newIngredient = {
-                name: e.target.name.value,
-                unit: e.target.unit.value,
-                nutritionalInfo: {
-                  protein: e.target.protein?.value || "0g",
-                  fat: e.target.fat?.value || "0g",
-                  calories: parseInt(e.target.calories?.value) || 0,
-                  day: parseInt(e.target.day?.value) || 0,
-                },
+                name: e.target.name.value.trim(),
+                unit: e.target.unit.value.trim(),
+                nutritionalInfo: JSON.stringify(nutritionalInfo),
               };
 
               try {
                 const res = await axios.post("/ingredients", newIngredient);
-                console.log("Ingredient added:", res.data);
+                console.log("✅ Ingredient added:", res.data);
 
                 if (onSelect) {
                   onSelect({
                     ingredientId: res.data.id,
                     ingredientName: res.data.name,
                     unit: res.data.unit,
-                    nutrition: res.data.nutritionalInfo,
+                    nutrition: nutritionalInfo,
                   });
                 }
 
                 if (onClose) onClose();
               } catch (err) {
-                console.error("Error adding ingredient:", err);
-                alert("Failed to add ingredient. Please check your input.");
+                console.error("❌ Error adding ingredient:", err);
+                alert(
+                  err.response?.data?.message ||
+                    "Failed to add ingredient. Please check your input."
+                );
               }
             }}
           >
-            <label>
+            <label className="full">
               Ingredient Name
-              <input name="name" required />
+              <input
+                type="text"
+                name="name"
+                placeholder="e.g., Chicken Breast"
+                required
+                className="ai-input"
+              />
             </label>
 
-            <label>
+            <label className="full">
               Unit
-              <input name="unit" required />
+              <input
+                type="text"
+                name="unit"
+                placeholder="e.g., kg, g, cái, lít"
+                required
+                className="ai-input"
+              />
             </label>
+
+            <div style={{ gridColumn: "1 / -1", marginTop: "16px" }}>
+              <h4 className="ai-subtitle">Nutritional Info (per 100g)</h4>
+            </div>
 
             <label>
               Protein (g)
-              <input name="protein" type="number" />
+              <input
+                type="number"
+                name="protein"
+                placeholder="e.g., 25"
+                step="0.1"
+                className="ai-input"
+              />
             </label>
 
             <label>
               Fat (g)
-              <input name="fat" type="number" />
+              <input
+                type="number"
+                name="fat"
+                placeholder="e.g., 15"
+                step="0.1"
+                className="ai-input"
+              />
             </label>
 
-            <label>
+            <label className="full">
               Calories
-              <input name="calories" type="number" />
-            </label>
-
-            <label>
-              Day
-              <input name="day" type="number" />
+              <input
+                type="number"
+                name="calories"
+                placeholder="e.g., 200"
+                step="1"
+                className="ai-input"
+              />
             </label>
 
             <button type="submit" className="ai-submit">

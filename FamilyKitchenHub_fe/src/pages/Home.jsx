@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
+import blobs from "../assets/blob-scene-haikei.svg";
 import {
   Calendar,
   Snowflake,
@@ -83,24 +84,17 @@ function Home() {
         </div>
       </section>
 
-      {/* ===== CATEGORIES SECTION ===== */}
-      <section className="categories-section">
-        <div className="categories-header">
-          <h2>Categories</h2>
-          <a href="#" className="view-all-link">
-            View all Categories →
-          </a>
+      <div className="usually-recipes">
+        <h2>Usually Recipes</h2>
+
+        <div className="recipe-content">
+          <div className="circle"></div>
+          <div className="circle"></div>
+          <div className="circle"></div>
         </div>
 
-        <div className="categories-grid">
-          {categories.map((cat) => (
-            <div key={cat.id} className="category-card">
-              <div className="category-icon">{cat.emoji}</div>
-              <p className="category-name">{cat.name}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        <img src={blobs} alt="blobs" className="svg-wave" />
+      </div>
 
       {/* ===== RECIPE SUGGESTIONS (From backend) ===== */}
       <section className="suggestions-section">

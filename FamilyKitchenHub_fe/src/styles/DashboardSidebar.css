@@ -21,7 +21,7 @@
 .sidebar-tab-switcher {
   display: flex;
   gap: 10px;
-  background: whitesmoke;
+  background: rgb(254, 249, 245);
   border-radius: 20px;
   
   box-shadow: 0 2px 12px 0 rgba(31,38,135,0.10);
@@ -80,7 +80,7 @@
 
 /* đổi màu chữ khi hover (giữ như cũ) */
 .tab-btn:hover {
-  color: #000000;
+  color: #ff964f;
 }
 
 /* hiệu ứng chuyển tab mượt */

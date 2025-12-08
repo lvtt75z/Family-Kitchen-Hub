@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import axios from "../../hooks/axios";
 import "./../../styles/Recipes.css";
 import bgRecipes from "../../assets/recipebg.jpg";
-import RecipesBook from '../../assets/recipe-book.png';
+import RecipesBook from "../../assets/recipe-book.png";
+import bgFooter from "../../assets/bgfooter.png";
+import blobs from "../../assets/blob-scene-haikei.svg";
 import {
   Heart,
   HeartOff,
   Trash2,
   PlusCircle,
   X,
+  ChefHat,
+  Search,
 } from "lucide-react";
 
 export default function RecipeDashboard() {
@@ -25,15 +29,16 @@ export default function RecipeDashboard() {
     cookingTimeMinutes: "",
     servings: "",
     imageUrl: "",
-    ingredients: [], // ✔️ luôn tồn tại
+    ingredients: [],
   };
 
   const [recipes, setRecipes] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState(defaultForm);
   const [preview, setPreview] = useState(null);
-
   const [allIngredients, setAllIngredients] = useState([]);
+  const [search, setSearch] = useState(""); //  ADD SEARCH STATE
+  const [searchResults, setSearchResults] = useState([]); //  SEARCH RESULTS
 
   // =========================
   //   LOAD INGREDIENTS (1 LẦN)
@@ -52,7 +57,7 @@ export default function RecipeDashboard() {
     };
 
     if (allIngredients.length === 0) {
-      fetchIngredients(); // ✔️ chỉ gọi 1 lần
+      fetchIngredients();
     }
   }, []);
 
@@ -66,18 +71,47 @@ export default function RecipeDashboard() {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRecipes(res.data);
+        setSearchResults(res.data); //  INIT SEARCH RESULTS
       } catch (err) {
-        console.error("❌ Lỗi khi tải recipes:", err);
+        console.error("Lỗi khi tải recipes:", err);
       }
     };
     fetchRecipes();
   }, [token]);
 
   // =========================
+  //   SEARCH RECIPES
+  // =========================
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearch(query);
+
+    if (!query.trim()) {
+      setSearchResults(recipes);
+      return;
+    }
+
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/recipes/search?name=${encodeURIComponent(
+          query
+        )}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSearchResults(res.data || []);
+    } catch (err) {
+      console.error(" Lỗi khi tìm kiếm recipes:", err);
+      setSearchResults([]);
+    }
+  };
+
+  // =========================
   //   MODAL OPEN/CLOSE
   // =========================
   const openModal = () => {
-    setForm(defaultForm);   // ✔ RESET DÒNG 1
+    setForm(defaultForm);
     setPreview(null);
     setIsOpen(true);
   };
@@ -130,8 +164,8 @@ export default function RecipeDashboard() {
       });
 
       setRecipes((prev) => [res.data, ...prev]);
+      setSearchResults((prev) => [res.data, ...prev]); // UPDATE SEARCH RESULTS
 
-      // RESET FORM
       setForm(defaultForm);
       setPreview(null);
       closeModal();
@@ -155,8 +189,9 @@ export default function RecipeDashboard() {
       });
 
       setRecipes((prev) => prev.filter((r) => r.id !== id));
+      setSearchResults((prev) => prev.filter((r) => r.id !== id)); // ✅ UPDATE SEARCH RESULTS
     } catch (err) {
-      console.error("❌ Lỗi khi xóa recipe:", err);
+      console.error(" Lỗi khi xóa recipe:", err);
     }
   };
 
@@ -166,34 +201,49 @@ export default function RecipeDashboard() {
 
   return (
     <div className="recipe-dashboard">
-
       {/* HEADER */}
       <header className="recipe-header">
-
-              {/* Welcome Section */}
-              <div className="welcome-section_recipe"
-              style={{
-                backgroundImage: `url(${bgRecipes})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                height: "110vh",
-              }}>
-                <div className="welcome-recipe-text">
-                  <h1>Make a recipe just for you</h1>
-                  <p>Keep your ingredients fresh and reduce food waste</p>
-                </div>
-              </div>
-        <button className="add-btn" onClick={openModal}>
-          <PlusCircle size={16} /> Add Recipe
-        </button>
+        {/* Welcome Section */}
+        <div
+          className="welcome-section_recipe"
+          style={{
+            backgroundImage: `url(${bgRecipes})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            height: "110vh",
+          }}
+        >
+          <div className="welcome-recipe-text">
+            <h1>Make a recipe just for you</h1>
+          </div>
+        </div>
       </header>
 
-      {/* GRID */}
+
+      {/* SEARCH SECTION */}
+      <div className="search-recipes">
+        <Search size={18} className="ai-search-icon" />
+        <input
+          type="text"
+          className="search-recipe-input"
+          placeholder="Search recipe..."
+          value={search}
+          onChange={handleSearch} //  CALL SEARCH API
+        />
+        <button className="add-btn-recipe" onClick={openModal}>
+          <PlusCircle size={16} /> Add Recipe
+        </button>
+      </div>
+      <div className="recipes-heading">
+        <h2 className="all-recipes">All Recipes</h2>
+      </div>
       <div className="recipe-grid">
-        {recipes.length === 0 ? (
-          <div className="empty">No recipes yet. Create one!</div>
+        {searchResults.length === 0 ? (
+          <div className="empty">
+            {search ? "No recipes found." : "No recipes yet. Create one!"}
+          </div>
         ) : (
-          recipes.map((r) => (
+          searchResults.map((r) => (
             <div
               key={r.id}
               className="recipe-card"
@@ -206,13 +256,14 @@ export default function RecipeDashboard() {
                   alt={r.title}
                 />
               </div>
-
+              <div className="line-middle">
+                <ChefHat size={16} />
+              </div>
               {/* CONTENT */}
               <div className="card-content-side">
                 <div className="card-header">
-                  <div>
+                  <div className="card-title">
                     <h3>{r.title}</h3>
-                    <p className="card-price">{r.servings} servings</p>
                   </div>
 
                   <div className="card-actions">
@@ -232,12 +283,12 @@ export default function RecipeDashboard() {
                     />
                   </div>
                 </div>
-
-                <p className="card-desc">{r.instructions}</p>
-
                 <div className="card-meta">
                   <span>⏱ {r.cookingTimeMinutes} min</span>
+                   {r.servings && <span>{r.servings} servings</span>}
+                  {r.mealType && <span>{r.mealType}</span>}
                 </div>
+                <p className="card-desc">{r.instructions}</p>
 
                 <button
                   className="btn-add"
@@ -259,21 +310,24 @@ export default function RecipeDashboard() {
       ============================== */}
       {isOpen && (
         <div className={`fh-modal-overlay ${isOpen ? "fh-active" : ""}`}>
-          <div className="fh-modal">
+          <div
+            className="fh-modal"
+            style={{
+              backgroundImage: `url(${bgFooter})`,
+              backgroundPosition: "bottom",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "100% auto",
+            }}
+          >
             <div className="fh-modal-header">
               <img className="fh-recipesBook" src={RecipesBook} alt="" />
               <h3 className="fh-modal-title">Add Recipe</h3>
-              {/* <button className="fh-icon-btn" onClick={closeModal}>
-                <X />
-              </button> */}
             </div>
-
             <form className="fh-modal-form" onSubmit={handleAdd}>
               <label className="fh-recipe-label">
-                
                 Title
                 <input
-                placeholder=""
+                  placeholder=""
                   type="text"
                   name="title"
                   value={form.title}
@@ -299,7 +353,7 @@ export default function RecipeDashboard() {
                 <label className="fh-recipe-label">
                   Time (minutes)
                   <input
-                  placeholder="30 minutes"
+                    placeholder="30 minutes"
                     type="number"
                     name="cookingTimeMinutes"
                     value={form.cookingTimeMinutes}
@@ -334,7 +388,11 @@ export default function RecipeDashboard() {
 
               {preview && (
                 <div className="fh-recipe-image-preview">
-                  <img src={preview} alt="Preview" className="fh-recipe-image" />
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="fh-recipe-image"
+                  />
                 </div>
               )}
 
@@ -351,7 +409,7 @@ export default function RecipeDashboard() {
                         ...prev,
                         ingredients: [
                           ...prev.ingredients,
-                          { ingredientId: "", quantity: "" },
+                          { ingredientId: "", quantity: "", unit: "" },
                         ],
                       }))
                     }
@@ -401,6 +459,23 @@ export default function RecipeDashboard() {
                       required
                     />
 
+                    <input
+                      type="text"
+                      placeholder="Unit"
+                      value={ing.unit}
+                      onChange={(e) => {
+                        const newList = [...form.ingredients];
+                        newList[index].unit = e.target.value;
+
+                        setForm((prev) => ({
+                          ...prev,
+                          ingredients: newList,
+                        }));
+                      }}
+                      className="fh-recipe-input fh-small"
+                      required
+                    />
+
                     <button
                       type="button"
                       className="fh-remove-ingredient-btn"
@@ -437,7 +512,6 @@ export default function RecipeDashboard() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

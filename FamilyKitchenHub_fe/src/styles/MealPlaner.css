@@ -30,9 +30,18 @@
 }
 
 .btn.primary {
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  background:  linear-gradient(180deg, #ffa45c, #ff8a37);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  box-shadow: 8px 8px 0px #f3c19e; /* viền bóng lệch */
+  transition: all 0.2s ease-in-out;
+}
+.btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 12px 12px 0px #f3c19e;
+}
+.btn.primary:active {
+  transform: translateY(0);
+  box-shadow: 8px 8px 0px #f3c19e;
 }
 .btn.ghost {
   background: #fff;
@@ -180,7 +189,7 @@
   background: #fff;
   border-radius: 16px;
   padding: 20px;
-  width: 520px;
+  width: 420px;
   max-width: calc(100% - 40px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   transform: scale(0.95) translateY(10px);

@@ -1,15 +1,14 @@
 .manage-layout-flex {
   display: flex;
-  min-height: 100vh;
+  min-height: 200vh;
   justify-content: center; /* căn giữa ngang */
-  align-items: center;     /* căn giữa dọc */
   background: #f3f4f6;     /* nền nhẹ cho dễ nhìn */
   gap: 32px;
 }
 
 .manage-main-content {
   flex: 1;
-  background: #f9fafb;
+  background: #ffffff;
   overflow-y: auto;
 }
 .menu-item {

@@ -1,7 +1,7 @@
 // ...existing code...
 import React from "react";
 import DashboardSidebar from "../layouts/dashboardSidebar";
-
+import Footer from "../layouts/footer";
 import { Outlet } from "react-router-dom";
 import "../styles/ManagesLayout.css"; // Thêm dòng này
 
@@ -18,7 +18,9 @@ const ManageLayouts = () => {
         <main className="manage-main-content">
           <Outlet />
         </main>
+        
       </div>
+      <Footer />
     </div>
   );
 };

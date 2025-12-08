@@ -1,6 +1,6 @@
 import React from "react";
 import "../styles/Footer.css";
-
+import logo from "../assets/bgfooter.png";
 export default function Footer() {
   return (
     <footer className="footer">
@@ -93,6 +93,7 @@ export default function Footer() {
 
       {/* Bottom */}
       <div className="footer-bottom">
+        
         <p>© 2024 Family Menu Manager. All rights reserved.</p>
         <div className="footer-tags">
           <span className="tag">SOC 2 Compliant</span>

@@ -24,17 +24,19 @@
 }
 /* Modal card */
 .ai-modal {
+  margin: 40%;
   width: 540px;
   max-height: 90vh;
   background: #fff;
   border-radius: 12px;
-  padding: 22px;
+  padding: 34px;
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(2,6,23,0.25);
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
+   transform: translateX(-120%); /* dịch sang trái 50px */
 }
 
 /* header (title + small image + close) */
@@ -215,8 +217,15 @@
   text-align: center;
   border: 1px solid #eef2f7;
   color: black;
-}
 
+    transition: transform 0.2s 
+ease, box-shadow 0.2s 
+ease;
+}
+.ai-card:hover {
+  transform: translateY(-6px); /* đẩy card lên 6px */
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12); /* bóng đổ mạnh hơn khi hover */
+}
 /* submit button */
 .ai-submit {
   grid-column: 1 / -1;

@@ -272,7 +272,7 @@ h1 {
 /* Suggestions Section */
 .suggestions-section {
   padding: 60px 20px;
-  background: #fafafa;
+  background: rgb(254, 249, 245);
 }
 
 .suggestions-header {

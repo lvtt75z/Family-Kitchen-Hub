@@ -1,12 +1,14 @@
 .footer {
+
   background: #0f172a;
   color: #e5e7eb;
-  padding: 60px 20px 30px;
+  padding: 20px 20px 30px;
   font-family: "Inter", sans-serif;
   width: 100%;
 }
 
 .footer-container {
+  
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
@@ -15,10 +17,12 @@
 }
 
 .footer-col h4 {
+  background-image: url("../assets/bgfooter.png"); /* đổi thành đường dẫn ảnh của bạn */
   font-weight: 700;
   font-size: 16px;
   margin-bottom: 16px;
   color: #f3f4f6;
+  
 }
 
 .footer-col ul {
@@ -88,6 +92,7 @@
 
 /* Bottom Row */
 .footer-bottom {
+  background-image: url("../assets/bgfooter.png"); /* đổi thành đường dẫn ảnh của bạn */
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
@@ -97,6 +102,8 @@
   gap: 12px;
   color: #94a3b8;
   font-size: 14px;
+    background-position: center;
+  background-repeat: no-repeat;
 }
 
 .footer-tags {

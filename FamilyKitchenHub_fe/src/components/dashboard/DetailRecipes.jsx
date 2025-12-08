@@ -66,20 +66,20 @@ export default function RecipeDetail() {
       // Gọi API với pagination params
       const data = await getRecipeComments(id, { page, size: 5 });
       const allComments = Array.isArray(data) ? data : [];
-      
+
       // Nếu backend trả về nhiều hơn 5 comments (không hỗ trợ pagination),
       // FE tự phân trang: chỉ lấy 5 comments cho trang hiện tại
       const startIndex = page * 5;
       const endIndex = startIndex + 5;
       const displayedComments = allComments.slice(startIndex, endIndex);
-      
+
       setComments(displayedComments);
       setCurrentPage(page);
-      
+
       // Kiểm tra xem còn comment nào sau trang hiện tại không
       const hasMore = allComments.length > endIndex;
       setHasMorePages(hasMore);
-      
+
       // Tính tổng số trang dựa trên tổng số comments
       const calculatedTotalPages = Math.ceil(allComments.length / 5) || 1;
       setTotalPages(calculatedTotalPages);
@@ -100,7 +100,7 @@ export default function RecipeDetail() {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5; // Hiển thị tối đa 5 số trang
-    
+
     if (totalPages <= maxVisible) {
       // Nếu tổng số trang <= 5, hiển thị tất cả
       for (let i = 0; i < totalPages; i++) {
@@ -125,7 +125,7 @@ export default function RecipeDetail() {
         }
       }
     }
-    
+
     return pages;
   };
 
@@ -231,8 +231,8 @@ export default function RecipeDetail() {
         const sorted =
           Array.isArray(data)
             ? [...data].sort(
-                (a, b) => (b.similarityScore || 0) - (a.similarityScore || 0)
-              )
+              (a, b) => (b.similarityScore || 0) - (a.similarityScore || 0)
+            )
             : [];
         setSimilarRecipes(sorted);
       } catch (err) {
@@ -262,7 +262,7 @@ export default function RecipeDetail() {
 
           <h1 className="title_recipe">{recipe.title}</h1>
 
-          <p className="subtitle">Perfect For All Soup Bases</p>
+          {/* <p className="subtitle">Perfect For All Soup Bases</p> */}
 
           <div className="ingredients-table">
             {recipe.ingredients?.map((item, i) => (
@@ -279,7 +279,14 @@ export default function RecipeDetail() {
         {/* RIGHT SIDE IMAGE */}
         <div className="right-image">
           <img src={recipe.imageUrl} alt={recipe.title} />
+          <div className="badge top-left">
+            {recipe.mealType && <span>{recipe.mealType}</span>}
+          </div>
+          <div className="badge bottom-right">
+            {recipe.cookingTimeMinutes && <span>{recipe.cookingTimeMinutes} phút</span>}
+          </div>
         </div>
+
         <div className="instructions-section">
           <h2 className="instruction-title">Instructions</h2>
           <span>{recipe.instructions}</span>
@@ -367,23 +374,25 @@ export default function RecipeDetail() {
                       ) : (
                         <video src={m.url} />
                       )}
+
                     </div>
                   ))}
                 </div>
               )}
+              <button
+                type="submit"
+                disabled={
+                  submittingComment || uploadingMedia || !newComment.trim()
+                }
+              >
+                {submittingComment || uploadingMedia
+                  ? "Đang gửi..."
+                  : "Gửi bình luận"}
+              </button>
+
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={
-              submittingComment || uploadingMedia || !newComment.trim()
-            }
-          >
-            {submittingComment || uploadingMedia
-              ? "Đang gửi..."
-              : "Gửi bình luận"}
-          </button>
         </form>
 
         <div className="comments-list">
@@ -462,9 +471,8 @@ export default function RecipeDetail() {
                     <button
                       onClick={() => loadCommentsForPage(pageNum)}
                       disabled={loadingComments}
-                      className={`pagination-btn pagination-number ${
-                        currentPage === pageNum ? "active" : ""
-                      }`}
+                      className={`pagination-btn pagination-number ${currentPage === pageNum ? "active" : ""
+                        }`}
                     >
                       {pageNum + 1}
                     </button>
