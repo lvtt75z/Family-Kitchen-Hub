@@ -1,4 +1,4 @@
-package com.c2se04.familykitchenhub.Enum;
+package com.c2se04.familykitchenhub.enums;
 
 public enum ActivityLevel {
     // Cấu trúc: TÊN(Hệ số TDEE, Mô tả hiển thị trên UI)

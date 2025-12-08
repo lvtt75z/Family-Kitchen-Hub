@@ -1,7 +1,7 @@
 package com.c2se04.familykitchenhub.model;
 
-import com.c2se04.familykitchenhub.Enum.Gender;
-import com.c2se04.familykitchenhub.Enum.ActivityLevel;
+import com.c2se04.familykitchenhub.enums.Gender;
+import com.c2se04.familykitchenhub.enums.ActivityLevel;
 import com.c2se04.familykitchenhub.Entity.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -54,7 +54,7 @@ public class FamilyMember {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // --- [MỚI] KẾT NỐI VỚI BẢNG ALLERGIES ---
+    // KẾT NỐI VỚI BẢNG ALLERGIES ---
     // Quan hệ Many-to-Many thông qua bảng trung gian 'member_allergies'
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
