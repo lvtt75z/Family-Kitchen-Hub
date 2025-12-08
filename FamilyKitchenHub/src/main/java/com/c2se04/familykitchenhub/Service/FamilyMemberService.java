@@ -3,7 +3,7 @@ package com.c2se04.familykitchenhub.Service;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import com.c2se04.familykitchenhub.model.Allergy;
 import com.c2se04.familykitchenhub.model.FamilyMember;
-import com.c2se04.familykitchenhub.Entity.User;
+import com.c2se04.familykitchenhub.Entity.User; // Lưu ý: Kiểm tra lại package User của bạn là model hay Entity
 import com.c2se04.familykitchenhub.Repository.AllergyRepository;
 import com.c2se04.familykitchenhub.Repository.FamilyMemberRepository;
 import com.c2se04.familykitchenhub.Repository.UserRepository;
@@ -66,7 +66,6 @@ public class FamilyMemberService {
 
     // READ BY USER ID
     public List<FamilyMember> getFamilyMembersByUserId(Long userId) {
-        // Validate that user exists
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User", "id", userId);
         }
@@ -79,11 +78,20 @@ public class FamilyMemberService {
         FamilyMember existingMember = familyMemberRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("FamilyMember", "id", id));
 
-        // Update basic fields
+        // --- CẬP NHẬT CÁC TRƯỜNG DỮ LIỆU MỚI ---
         existingMember.setName(updatedDetails.getName());
         existingMember.setAge(updatedDetails.getAge());
-        existingMember.setHealthGoals(updatedDetails.getHealthGoals());
-        existingMember.setNotes(updatedDetails.getNotes());
+
+        // Cập nhật các trường nhân khẩu học & sức khỏe mới
+        existingMember.setGender(updatedDetails.getGender());
+        existingMember.setHeightCm(updatedDetails.getHeightCm());
+        existingMember.setWeightKg(updatedDetails.getWeightKg());
+        existingMember.setActivityLevel(updatedDetails.getActivityLevel());
+        existingMember.setIsAccountOwner(updatedDetails.getIsAccountOwner());
+
+        // Cập nhật sở thích & bệnh lý (thay thế cho notes/healthGoals cũ)
+        existingMember.setTastePreferences(updatedDetails.getTastePreferences());
+        existingMember.setHealthConditions(updatedDetails.getHealthConditions());
 
         // Update User if userId is provided and different
         if (userId != null) {
@@ -119,7 +127,7 @@ public class FamilyMemberService {
         familyMemberRepository.deleteById(id);
     }
 
-    // ADD ALLERGY TO FAMILY MEMBER
+    // ADD ALLERGY
     @Transactional
     public FamilyMember addAllergyToFamilyMember(Long memberId, Long allergyId) {
         FamilyMember member = familyMemberRepository.findById(memberId)
@@ -128,7 +136,6 @@ public class FamilyMemberService {
         Allergy allergy = allergyRepository.findById(allergyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Allergy", "id", allergyId));
 
-        // Check if the allergy is already associated with this member
         boolean alreadyExists = member.getAllergies().stream()
                 .anyMatch(a -> a.getId().equals(allergyId));
 
@@ -139,18 +146,16 @@ public class FamilyMemberService {
         return familyMemberRepository.save(member);
     }
 
-    // REMOVE ALLERGY FROM FAMILY MEMBER
+    // REMOVE ALLERGY
     @Transactional
     public FamilyMember removeAllergyFromFamilyMember(Long memberId, Long allergyId) {
         FamilyMember member = familyMemberRepository.findById(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("FamilyMember", "id", memberId));
 
-        // Validate that allergy exists
         if (!allergyRepository.existsById(allergyId)) {
             throw new ResourceNotFoundException("Allergy", "id", allergyId);
         }
 
-        // Remove the Allergy association
         member.getAllergies().removeIf(a -> a.getId().equals(allergyId));
 
         return familyMemberRepository.save(member);

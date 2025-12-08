@@ -1,6 +1,6 @@
 package com.c2se04.familykitchenhub.Controller;
 
-import com.c2se04.familykitchenhub.DTO.CategoryTreeDTO;
+import com.c2se04.familykitchenhub.DTO.CategoryDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeRequestDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeResponseDTO;
 import com.c2se04.familykitchenhub.DTO.Request.SetRecipeCategoriesDTO;
@@ -8,7 +8,7 @@ import com.c2se04.familykitchenhub.DTO.SimilarRecipeDTO;
 import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
 import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Recipe;
-import com.c2se04.familykitchenhub.Service.RecipeCategoryService;
+import com.c2se04.familykitchenhub.Service.CategoryService;
 import com.c2se04.familykitchenhub.Service.RecipeRecommendationService;
 import com.c2se04.familykitchenhub.Service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public class RecipeController {
     private final RecipeMapper recipeMapper; // Tiêm Mapper
 
     @Autowired
-    private RecipeCategoryService categoryService;
+    private CategoryService categoryService;
 
     @Autowired
     private RecipeRecommendationService recommendationService;
@@ -119,8 +119,8 @@ public class RecipeController {
      * Get categories for a recipe
      */
     @GetMapping("/{id}/categories")
-    public ResponseEntity<List<CategoryTreeDTO>> getRecipeCategories(@PathVariable Long id) {
-        List<CategoryTreeDTO> categories = categoryService.getCategoriesForRecipe(id);
+    public ResponseEntity<List<CategoryDTO>> getRecipeCategories(@PathVariable Long id) {
+        List<CategoryDTO> categories = categoryService.getCategoriesForRecipe(id);
         return ResponseEntity.ok(categories);
     }
 

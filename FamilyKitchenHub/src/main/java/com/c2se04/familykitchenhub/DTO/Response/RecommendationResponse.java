@@ -1,30 +1,36 @@
 package com.c2se04.familykitchenhub.DTO.Response;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
+@Data
+@NoArgsConstructor
 public class RecommendationResponse {
+
+    private String status;
+
+    @JsonProperty("family_tdee")
+    private Integer familyTdee; // Tổng calo cả nhà cần
+
+    @JsonProperty("target_meal_calories")
+    private Integer targetMealCalories; // Mục tiêu calo cho bữa này
+
     private List<RecommendationItem> recommendations;
 
-    public List<RecommendationItem> getRecommendations() {
-        return recommendations;
-    }
-
-    public void setRecommendations(List<RecommendationItem> recommendations) {
-        this.recommendations = recommendations;
-    }
-
-    // Class con (Inner Class) để hứng từng mục gợi ý
+    @Data
+    @NoArgsConstructor
     public static class RecommendationItem {
         @JsonProperty("recipe_id")
         private Long recipeId;
 
-        private double score;
+        private Double score;
 
-        public Long getRecipeId() { return recipeId; }
-        public void setRecipeId(Long recipeId) { this.recipeId = recipeId; }
+        private Integer calories;
 
-        public double getScore() { return score; }
-        public void setScore(double score) { this.score = score; }
+        @JsonProperty("match_nutrition")
+        private Boolean matchNutrition;
     }
 }
-

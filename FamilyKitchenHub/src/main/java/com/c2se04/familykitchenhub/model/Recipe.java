@@ -32,9 +32,6 @@ public class Recipe {
     @Column(name = "cooking_time_minutes")
     private Integer cookingTimeMinutes;
 
-    // --- ĐIỂM SỬA CHỮA Ở ĐÂY ---
-    // Giữ tên biến là 'servings' để Service không bị lỗi
-    // Nhưng map vào cột 'serving_size' của Database mới
     @Column(name = "serving")
     private Integer servings;
 
@@ -66,6 +63,14 @@ public class Recipe {
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecipeStep> steps = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "recipe_categories",
+            joinColumns = @JoinColumn(name = "recipe_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories = new HashSet<>();
 
     // --- Constructors ---
 
@@ -119,7 +124,6 @@ public class Recipe {
         this.cookingTimeMinutes = cookingTimeMinutes;
     }
 
-    // Getter & Setter vẫn giữ tên là Servings -> Service sẽ hết đỏ
     public Integer getServings() {
         return servings;
     }
@@ -190,5 +194,12 @@ public class Recipe {
 
     public void setSteps(List<RecipeStep> steps) {
         this.steps = steps;
+    }
+    public Set<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(Set<Category> categories) {
+        this.categories = categories;
     }
 }
