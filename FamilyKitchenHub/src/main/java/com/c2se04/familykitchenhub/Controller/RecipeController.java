@@ -1,6 +1,6 @@
 package com.c2se04.familykitchenhub.Controller;
 
-import com.c2se04.familykitchenhub.DTO.CategoryTreeDTO;
+import com.c2se04.familykitchenhub.DTO.CategoryDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeRequestDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeResponseDTO;
 import com.c2se04.familykitchenhub.DTO.Request.SetRecipeCategoriesDTO;
@@ -8,7 +8,7 @@ import com.c2se04.familykitchenhub.DTO.SimilarRecipeDTO;
 import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
 import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Recipe;
-import com.c2se04.familykitchenhub.Service.RecipeCategoryService;
+import com.c2se04.familykitchenhub.Service.CategoryService;
 import com.c2se04.familykitchenhub.Service.RecipeRecommendationService;
 import com.c2se04.familykitchenhub.Service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public class RecipeController {
     private final RecipeMapper recipeMapper; // Tiêm Mapper
 
     @Autowired
-    private RecipeCategoryService categoryService;
+    private CategoryService categoryService;
 
     @Autowired
     private RecipeRecommendationService recommendationService;
@@ -68,8 +68,9 @@ public class RecipeController {
     public ResponseEntity<RecipeResponseDTO> getRecipeById(@PathVariable Long id) {
         return recipeService.getRecipeById(id)
                 .map(recipeMapper::toResponseDTO) // Chuyển Entity thành DTO
-                .map(ResponseEntity::ok)        // Nếu tìm thấy, trả về 200 OK
-                .orElse(ResponseEntity.notFound().build()); // Nếu không tìm thấy, Exception sẽ không ném ra đây, mà là 404 (do Optional)
+                .map(ResponseEntity::ok) // Nếu tìm thấy, trả về 200 OK
+                .orElse(ResponseEntity.notFound().build()); // Nếu không tìm thấy, Exception sẽ không ném ra đây, mà là
+                                                            // 404 (do Optional)
     }
 
     // GET /api/recipes/meal-type/{mealType} - READ BY MEAL TYPE
@@ -90,7 +91,8 @@ public class RecipeController {
 
     // PUT /api/recipes/{id} - UPDATE
     @PutMapping("/{id}")
-    public ResponseEntity<RecipeResponseDTO> updateRecipe(@PathVariable Long id, @RequestBody RecipeRequestDTO recipeDTO) {
+    public ResponseEntity<RecipeResponseDTO> updateRecipe(@PathVariable Long id,
+            @RequestBody RecipeRequestDTO recipeDTO) {
         // 1. Dùng Mapper: DTO -> Entity tạm thời để truyền dữ liệu cập nhật
         Recipe updateDetails = recipeMapper.toEntity(recipeDTO);
 
@@ -119,8 +121,8 @@ public class RecipeController {
      * Get categories for a recipe
      */
     @GetMapping("/{id}/categories")
-    public ResponseEntity<List<CategoryTreeDTO>> getRecipeCategories(@PathVariable Long id) {
-        List<CategoryTreeDTO> categories = categoryService.getCategoriesForRecipe(id);
+    public ResponseEntity<List<CategoryDTO>> getRecipeCategories(@PathVariable Long id) {
+        List<CategoryDTO> categories = categoryService.getCategoriesForRecipe(id);
         return ResponseEntity.ok(categories);
     }
 

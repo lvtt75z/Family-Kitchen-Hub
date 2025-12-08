@@ -2,7 +2,6 @@ package com.c2se04.familykitchenhub.Service;
 
 import com.c2se04.familykitchenhub.DTO.SimilarRecipeDTO;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
-import com.c2se04.familykitchenhub.Repository.RecipeCategoryMapRepository;
 import com.c2se04.familykitchenhub.Repository.RecipeIngredientRepository;
 import com.c2se04.familykitchenhub.Repository.RecipeRepository;
 import com.c2se04.familykitchenhub.model.Recipe;
@@ -27,16 +26,13 @@ public class RecipeRecommendationService {
     private RecipeRepository recipeRepository;
 
     @Autowired
-    private RecipeCategoryMapRepository categoryMapRepository;
-
-    @Autowired
     private RecipeIngredientRepository recipeIngredientRepository;
 
     /**
      * Find similar recipes based on categories, ingredients, and cooking time
      * 
      * @param recipeId Target recipe ID
-     * @param limit Maximum number of results (default 10)
+     * @param limit    Maximum number of results (default 10)
      * @return List of similar recipes sorted by similarity score (descending)
      */
     public List<SimilarRecipeDTO> findSimilarRecipes(Long recipeId, Integer limit) {
@@ -57,11 +53,10 @@ public class RecipeRecommendationService {
         // Calculate similarity for each recipe
         List<SimilarRecipeDTO> results = allRecipes.stream()
                 .map(recipe -> calculateSimilarity(
-                    recipe, 
-                    targetCategoryIds, 
-                    targetIngredientIds, 
-                    targetCookingTime
-                ))
+                        recipe,
+                        targetCategoryIds,
+                        targetIngredientIds,
+                        targetCookingTime))
                 .filter(dto -> dto.getSimilarityScore() > 0) // Only return if score > 0
                 .sorted((a, b) -> Double.compare(b.getSimilarityScore(), a.getSimilarityScore()))
                 .limit(limit != null ? limit : 10)
@@ -78,10 +73,10 @@ public class RecipeRecommendationService {
      * 2. Ingredients: +2 points per shared ingredient
      * 3. Cooking Time: +1 point if difference ≤ 15 minutes
      */
-    private SimilarRecipeDTO calculateSimilarity(Recipe candidate, 
-                                                  Set<Long> targetCategories,
-                                                  Set<Long> targetIngredients,
-                                                  Integer targetCookingTime) {
+    private SimilarRecipeDTO calculateSimilarity(Recipe candidate,
+            Set<Long> targetCategories,
+            Set<Long> targetIngredients,
+            Integer targetCookingTime) {
         double score = 0;
         List<String> reasons = new ArrayList<>();
 
@@ -93,9 +88,9 @@ public class RecipeRecommendationService {
         // FACTOR 1: Shared Categories (+5 points each)
         // ============================================
         Set<Long> commonCategories = new HashSet<>(targetCategories);
-        commonCategories.retainAll(candidateCategories);  // Find intersection
+        commonCategories.retainAll(candidateCategories); // Find intersection
         if (!commonCategories.isEmpty()) {
-            score += commonCategories.size() * 5;  // +5 points per category
+            score += commonCategories.size() * 5; // +5 points per category
             reasons.add(commonCategories.size() + " danh mục chung");
         }
 
@@ -103,9 +98,9 @@ public class RecipeRecommendationService {
         // FACTOR 2: Shared Ingredients (+2 points each)
         // ============================================
         Set<Long> commonIngredients = new HashSet<>(targetIngredients);
-        commonIngredients.retainAll(candidateIngredients);  // Find intersection
+        commonIngredients.retainAll(candidateIngredients); // Find intersection
         if (!commonIngredients.isEmpty()) {
-            score += commonIngredients.size() * 2;  // +2 points per ingredient
+            score += commonIngredients.size() * 2; // +2 points per ingredient
             reasons.add(commonIngredients.size() + " nguyên liệu chung");
         }
 
@@ -114,8 +109,8 @@ public class RecipeRecommendationService {
         // ============================================
         if (targetCookingTime != null && candidate.getCookingTimeMinutes() != null) {
             int timeDiff = Math.abs(targetCookingTime - candidate.getCookingTimeMinutes());
-            if (timeDiff <= 15) {  // Within 15 minutes
-                score += 1;  // +1 bonus point
+            if (timeDiff <= 15) { // Within 15 minutes
+                score += 1; // +1 bonus point
                 reasons.add("Thời gian nấu gần nhau");
             }
         }
@@ -124,13 +119,13 @@ public class RecipeRecommendationService {
         // Build result DTO with score and explanation
         // ============================================
         SimilarRecipeDTO dto = new SimilarRecipeDTO(
-            candidate.getId(),
-            candidate.getTitle(),
-            candidate.getImageUrl(),
-            candidate.getCookingTimeMinutes(),
-            candidate.getServings(),
-            score,  // Total similarity score
-            String.join(", ", reasons)  // Human-readable explanation
+                candidate.getId(),
+                candidate.getTitle(),
+                candidate.getImageUrl(),
+                candidate.getCookingTimeMinutes(),
+                candidate.getServings(),
+                score, // Total similarity score
+                String.join(", ", reasons) // Human-readable explanation
         );
 
         return dto;
@@ -140,8 +135,12 @@ public class RecipeRecommendationService {
      * Get category IDs for a recipe
      */
     private Set<Long> getCategoryIds(Long recipeId) {
-        return categoryMapRepository.findByRecipeId(recipeId).stream()
-                .map(map -> map.getCategoryId())
+        Recipe recipe = recipeRepository.findById(recipeId).orElse(null);
+        if (recipe == null) {
+            return new HashSet<>();
+        }
+        return recipe.getCategories().stream()
+                .map(category -> category.getId())
                 .collect(Collectors.toSet());
     }
 
@@ -154,7 +153,3 @@ public class RecipeRecommendationService {
                 .collect(Collectors.toSet());
     }
 }
-
-
-
-
