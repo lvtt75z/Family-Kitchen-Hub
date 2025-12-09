@@ -50,6 +50,8 @@ public class SecurityConfig {
                                 "/api/recipes/*/comments",          // POST/GET comments for a recipe
                                 "/api/recipes/comments/**"          // update status, etc.
                         ).permitAll()
+                        // Make ingredient APIs public
+                        .requestMatchers("/api/ingredients/**").permitAll()
                         // Other endpoints require authentication
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()

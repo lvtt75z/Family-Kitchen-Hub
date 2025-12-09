@@ -2,7 +2,6 @@ package com.c2se04.familykitchenhub.Service;
 
 import com.c2se04.familykitchenhub.DTO.SimilarRecipeDTO;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
-import com.c2se04.familykitchenhub.Repository.RecipeCategoryMapRepository;
 import com.c2se04.familykitchenhub.Repository.RecipeIngredientRepository;
 import com.c2se04.familykitchenhub.Repository.RecipeRepository;
 import com.c2se04.familykitchenhub.model.Recipe;
@@ -25,9 +24,6 @@ public class RecipeRecommendationService {
 
     @Autowired
     private RecipeRepository recipeRepository;
-
-    @Autowired
-    private RecipeCategoryMapRepository categoryMapRepository;
 
     @Autowired
     private RecipeIngredientRepository recipeIngredientRepository;
@@ -140,8 +136,12 @@ public class RecipeRecommendationService {
      * Get category IDs for a recipe
      */
     private Set<Long> getCategoryIds(Long recipeId) {
-        return categoryMapRepository.findByRecipeId(recipeId).stream()
-                .map(map -> map.getCategoryId())
+        Recipe recipe = recipeRepository.findById(recipeId).orElse(null);
+        if (recipe == null) {
+            return new HashSet<>();
+        }
+        return recipe.getCategories().stream()
+                .map(category -> category.getId())
                 .collect(Collectors.toSet());
     }
 

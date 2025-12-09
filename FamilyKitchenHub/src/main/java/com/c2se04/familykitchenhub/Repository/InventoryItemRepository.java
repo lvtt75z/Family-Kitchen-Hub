@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,4 +31,11 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
     @Override
     @EntityGraph(attributePaths = {"ingredient"})
     Optional<InventoryItem> findById(Long id);
+
+    /**
+     * Tìm tất cả InventoryItem sắp hết hạn (trong vòng 2 ngày tới) và chưa được thông báo
+     * Dùng cho scheduler tự động gửi cảnh báo
+     */
+    @EntityGraph(attributePaths = {"ingredient", "user"})
+    List<InventoryItem> findByExpirationDateLessThanEqualAndExpirationNotifiedFalse(LocalDate expirationDate);
 }

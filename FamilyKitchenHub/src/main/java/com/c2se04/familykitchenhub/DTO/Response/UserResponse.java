@@ -1,6 +1,6 @@
 package com.c2se04.familykitchenhub.DTO.Response;
 
-import com.c2se04.familykitchenhub.Enum.Role;
+import com.c2se04.familykitchenhub.enums.Role;
 
 import java.time.LocalDateTime;
 

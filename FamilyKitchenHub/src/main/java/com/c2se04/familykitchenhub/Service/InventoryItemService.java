@@ -47,8 +47,17 @@ public class InventoryItemService {
         // 2. Thiết lập mối quan hệ
         item.setUser(user);
         item.setIngredient(ingredient);
+        
+        // 3. Set unit từ Ingredient (bắt buộc vì cột unit không thể null)
+        if (ingredient.getUnit() != null && !ingredient.getUnit().trim().isEmpty()) {
+            item.setUnit(ingredient.getUnit());
+        } else {
+            // Fallback: sử dụng "g" (gram) làm đơn vị mặc định cho nguyên liệu thực phẩm
+            // Thay vì "unit" để có giá trị hợp lý hơn
+            item.setUnit("g");
+        }
 
-        // 3. Lưu lại
+        // 4. Lưu lại
         return inventoryItemRepository.save(item);
     }
 

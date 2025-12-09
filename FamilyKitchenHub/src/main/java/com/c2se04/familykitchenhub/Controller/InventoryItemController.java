@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -114,10 +116,37 @@ public class InventoryItemController {
         dto.setExpirationNotified(Boolean.TRUE.equals(item.getExpirationNotified()));
         dto.setExpirationNotifiedAt(item.getExpirationNotifiedAt());
         dto.setExpirationAcknowledgedAt(item.getExpirationAcknowledgedAt());
+        
+        // Tính toán ngày cảnh báo và trạng thái cảnh báo
+        LocalDate today = LocalDate.now();
+        if (item.getExpirationDate() != null) {
+            LocalDate warningDate = item.getExpirationDate().minusDays(2);
+            dto.setExpirationWarningDate(warningDate);
+            
+            // Kiểm tra item có đang cần cảnh báo không
+            // Cần cảnh báo nếu: hôm nay >= ngày cảnh báo VÀ chưa hết hạn
+            boolean needsWarning = !today.isBefore(warningDate) && !today.isAfter(item.getExpirationDate());
+            dto.setNeedsWarning(needsWarning);
+            
+            // Kiểm tra item đã hết hạn chưa
+            boolean isExpired = today.isAfter(item.getExpirationDate());
+            dto.setExpired(isExpired);
+        } else {
+            dto.setNeedsWarning(false);
+            dto.setExpired(false);
+        }
+        
         if (item.getIngredient() != null) {
             dto.setIngredientId(item.getIngredient().getId());
             dto.setIngredientName(item.getIngredient().getName());
-            dto.setUnit(item.getIngredient().getUnit());
+            // Ưu tiên lấy unit từ InventoryItem, nếu null thì lấy từ Ingredient
+            if (item.getUnit() != null && !item.getUnit().trim().isEmpty()) {
+                dto.setUnit(item.getUnit());
+            } else if (item.getIngredient().getUnit() != null && !item.getIngredient().getUnit().trim().isEmpty()) {
+                dto.setUnit(item.getIngredient().getUnit());
+            } else {
+                dto.setUnit("g"); // Fallback: sử dụng "g" (gram) thay vì "unit"
+            }
         }
         return dto;
     }

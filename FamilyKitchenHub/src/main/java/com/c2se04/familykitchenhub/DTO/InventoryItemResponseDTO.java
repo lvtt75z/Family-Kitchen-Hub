@@ -14,6 +14,9 @@ public class InventoryItemResponseDTO {
     private Long ingredientId;
     private String ingredientName;
     private String unit;
+    private LocalDate expirationWarningDate; // Ngày cảnh báo (thường là 2 ngày trước expirationDate)
+    private boolean needsWarning; // true nếu item đang trong trạng thái cần cảnh báo (hôm nay >= expirationWarningDate và chưa hết hạn)
+    private boolean isExpired; // true nếu item đã hết hạn (hôm nay > expirationDate)
 
     public Long getId() {
         return id;
@@ -93,6 +96,30 @@ public class InventoryItemResponseDTO {
 
     public void setExpirationAcknowledgedAt(LocalDateTime expirationAcknowledgedAt) {
         this.expirationAcknowledgedAt = expirationAcknowledgedAt;
+    }
+
+    public LocalDate getExpirationWarningDate() {
+        return expirationWarningDate;
+    }
+
+    public void setExpirationWarningDate(LocalDate expirationWarningDate) {
+        this.expirationWarningDate = expirationWarningDate;
+    }
+
+    public boolean isNeedsWarning() {
+        return needsWarning;
+    }
+
+    public void setNeedsWarning(boolean needsWarning) {
+        this.needsWarning = needsWarning;
+    }
+
+    public boolean isExpired() {
+        return isExpired;
+    }
+
+    public void setExpired(boolean expired) {
+        isExpired = expired;
     }
 }
 

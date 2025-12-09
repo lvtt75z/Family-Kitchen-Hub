@@ -5,14 +5,19 @@ import com.c2se04.familykitchenhub.DTO.Response.AuthResponse;
 import com.c2se04.familykitchenhub.DTO.Response.MessageResponse;
 import com.c2se04.familykitchenhub.DTO.Response.UserResponse;
 import com.c2se04.familykitchenhub.Entity.User;
-import com.c2se04.familykitchenhub.Enum.Role;
 import com.c2se04.familykitchenhub.Exception.BadRequestException;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import com.c2se04.familykitchenhub.Jwt.JwtTokenProvider;
 import com.c2se04.familykitchenhub.Mapper.UserMapper;
+import com.c2se04.familykitchenhub.Repository.FamilyMemberRepository;
 import com.c2se04.familykitchenhub.Repository.UserRepository;
 import com.c2se04.familykitchenhub.Util.PasswordUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.c2se04.familykitchenhub.Util.ValidationUtil;
+import com.c2se04.familykitchenhub.enums.ActivityLevel;
+import com.c2se04.familykitchenhub.enums.Gender;
+import com.c2se04.familykitchenhub.enums.Role;
+import com.c2se04.familykitchenhub.model.FamilyMember;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,58 +26,43 @@ import java.util.Random;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
-    
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
-    
-    @Autowired
-    private EmailService emailService;
-    
-    @Autowired
-    private UserMapper userMapper;
-    
+
+    private final UserRepository userRepository;
+    private final FamilyMemberRepository familyMemberRepository;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final EmailService emailService;
+    private final UserMapper userMapper;
+
     /**
-     * Register a new user
-     * @param request Registration request
-     * @return Success message
+     * 1. REGISTER (Đăng ký & Tạo Profile mặc định)
      */
     @Transactional
     public MessageResponse register(RegisterRequest request) {
-        // Validate username format
-        String usernameError = com.c2se04.familykitchenhub.Util.ValidationUtil.getUsernameValidationError(request.getUsername());
-        if (usernameError != null) {
-            throw new BadRequestException(usernameError);
-        }
-        
-        // Validate password complexity
-        String passwordError = com.c2se04.familykitchenhub.Util.ValidationUtil.getPasswordValidationError(request.getPassword());
-        if (passwordError != null) {
-            throw new BadRequestException(passwordError);
-        }
-        
-        // Validate password and repeat password match
+        // Validate inputs
+        String usernameError = ValidationUtil.getUsernameValidationError(request.getUsername());
+        if (usernameError != null) throw new BadRequestException(usernameError);
+
+        String passwordError = ValidationUtil.getPasswordValidationError(request.getPassword());
+        if (passwordError != null) throw new BadRequestException(passwordError);
+
         if (!request.getPassword().equals(request.getRepeatPassword())) {
             throw new BadRequestException("Password and repeat password do not match");
         }
-        
-        // Check if username already exists
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Username is already taken");
         }
-        
-        // Check if email already exists
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email is already registered");
         }
-        
-        // Generate OTP code
+
+        // Tạo OTP
         String otpCode = generateOtpCode();
-        
-        // Create new user
+
+        // Tạo User
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
@@ -82,156 +72,156 @@ public class AuthService {
         user.setIsVerified(false);
         user.setVerificationCode(otpCode);
         user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(10));
-        
-        userRepository.save(user);
-        
-        // Send OTP email
+
+        User savedUser = userRepository.save(user);
+
+        // Tạo Profile FamilyMember chủ hộ
+        createDefaultFamilyMemberProfile(savedUser);
+
+        // Gửi Email
         emailService.sendOtpEmail(user.getEmail(), otpCode);
-        
+
         return new MessageResponse("Registration successful! Please check your email for verification code.", true);
     }
-    
+
+    private void createDefaultFamilyMemberProfile(User user) {
+        FamilyMember ownerProfile = new FamilyMember();
+        ownerProfile.setUser(user);
+        ownerProfile.setName(user.getFullName() != null ? user.getFullName() : "Me");
+        ownerProfile.setIsAccountOwner(true);
+        ownerProfile.setAge(30);
+        ownerProfile.setGender(Gender.MALE);
+        ownerProfile.setHeightCm(170.0f);
+        ownerProfile.setWeightKg(65.0f);
+        ownerProfile.setActivityLevel(ActivityLevel.SEDENTARY);
+        familyMemberRepository.save(ownerProfile);
+    }
+
     /**
-     * Verify email with OTP
-     * @param request OTP verification request
-     * @return Success message
+     * 2. VERIFY EMAIL (Hàm bạn đang bị thiếu)
      */
     @Transactional
     public MessageResponse verifyEmail(VerifyOtpRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        if (user.getIsVerified()) {
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+
+        if (Boolean.TRUE.equals(user.getIsVerified())) {
             throw new BadRequestException("Email is already verified");
         }
-        
-        if (user.getVerificationCode() == null || 
-            !user.getVerificationCode().equals(request.getOtpCode())) {
+
+        if (user.getVerificationCode() == null ||
+                !user.getVerificationCode().equals(request.getOtpCode())) {
             throw new BadRequestException("Invalid OTP code");
         }
-        
+
         if (user.getVerificationCodeExpiry().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("OTP code has expired");
         }
-        
+
         user.setIsVerified(true);
         user.setVerificationCode(null);
         user.setVerificationCodeExpiry(null);
         userRepository.save(user);
-        
+
         return new MessageResponse("Email verified successfully!", true);
     }
-    
+
     /**
-     * Resend OTP code
-     * @param request Resend OTP request
-     * @return Success message
+     * 3. RESEND OTP
      */
     @Transactional
     public MessageResponse resendOtp(ResendOtpRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        if (user.getIsVerified()) {
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+
+        if (Boolean.TRUE.equals(user.getIsVerified())) {
             throw new BadRequestException("Email is already verified");
         }
-        
+
         String otpCode = generateOtpCode();
         user.setVerificationCode(otpCode);
         user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(10));
         userRepository.save(user);
-        
+
         emailService.sendOtpEmail(user.getEmail(), otpCode);
-        
+
         return new MessageResponse("OTP code has been resent to your email", true);
     }
-    
+
     /**
-     * Login user
-     * @param request Login request
-     * @return Authentication response with JWT token
+     * 4. LOGIN
      */
     public AuthResponse login(LoginRequest request) {
+        // Đảm bảo UserRepository có hàm findByUsernameOrEmail
         User user = userRepository.findByUsernameOrEmail(
-                request.getUsernameOrEmail(), 
+                request.getUsernameOrEmail(),
                 request.getUsernameOrEmail()
         ).orElseThrow(() -> new BadRequestException("Invalid username/email or password"));
-        
+
         if (!PasswordUtil.verifyPassword(request.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid username/email or password");
         }
-        
-        if (!user.getIsVerified()) {
+
+        if (!Boolean.TRUE.equals(user.getIsVerified())) {
             throw new BadRequestException("Please verify your email before logging in");
         }
-        
+
         String token = jwtTokenProvider.generateToken(user.getUsername());
         UserResponse userResponse = userMapper.toUserResponse(user);
-        
+
         return new AuthResponse(token, userResponse);
     }
-    
+
     /**
-     * Forgot password - send reset token
-     * @param request Forgot password request
-     * @return Success message
+     * 5. FORGOT PASSWORD
      */
     @Transactional
     public MessageResponse forgotPassword(ForgotPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with this email"));
-        
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+
         String resetToken = UUID.randomUUID().toString();
         user.setResetToken(resetToken);
         user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
         userRepository.save(user);
-        
+
         emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
-        
+
         return new MessageResponse("Password reset instructions have been sent to your email", true);
     }
-    
+
     /**
-     * Reset password with token
-     * @param request Reset password request
-     * @return Success message
+     * 6. RESET PASSWORD
      */
     @Transactional
     public MessageResponse resetPassword(ResetPasswordRequest request) {
         User user = userRepository.findByResetToken(request.getResetToken())
                 .orElseThrow(() -> new BadRequestException("Invalid reset token"));
-        
+
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Reset token has expired");
         }
-        
-        // Validate password complexity
-        String passwordError = com.c2se04.familykitchenhub.Util.ValidationUtil.getPasswordValidationError(request.getNewPassword());
+
+        String passwordError = ValidationUtil.getPasswordValidationError(request.getNewPassword());
         if (passwordError != null) {
             throw new BadRequestException(passwordError);
         }
-        
-        // Validate password and repeat password match
+
         if (!request.getNewPassword().equals(request.getRepeatPassword())) {
             throw new BadRequestException("Password and repeat password do not match");
         }
-        
+
         user.setPassword(PasswordUtil.hashPassword(request.getNewPassword()));
         user.setResetToken(null);
         user.setResetTokenExpiry(null);
         userRepository.save(user);
-        
+
         return new MessageResponse("Password has been reset successfully", true);
     }
-    
-    /**
-     * Generate 6-digit OTP code
-     * @return OTP code
-     */
+
     private String generateOtpCode() {
         Random random = new Random();
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
 }
-

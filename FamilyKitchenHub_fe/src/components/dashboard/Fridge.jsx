@@ -1,26 +1,28 @@
-// ...existing code...
-import React, { useState, useEffect } from "react";
-import axios from "../../hooks/axios"; // file cấu hình axios riêng
+import React, { useState, useEffect, useRef } from "react";
+import axios from "../../hooks/axios";
 import "./../../styles/FridgeManager.css";
 import bgIngredients from "../../assets/bgIg3.jpg";
-import AddIngredientModal from "../AddIngredientScreen";
 import { Plus, MoreVertical } from "lucide-react";
 
 export default function FridgeManager() {
-  const [ingredients, setIngredients] = useState([]);
+  const [ingredients, setIngredients] = useState([]); // Inventory items
   const [showModal, setShowModal] = useState(false);
-
-  const [showIngredientModal, setShowIngredientModal] = useState(false);
+  
+  // Ingredients list for dropdown
+  const [availableIngredients, setAvailableIngredients] = useState([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchTimeoutRef = useRef(null);
 
   const [newIngredient, setNewIngredient] = useState({
     ingredientId: "",
     ingredientName: "",
-    quantity: "",
     unit: "",
+    quantity: "",
     expirationDate: "",
+    purchasedAt: "",
   });
-
-  const token = localStorage.getItem("token");
 
   // GET inventory list
   useEffect(() => {
@@ -32,12 +34,7 @@ export default function FridgeManager() {
         const userData = JSON.parse(userDataString);
         const userId = userData.id;
 
-        const res = await axios.get(
-          `http://localhost:8080/api/inventory/user/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get(`/inventory/user/${userId}`);
         setIngredients(res.data);
       } catch (error) {
         console.error("Error fetching ingredients:", error);
@@ -45,49 +42,146 @@ export default function FridgeManager() {
     };
 
     fetchIngredients();
-  }, [token]);
+  }, []);
+
+  // Load all ingredients for dropdown
+  useEffect(() => {
+    const loadIngredients = async () => {
+      try {
+        const res = await axios.get("/ingredients");
+        setAvailableIngredients(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.error("Error loading ingredients:", error);
+      }
+    };
+    loadIngredients();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showDropdown && !event.target.closest('.ingredient-dropdown-container')) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  // Search ingredients with debounce
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // If search keyword is empty, don't search but keep current list
+    if (!searchKeyword.trim()) {
+      return;
+    }
+
+    // Set debounce timeout for search
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        const res = await axios.get("/ingredients/search", {
+          params: { keyword: searchKeyword.trim() },
+        });
+        setAvailableIngredients(Array.isArray(res.data) ? res.data : []);
+        setShowDropdown(true);
+      } catch (error) {
+        console.error("Error searching ingredients:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    // Cleanup
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchKeyword]);
 
   // POST add ingredient
   const handleAddIngredient = async (e) => {
     e.preventDefault();
     try {
       const userDataString = localStorage.getItem("user");
+      if (!userDataString) {
+        alert("Vui lòng đăng nhập lại.");
+        return;
+      }
+
       const userData = JSON.parse(userDataString);
       const userId = userData.user?.id || userData.id;
 
-      const payload = {
-        userId: userId,
-        ingredientId: newIngredient.ingredientId || undefined,
-        ingredientName: newIngredient.ingredientName || undefined,
-        quantity: newIngredient.quantity
-          ? parseFloat(newIngredient.quantity)
-          : 0,
-        unit: newIngredient.unit || undefined,
-        expirationDate: newIngredient.expirationDate || undefined,
-      };
+      if (!userId) {
+        alert("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
+        return;
+      }
 
-      await axios.post("http://localhost:8080/api/inventory", payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Validate: cần có ingredientId (bắt buộc theo backend)
+      if (!newIngredient.ingredientId) {
+        alert("Vui lòng chọn nguyên liệu từ danh sách.");
+        return;
+      }
+
+      // Validate: cần có quantity
+      if (!newIngredient.quantity) {
+        alert("Vui lòng nhập số lượng.");
+        return;
+      }
+
+      // Chuẩn bị payload theo format backend yêu cầu
+      const payload = {
+        userId: Number(userId),
+        ingredientId: Number(newIngredient.ingredientId),
+        quantity: parseFloat(newIngredient.quantity),
+      };
+      
+      // Thêm expirationDate nếu có
+      if (newIngredient.expirationDate) {
+        payload.expirationDate = newIngredient.expirationDate;
+      }
+      
+      // Thêm purchasedAt (ngày mua) - nếu không có thì dùng ngày hiện tại
+      if (newIngredient.purchasedAt) {
+        payload.purchasedAt = newIngredient.purchasedAt;
+      } else {
+        // Mặc định là ngày hiện tại (format YYYY-MM-DD)
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        payload.purchasedAt = `${year}-${month}-${day}`;
+      }
+
+      console.log("Sending payload:", payload); // Debug log
+      await axios.post("/inventory", payload);
 
       setShowModal(false);
       setNewIngredient({
         ingredientId: "",
         ingredientName: "",
-        quantity: "",
         unit: "",
+        quantity: "",
         expirationDate: "",
+        purchasedAt: "",
       });
+      setSearchKeyword("");
+      setShowDropdown(false);
 
-      const res = await axios.get(
-        `http://localhost:8080/api/inventory/user/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await axios.get(`/inventory/user/${userId}`);
       setIngredients(res.data);
     } catch (error) {
       console.error("Error adding ingredient:", error);
+      // Hiển thị thông báo lỗi chi tiết hơn
+      const errorMessage = error.response?.data?.message || error.message || "Không thể thêm nguyên liệu. Vui lòng thử lại.";
+      alert(errorMessage);
     }
   };
 
@@ -186,12 +280,6 @@ export default function FridgeManager() {
           <div className="modal">
             <div className="modal-header">
               <h3>Add Inventory Item</h3>
-
-              {/* Nút mở modal thứ hai */}
-              <button onClick={() => setShowIngredientModal(true)}>
-                Add Ingredients
-              </button>
-
               <button className="icon-btn" onClick={() => setShowModal(false)}>
                 ✖
               </button>
@@ -199,22 +287,103 @@ export default function FridgeManager() {
 
             <form className="modal-form" onSubmit={handleAddIngredient}>
               <label>
-                Ingredient Name
-                <input
-                  type="text"
-                  value={newIngredient.ingredientName}
-                  onChange={(e) =>
-                    setNewIngredient({
-                      ...newIngredient,
-                      ingredientId: e.target.value,
-                    })
-                  }
-                  placeholder="e.g. 1"
-                />
+                Ingredient (Nguyên liệu)
+                <div className="ingredient-dropdown-container" style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    value={searchKeyword}
+                    onChange={(e) => {
+                      setSearchKeyword(e.target.value);
+                      setShowDropdown(true);
+                    }}
+                    onFocus={() => {
+                      if (availableIngredients.length > 0) {
+                        setShowDropdown(true);
+                      }
+                    }}
+                    placeholder="Tìm kiếm nguyên liệu..."
+                    required
+                    style={{ width: "100%" }}
+                  />
+                  {isSearching && (
+                    <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)" }}>
+                      Đang tìm...
+                    </span>
+                  )}
+                  {showDropdown && availableIngredients.length > 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        backgroundColor: "white",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        maxHeight: "200px",
+                        overflowY: "auto",
+                        zIndex: 1000,
+                        marginTop: "4px",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      {availableIngredients.map((ing) => (
+                        <div
+                          key={ing.id}
+                          onClick={() => {
+                            setNewIngredient({
+                              ...newIngredient,
+                              ingredientId: ing.id,
+                              ingredientName: ing.name,
+                              unit: ing.unit || "",
+                            });
+                            setSearchKeyword(`${ing.name} (${ing.unit})`);
+                            setShowDropdown(false);
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = "#f5f5f5";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = "white";
+                          }}
+                        >
+                          {ing.name} ({ing.unit})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {newIngredient.ingredientId && (
+                  <small style={{ color: "#666", marginTop: "4px", display: "block" }}>
+                    Đã chọn: {newIngredient.ingredientName}
+                  </small>
+                )}
               </label>
 
+              {newIngredient.ingredientId && newIngredient.unit && (
+                <label>
+                  Unit (Đơn vị)
+                  <input
+                    type="text"
+                    value={newIngredient.unit}
+                    readOnly
+                    style={{
+                      backgroundColor: "#f5f5f5",
+                      cursor: "not-allowed",
+                      color: "#666",
+                    }}
+                    placeholder="Đơn vị sẽ hiển thị sau khi chọn nguyên liệu"
+                  />
+                </label>
+              )}
+
               <label>
-                Quantity
+                Quantity (Số lượng)
                 <input
                   type="number"
                   step="any"
@@ -231,19 +400,6 @@ export default function FridgeManager() {
               </label>
 
               <label>
-                Unit
-                <input
-                  type="text"
-                  value={newIngredient.unit}
-                  onChange={(e) =>
-                    setNewIngredient({ ...newIngredient, unit: e.target.value })
-                  }
-                  placeholder="e.g. cái, kg"
-                  required
-                />
-              </label>
-
-              <label>
                 Expiration Date
                 <input
                   type="date"
@@ -252,6 +408,20 @@ export default function FridgeManager() {
                     setNewIngredient({
                       ...newIngredient,
                       expirationDate: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Purchased Date (Ngày mua)
+                <input
+                  type="date"
+                  value={newIngredient.purchasedAt}
+                  onChange={(e) =>
+                    setNewIngredient({
+                      ...newIngredient,
+                      purchasedAt: e.target.value,
                     })
                   }
                 />
@@ -274,26 +444,6 @@ export default function FridgeManager() {
         </div>
       )}
 
-      {/* Modal 2: Add Ingredients Modal */}
-      {showIngredientModal && (
-        <AddIngredientModal
-          onClose={() => {
-            setShowIngredientModal(false);
-            setShowModal(true);
-          }}
-          onSelect={(selected) => {
-            // 🎯 Nhận dữ liệu từ Modal 2
-            setNewIngredient((prev) => ({
-              ...prev,
-              ingredientName: selected.ingredientName,
-              unit: selected.unit,
-            }));
-
-            setShowIngredientModal(false); // đóng modal 2
-            setShowModal(true); // mở modal 1 lại
-          }}
-        />
-      )}
     </div>
   );
 }
