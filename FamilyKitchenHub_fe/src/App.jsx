@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import VerifyEmail from "./pages/VerifyEmail";
 import FamilyProfiles from "./components/dashboard/FamilyProfile";
 import MealPlanner from "./components/dashboard/MealPlaner";
+import SmartRecommendation from "./components/dashboard/SmartRecommendation";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Test from"./layouts/header";
@@ -46,6 +47,7 @@ function App() {
           <Route path="familyProfile" element={<FamilyProfiles/>} />
            <Route path="mealPlaner" element={<MealPlanner/>} />
           <Route path="editprofile" element={<EditProfile />} />
+          <Route path="recommendations" element={<SmartRecommendation />} />
         </Route>
       </Routes>
     </BrowserRouter>
