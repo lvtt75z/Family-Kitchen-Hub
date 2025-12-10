@@ -1,6 +1,8 @@
 package com.c2se04.familykitchenhub.Controller;
 
+import com.c2se04.familykitchenhub.DTO.Request.EditProfileRequestDTO;
 import com.c2se04.familykitchenhub.DTO.Request.UserRequestDTO;
+import com.c2se04.familykitchenhub.DTO.Response.EditProfileResponseDTO;
 import com.c2se04.familykitchenhub.DTO.Response.UserResponseDTO;
 import com.c2se04.familykitchenhub.Entity.User; // Import từ model (entity đã chuẩn hóa)
 import com.c2se04.familykitchenhub.Service.UserService;
@@ -80,5 +82,21 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // 6. GET USER PROFILE
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<EditProfileResponseDTO> getUserProfile(@PathVariable Long id) {
+        EditProfileResponseDTO profile = userService.getProfile(id);
+        return ResponseEntity.ok(profile);
+    }
+
+    // 7. UPDATE USER PROFILE
+    @PutMapping("/{id}/profile")
+    public ResponseEntity<EditProfileResponseDTO> updateUserProfile(
+            @PathVariable Long id,
+            @RequestBody EditProfileRequestDTO requestDTO) {
+        EditProfileResponseDTO updatedProfile = userService.updateProfile(id, requestDTO);
+        return ResponseEntity.ok(updatedProfile);
     }
 }

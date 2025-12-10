@@ -50,10 +50,23 @@ const EditProfile = () => {
             try {
                 const userDataString = localStorage.getItem("user");
                 const userData = userDataString ? JSON.parse(userDataString) : null;
-                const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
-                if (!userId) return;
+                let userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
+                
+                // Convert to number if it's a string
+                if (userId) {
+                    userId = Number(userId);
+                    if (isNaN(userId) || userId <= 0) {
+                        console.warn("Invalid userId, using default values");
+                        return;
+                    }
+                } else {
+                    console.warn("No userId found, using default values");
+                    return;
+                }
 
+                console.log(`Fetching profile for userId: ${userId}`);
                 const { data } = await axios.get(`/users/${userId}/profile`);
+                console.log("Profile data received:", data);
 
                 setFormData({
                     fullName: data.fullName || '',
@@ -71,7 +84,14 @@ const EditProfile = () => {
                     }
                 });
             } catch (err) {
-                console.error("Failed to load profile", err);
+                // Silently fail - form will use default values
+                // Log detailed error for debugging
+                console.error("Failed to load profile (using defaults):", {
+                    status: err.response?.status,
+                    statusText: err.response?.statusText,
+                    data: err.response?.data,
+                    message: err.message
+                });
             }
         };
 
@@ -85,38 +105,60 @@ const EditProfile = () => {
         }));
     };
 
-    const handleAgeGroupChange = (field) => {
-        setFormData(prev => ({
-            ...prev,
-            ageGroups: {
-                ...prev.ageGroups,
-                [field]: !prev.ageGroups[field]
-            }
-        }));
-    };
 
     const handleSubmit = async () => {
         // Lấy userId từ localStorage (theo convention các màn khác)
         const userDataString = localStorage.getItem("user");
         const userData = userDataString ? JSON.parse(userDataString) : null;
-        const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId") || '1';
+        let userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
+        
+        // Validate userId
+        if (!userId) {
+            setSnackbar({
+                open: true,
+                message: 'User ID not found. Please login again.',
+                severity: 'error'
+            });
+            return;
+        }
+        
+        // Convert to number
+        userId = Number(userId);
+        if (isNaN(userId) || userId <= 0) {
+            setSnackbar({
+                open: true,
+                message: 'Invalid User ID. Please login again.',
+                severity: 'error'
+            });
+            return;
+        }
 
         // Prepare request body according to API specification
-        const requestBody = {
-            fullName: formData.fullName,
-            gender: formData.gender,
-            pathology: formData.pathology,
-            email: formData.email,
-            numberOfFamilyMembers: parseInt(formData.numberOfFamilyMembers, 10),
-            country: formData.country,
-            favorite: formData.favorite,
-            ageGroups: {
-                children: formData.ageGroups.children,
-                teenagers: formData.ageGroups.teenagers,
-                adult: formData.ageGroups.adult,
-                oldPerson: formData.ageGroups.oldPerson
-            }
-        };
+        // Backend only updates: fullName, email, country, gender, pathology, favorite
+        // numberOfFamilyMembers and ageGroups are calculated automatically
+        // Only include fields that have values to avoid sending null/empty strings
+        const requestBody = {};
+        
+        if (formData.fullName && formData.fullName.trim()) {
+            requestBody.fullName = formData.fullName.trim();
+        }
+        if (formData.email && formData.email.trim()) {
+            requestBody.email = formData.email.trim();
+        }
+        if (formData.country && formData.country.trim()) {
+            requestBody.country = formData.country.trim();
+        }
+        if (formData.gender && formData.gender.trim()) {
+            requestBody.gender = formData.gender.trim();
+        }
+        if (formData.pathology && formData.pathology.trim()) {
+            requestBody.pathology = formData.pathology.trim();
+        }
+        if (formData.favorite && formData.favorite.trim()) {
+            requestBody.favorite = formData.favorite.trim();
+        }
+        
+        console.log('Submitting profile update:', requestBody);
 
         setIsLoading(true);
 
@@ -138,9 +180,26 @@ const EditProfile = () => {
 
         } catch (error) {
             console.error('Error updating profile:', error);
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
+            
+            // Extract error message from response
+            let errorMessage = 'Failed to update profile. Please try again.';
+            if (error.response?.data) {
+                if (typeof error.response.data === 'string') {
+                    errorMessage = error.response.data;
+                } else if (error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                } else if (error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
             setSnackbar({
                 open: true,
-                message: error.message || 'Failed to update profile. Please try again.',
+                message: errorMessage,
                 severity: 'error'
             });
         } finally {
@@ -329,48 +388,7 @@ const EditProfile = () => {
                                 Age of family members:
                             </Typography>
                             
-                            <Box className="checkbox-group">
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={formData.ageGroups.children}
-                                            onChange={() => handleAgeGroupChange('children')}
-                                        />
-                                    }
-                                    label="Children (1-12 Year olds)"
-                                    sx={{ width: 'fit-content' }}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={formData.ageGroups.teenagers}
-                                            onChange={() => handleAgeGroupChange('teenagers')}
-                                        />
-                                    }
-                                    label="Teenagers (13-18 Year olds)"
-                                    sx={{ width: 'fit-content' }}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={formData.ageGroups.adult}
-                                            onChange={() => handleAgeGroupChange('adult')}
-                                        />
-                                    }
-                                    label="Adult (19-60 Year olds)"
-                                    sx={{ width: 'fit-content' }}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={formData.ageGroups.oldPerson}
-                                            onChange={() => handleAgeGroupChange('oldPerson')}
-                                        />
-                                    }
-                                    label="Old person (>60 Year olds)"
-                                    sx={{ width: 'fit-content' }}
-                                />
-                            </Box>
+                        
                         </Grid>
                     </Grid>
                 </CardContent>
