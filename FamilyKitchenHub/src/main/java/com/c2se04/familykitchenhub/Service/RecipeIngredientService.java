@@ -30,29 +30,41 @@ public class RecipeIngredientService {
     }
 
     @Transactional
-    public RecipeIngredient addIngredient(Long recipeId, RecipeIngredient recipeIngredient) {
+    public RecipeIngredient addIngredient(Long recipeId, Long ingredientId, Double quantity, String unit) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with id: " + recipeId));
 
-        Ingredient ingredient = ingredientRepository.findById(recipeIngredient.getIngredient().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Ingredient not found"));
+        Ingredient ingredient = ingredientRepository.findById(ingredientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingredient not found with id: " + ingredientId));
 
+        RecipeIngredient recipeIngredient = new RecipeIngredient();
         recipeIngredient.setRecipe(recipe);
         recipeIngredient.setIngredient(ingredient);
+        recipeIngredient.setQuantity(quantity);
+        recipeIngredient.setUnit(unit);
+
         return recipeIngredientRepository.save(recipeIngredient);
     }
 
     @Transactional
-    public RecipeIngredient updateIngredient(Long ingredientId, RecipeIngredient ingredientDetails) {
-        RecipeIngredient recipeIngredient = recipeIngredientRepository.findById(ingredientId)
+    public RecipeIngredient updateIngredient(Long recipeIngredientId, Long ingredientId, Double quantity, String unit) {
+        RecipeIngredient recipeIngredient = recipeIngredientRepository.findById(recipeIngredientId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException("RecipeIngredient not found with id: " + ingredientId));
+                        () -> new ResourceNotFoundException(
+                                "RecipeIngredient not found with id: " + recipeIngredientId));
 
-        if (ingredientDetails.getQuantity() != null) {
-            recipeIngredient.setQuantity(ingredientDetails.getQuantity());
+        // Update ingredient reference if provided and different
+        if (ingredientId != null && !ingredientId.equals(recipeIngredient.getIngredient().getId())) {
+            Ingredient ingredient = ingredientRepository.findById(ingredientId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Ingredient not found with id: " + ingredientId));
+            recipeIngredient.setIngredient(ingredient);
         }
-        if (ingredientDetails.getUnit() != null) {
-            recipeIngredient.setUnit(ingredientDetails.getUnit());
+
+        if (quantity != null) {
+            recipeIngredient.setQuantity(quantity);
+        }
+        if (unit != null) {
+            recipeIngredient.setUnit(unit);
         }
 
         return recipeIngredientRepository.save(recipeIngredient);

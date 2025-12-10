@@ -140,6 +140,30 @@ public class RecipeController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/recipes/{recipeId}/categories/{categoryId}
+     * Add a single category to a recipe
+     */
+    @PostMapping("/{recipeId}/categories/{categoryId}")
+    public ResponseEntity<Void> addCategoryToRecipe(
+            @PathVariable Long recipeId,
+            @PathVariable Long categoryId) {
+        categoryService.addCategoryToRecipe(recipeId, categoryId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * DELETE /api/recipes/{recipeId}/categories/{categoryId}
+     * Remove a category from a recipe
+     */
+    @DeleteMapping("/{recipeId}/categories/{categoryId}")
+    public ResponseEntity<Void> removeCategoryFromRecipe(
+            @PathVariable Long recipeId,
+            @PathVariable Long categoryId) {
+        categoryService.removeCategoryFromRecipe(recipeId, categoryId);
+        return ResponseEntity.noContent().build();
+    }
+
     // ========== SIMILAR RECIPES ENDPOINT (7.2) ==========
 
     /**

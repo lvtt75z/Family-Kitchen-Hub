@@ -43,6 +43,18 @@ export const setRecipeCategories = async (recipeId, categoryIds) => {
     return response.data;
 };
 
+// Add category to recipe
+export const addCategoryToRecipe = async (recipeId, categoryId) => {
+    const response = await axios.post(`/recipes/${recipeId}/categories/${categoryId}`);
+    return response.data;
+};
+
+// Remove category from recipe
+export const removeCategoryFromRecipe = async (recipeId, categoryId) => {
+    const response = await axios.delete(`/recipes/${recipeId}/categories/${categoryId}`);
+    return response.data;
+};
+
 // Get recipe steps (from dedicated endpoint)
 export const getRecipeSteps = async (recipeId) => {
     const response = await axios.get(`/recipes/${recipeId}/steps`);

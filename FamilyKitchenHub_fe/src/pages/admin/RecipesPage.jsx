@@ -194,7 +194,8 @@ export default function RecipesPage() {
                 fetchRecipeCategories(recipeId),
                 fetchRecipeSteps(recipeId),
                 fetchRecipeIngredients(recipeId),
-                fetchAllCategories()
+                fetchAllCategories(),
+                fetchAllIngredients()
             ]);
         }
     };
@@ -238,24 +239,25 @@ export default function RecipesPage() {
         }
     };
 
+
     const handleToggleCategory = async (recipeId, categoryId, isCurrentlySelected) => {
         try {
-            // Get current category IDs (ensure it's an array)
-            const currentIds = Array.isArray(recipeCategories) ? recipeCategories.map(c => c.id) : [];
-            let newIds;
-
             if (isCurrentlySelected) {
-                // Remove category
-                newIds = currentIds.filter(id => id !== categoryId);
+                // Check if this is the last category
+                const currentIds = Array.isArray(recipeCategories) ? recipeCategories.map(c => c.id) : [];
+                if (currentIds.length === 1) {
+                    toast.error('Recipe must have at least 1 category');
+                    return;
+                }
+                // Remove category using individual endpoint
+                await import('../../service/recipeService').then(m => m.removeCategoryFromRecipe(recipeId, categoryId));
+                toast.success('Category removed');
             } else {
-                // Add category
-                newIds = [...currentIds, categoryId];
+                // Add category using individual endpoint
+                await import('../../service/recipeService').then(m => m.addCategoryToRecipe(recipeId, categoryId));
+                toast.success('Category added');
             }
-
-            await setRecipeCategories(recipeId, newIds);
-            toast.success(isCurrentlySelected ? 'Category removed' : 'Category added');
-
-            // Refresh categories
+            // Refresh
             await fetchRecipeCategories(recipeId);
         } catch (error) {
             console.error('Error toggling category:', error);
@@ -298,6 +300,67 @@ export default function RecipesPage() {
         } catch (error) {
             console.error('Error deleting step:', error);
             toast.error('Failed to delete step');
+        }
+    };
+
+    // Ingredient CRUD handlers
+    const fetchAllIngredients = async () => {
+        try {
+            const ingredients = await getAllIngredients();
+            setAllIngredients(ingredients);
+        } catch (error) {
+            console.error('Error fetching all ingredients:', error);
+        }
+    };
+
+    const handleAddIngredient = async (recipeId) => {
+        const { ingredientId, quantity, unit } = newIngredient;
+        if (!ingredientId || !quantity || !unit) {
+            toast.error('Please fill all ingredient fields');
+            return;
+        }
+        try {
+            await addRecipeIngredient(recipeId, {
+                ingredientId: Number(ingredientId),
+                quantity: Number(quantity),
+                unit
+            });
+            toast.success('Ingredient added');
+            setNewIngredient({ ingredientId: '', quantity: '', unit: '' });
+            await fetchRecipeIngredients(recipeId);
+        } catch (error) {
+            console.error('Error adding ingredient:', error);
+            toast.error('Failed to add ingredient');
+        }
+    };
+
+    const handleUpdateIngredient = async (recipeId, ingredientId) => {
+        const data = editIngredientData;
+        try {
+            await updateRecipeIngredient(recipeId, ingredientId, {
+                ingredientId: Number(data.ingredientId),
+                quantity: Number(data.quantity),
+                unit: data.unit
+            });
+            toast.success('Ingredient updated');
+            setEditingIngredientId(null);
+            setEditIngredientData({});
+            await fetchRecipeIngredients(recipeId);
+        } catch (error) {
+            console.error('Error updating ingredient:', error);
+            toast.error('Failed to update ingredient');
+        }
+    };
+
+    const handleDeleteIngredient = async (recipeId, ingredientId) => {
+        if (!window.confirm('Delete this ingredient?')) return;
+        try {
+            await deleteRecipeIngredient(recipeId, ingredientId);
+            toast.success('Ingredient deleted');
+            await fetchRecipeIngredients(recipeId);
+        } catch (error) {
+            console.error('Error deleting ingredient:', error);
+            toast.error('Failed to delete ingredient');
         }
     };
 
@@ -690,21 +753,141 @@ export default function RecipesPage() {
                                                     <td colSpan="9">
                                                         <div className="sub-content">
                                                             <strong>🥕 Ingredients:</strong>
-                                                            <div className="ingredients-preview">
-                                                                {recipeIngredients.length > 0 ? (
-                                                                    <div className="ingredients-grid">
-                                                                        {recipeIngredients.map((ing, index) => (
-                                                                            <div key={ing.ingredientId || index} className="ingredient-item">
-                                                                                <span className="ingredient-name">{ing.ingredientName}</span>
-                                                                                <span className="ingredient-amount">
-                                                                                    {ing.quantity} {ing.unit}
-                                                                                </span>
+                                                            <div className="ingredients-crud">
+                                                                {/* Ingredient Grid */}
+                                                                <div className="ingredients-grid-crud">
+                                                                    {recipeIngredients.length > 0 ? (
+                                                                        recipeIngredients.map((ing) => (
+                                                                            <div key={ing.id} className="ingredient-item-crud">
+                                                                                {editingIngredientId === ing.id ? (
+                                                                                    <>
+                                                                                        <select
+                                                                                            className="ingredient-select"
+                                                                                            value={editIngredientData.ingredientId || ing.ingredientId}
+                                                                                            onChange={(e) => setEditIngredientData({
+                                                                                                ...editIngredientData,
+                                                                                                ingredientId: e.target.value
+                                                                                            })}
+                                                                                        >
+                                                                                            {allIngredients.map(i => (
+                                                                                                <option key={i.id} value={i.id}>{i.name}</option>
+                                                                                            ))}
+                                                                                        </select>
+                                                                                        <input
+                                                                                            type="number"
+                                                                                            className="ingredient-qty-input"
+                                                                                            placeholder="100"
+                                                                                            value={editIngredientData.quantity ?? ing.quantity}
+                                                                                            onChange={(e) => setEditIngredientData({
+                                                                                                ...editIngredientData,
+                                                                                                quantity: e.target.value
+                                                                                            })}
+                                                                                        />
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            className="ingredient-unit-input"
+                                                                                            placeholder="ml"
+                                                                                            value={editIngredientData.unit || ing.unit}
+                                                                                            onChange={(e) => setEditIngredientData({
+                                                                                                ...editIngredientData,
+                                                                                                unit: e.target.value
+                                                                                            })}
+                                                                                        />
+                                                                                        <button
+                                                                                            className="btn-ingredient-save"
+                                                                                            onClick={() => handleUpdateIngredient(recipe.id, ing.id)}
+                                                                                        >
+                                                                                            ✓
+                                                                                        </button>
+                                                                                        <button
+                                                                                            className="btn-ingredient-cancel"
+                                                                                            onClick={() => {
+                                                                                                setEditingIngredientId(null);
+                                                                                                setEditIngredientData({});
+                                                                                            }}
+                                                                                        >
+                                                                                            ✕
+                                                                                        </button>
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <button
+                                                                                            className="btn-ingredient-delete-sm"
+                                                                                            onClick={() => handleDeleteIngredient(recipe.id, ing.id)}
+                                                                                            title="Delete"
+                                                                                        >
+                                                                                            ✕
+                                                                                        </button>
+                                                                                        <span className="ingredient-display-compact">
+                                                                                            <span className="ingredient-qty">{ing.quantity} {ing.unit}</span>
+                                                                                            <strong className="ingredient-name-compact">{ing.ingredientName}</strong>
+                                                                                        </span>
+                                                                                        <button
+                                                                                            className="btn-ingredient-edit-sm"
+                                                                                            onClick={() => {
+                                                                                                setEditingIngredientId(ing.id);
+                                                                                                setEditIngredientData({
+                                                                                                    ingredientId: ing.ingredientId,
+                                                                                                    quantity: ing.quantity,
+                                                                                                    unit: ing.unit
+                                                                                                });
+                                                                                            }}
+                                                                                            title="Edit"
+                                                                                        >
+                                                                                            ✏️
+                                                                                        </button>
+                                                                                    </>
+                                                                                )}
                                                                             </div>
+                                                                        ))
+                                                                    ) : (
+                                                                        <span className="no-items">No ingredients defined</span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Add Ingredient Form */}
+                                                                <div className="add-ingredient-form">
+                                                                    <select
+                                                                        className="ingredient-select"
+                                                                        value={newIngredient.ingredientId}
+                                                                        onChange={(e) => setNewIngredient({
+                                                                            ...newIngredient,
+                                                                            ingredientId: e.target.value
+                                                                        })}
+                                                                    >
+                                                                        <option value="">Select ingredient...</option>
+                                                                        {allIngredients.map(i => (
+                                                                            <option key={i.id} value={i.id}>{i.name}</option>
                                                                         ))}
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="no-items">No ingredients defined</span>
-                                                                )}
+                                                                    </select>
+                                                                    <input
+                                                                        type="number"
+                                                                        className="ingredient-qty-input"
+                                                                        placeholder="100"
+                                                                        value={newIngredient.quantity}
+                                                                        onChange={(e) => setNewIngredient({
+                                                                            ...newIngredient,
+                                                                            quantity: e.target.value
+                                                                        })}
+                                                                    />
+                                                                    <input
+                                                                        type="text"
+                                                                        className="ingredient-unit-input"
+                                                                        placeholder="ml"
+                                                                        value={newIngredient.unit}
+                                                                        onChange={(e) => setNewIngredient({
+                                                                            ...newIngredient,
+                                                                            unit: e.target.value
+                                                                        })}
+                                                                    />
+                                                                    <button
+                                                                        className="btn-add-ingredient"
+                                                                        onClick={() => handleAddIngredient(recipe.id)}
+                                                                        disabled={!newIngredient.ingredientId || !newIngredient.quantity || !newIngredient.unit}
+                                                                    >
+                                                                        Add Ingredient
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </td>

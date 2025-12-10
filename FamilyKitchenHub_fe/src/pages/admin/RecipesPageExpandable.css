@@ -261,42 +261,199 @@
     cursor: not-allowed;
 }
 
-/* Ingredients Preview */
-.ingredients-preview {
+/* Ingredients CRUD */
+.ingredients-crud {
     padding: 0.75rem;
     background: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #dee2e6;
 }
 
-.ingredients-grid {
+.ingredients-grid-crud {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
     max-height: 150px;
     overflow-y: auto;
 }
 
-.ingredient-item {
+.ingredient-item-crud {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.4rem 0.5rem 0.3rem 0.5rem;
+    background: white;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+    font-size: 0.8rem;
+    position: relative;
+    min-height: 45px;
+}
+
+.ingredient-display-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    min-width: 0;
+    padding-right: 1rem;
+    text-align: center;
+}
+
+.ingredient-qty {
+    color: #667eea;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.ingredient-name-compact {
+    color: #2c3e50;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-ingredient-delete-sm {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1;
+    color: #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-ingredient-delete-sm:hover {
+    color: #c0392b;
+    background: #ffebee;
+    border-radius: 3px;
+}
+
+.btn-ingredient-edit-sm {
+    position: absolute;
+    top: 2px;
+    right: 22px;
+    padding: 0.1rem 0.25rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-ingredient-edit-sm:hover {
+    background: #e3f2fd;
+    border-radius: 3px;
+}
+
+.ingredient-select {
+    flex: 2;
+    padding: 0.4rem;
+    border: 2px solid #667eea;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    background: white;
+    color: #000;
+}
+
+.ingredient-qty-input {
+    width: 70px;
+    padding: 0.4rem;
+    border: 2px solid #667eea;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    background: white;
+    color: #000;
+}
+
+.ingredient-unit-input {
+    width: 60px;
+    padding: 0.4rem;
+    border: 2px solid #667eea;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    background: white;
+    color: #000;
+}
+
+.btn-ingredient-edit,
+.btn-ingredient-delete,
+.btn-ingredient-save,
+.btn-ingredient-cancel {
+    padding: 0.3rem 0.6rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    background: transparent;
+}
+
+.btn-ingredient-edit:hover {
+    background: #e3f2fd;
+}
+
+.btn-ingredient-delete:hover {
+    background: #ffebee;
+}
+
+.btn-ingredient-save {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-ingredient-save:hover {
+    background: #229954;
+}
+
+.btn-ingredient-cancel {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-ingredient-cancel:hover {
+    background: #7f8c8d;
+}
+
+.add-ingredient-form {
+    display: flex;
+    gap: 0.5rem;
     align-items: center;
     padding: 0.5rem;
     background: white;
     border-radius: 6px;
-    border: 1px solid #e0e0e0;
+    border: 2px dashed #667eea;
 }
 
-.ingredient-name {
-    font-weight: 500;
-    color: #2c3e50;
+.btn-add-ingredient {
+    padding: 0.4rem 0.8rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
     font-size: 0.85rem;
 }
 
-.ingredient-amount {
-    color: #667eea;
-    font-weight: 600;
-    font-size: 0.8rem;
+.btn-add-ingredient:hover:not(:disabled) {
+    background: #5568d3;
+}
+
+.btn-add-ingredient:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .loading-text {
@@ -308,27 +465,27 @@
 /* Custom Scrollbar Styling - Light Theme */
 .steps-list-crud::-webkit-scrollbar,
 .items-list::-webkit-scrollbar,
-.ingredients-grid::-webkit-scrollbar {
+.ingredients-grid-crud::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 .steps-list-crud::-webkit-scrollbar-track,
 .items-list::-webkit-scrollbar-track,
-.ingredients-grid::-webkit-scrollbar-track {
+.ingredients-grid-crud::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
 }
 
 .steps-list-crud::-webkit-scrollbar-thumb,
 .items-list::-webkit-scrollbar-thumb,
-.ingredients-grid::-webkit-scrollbar-thumb {
+.ingredients-grid-crud::-webkit-scrollbar-thumb {
     background: #c0c0c0;
     border-radius: 4px;
 }
 
 .steps-list-crud::-webkit-scrollbar-thumb:hover,
 .items-list::-webkit-scrollbar-thumb:hover,
-.ingredients-grid::-webkit-scrollbar-thumb:hover {
+.ingredients-grid-crud::-webkit-scrollbar-thumb:hover {
     background: #a0a0a0;
 }
