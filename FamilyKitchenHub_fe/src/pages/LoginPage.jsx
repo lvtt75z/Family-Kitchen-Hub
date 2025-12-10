@@ -127,11 +127,9 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="divider">OR</div>
-          <button className="demo-btn">Try Demo Account</button>
-          <a href="#" className="forgot">
+          <Link to="/forgot-password" className="forgot">
             Forgot your password?
-          </a>
+          </Link>
           <p className="signup-link">
             Don't have an account? <Link to="/register">Sign up here</Link>
           </p>

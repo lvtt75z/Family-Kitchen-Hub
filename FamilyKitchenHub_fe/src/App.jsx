@@ -12,6 +12,7 @@ import IngredientListScreen from "./components/IngredientListScreen";
 import EditProfile from "./components/EditProfile";
 import RegisterPage from "./pages/RegisterPage";
 import VerifyEmail from "./pages/VerifyEmail";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import FamilyProfiles from "./components/dashboard/FamilyProfile";
 import MealPlanner from "./components/dashboard/MealPlaner";
 import { ToastContainer } from "react-toastify";
@@ -41,6 +42,7 @@ function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="verify-email" element={<VerifyEmail />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route path="test" element={<AddIngredientScreen />} />
         </Route>
 
