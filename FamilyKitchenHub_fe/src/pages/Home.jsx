@@ -9,6 +9,7 @@ import {
   HeartPulse,
   Apple,
   ShoppingCart,
+  Sparkles,
 } from "lucide-react";
 import cookingAnimation from "../assets/kitchen_cooking.mp4";
 import axios from "../hooks/axios";
@@ -36,15 +37,6 @@ function Home() {
   }, []);
 
 
-  // Mock categories
-  const categories = [
-    { id: 1, name: "Breakfast", emoji: "🍳" },
-    { id: 2, name: "Vegan", emoji: "🥗" },
-    { id: 3, name: "Meat", emoji: "🍖" },
-    { id: 4, name: "Dessert", emoji: "🍰" },
-    { id: 5, name: "Lunch", emoji: "🍱" },
-    { id: 6, name: "Chocolate", emoji: "🍫" },
-  ];
 
   return (
     <div className="home">
@@ -66,7 +58,17 @@ function Home() {
             </p>
 
             <div className="hero-buttons">
-              <button className="btn-primary">Get Started Free</button>
+              <button 
+                className="btn-primary"
+                onClick={() => navigate("/manage/recommendations")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <Sparkles size={18} /> Gợi ý thực đơn ngay
+              </button>
               <button className="btn-outline">See Demo</button>
             </div>
           </div>

@@ -23,6 +23,8 @@ import {
     MenuItem
 } from '@mui/material';
 import { Search, Add, Edit, DeleteOutline, Save, Cancel } from '@mui/icons-material';
+import { Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AddIngredientScreen from './AddIngredientScreen';
 import '../styles/IngredientListScreen.css';
 
@@ -35,6 +37,7 @@ const ingredientsData = [
 ];
 
 const IngredientListScreen = () => {
+    const navigate = useNavigate();
     const [showAddScreen, setShowAddScreen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [_editingIngredient, setEditingIngredient] = useState(null);
@@ -107,6 +110,52 @@ const IngredientListScreen = () => {
 
     return (
         <Box className="ingredient-list-container">
+            {/* --- Smart Recommendation Widget --- */}
+            <Paper 
+                elevation={3} 
+                className="smart-recommendation-widget"
+                sx={{
+                    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                    color: 'white',
+                    padding: '24px',
+                    marginBottom: '24px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 16px rgba(249, 115, 22, 0.3)',
+                    }
+                }}
+                onClick={() => navigate('/manage/recommendations')}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+                            Hôm nay gia đình ăn gì?
+                        </Typography>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                            Để AI gợi ý thực đơn phù hợp nhất cho gia đình bạn
+                        </Typography>
+                    </Box>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '12px 24px',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            borderRadius: '8px',
+                            backdropFilter: 'blur(10px)',
+                        }}
+                    >
+                        <Sparkles size={24} />
+                        <Typography variant="button" sx={{ fontWeight: 600 }}>
+                            Gợi ý thực đơn ngay
+                        </Typography>
+                    </Box>
+                </Box>
+            </Paper>
             
             {/* --- Warning Card --- */}
             <Paper elevation={3} className="warning-card">
