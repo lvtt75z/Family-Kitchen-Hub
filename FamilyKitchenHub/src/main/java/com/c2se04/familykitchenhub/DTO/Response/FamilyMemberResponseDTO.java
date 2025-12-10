@@ -1,19 +1,32 @@
 package com.c2se04.familykitchenhub.DTO.Response;
 
+import com.c2se04.familykitchenhub.enums.ActivityLevel;
+import com.c2se04.familykitchenhub.enums.Gender;
 import java.util.Set;
 
 public class FamilyMemberResponseDTO {
+
     private Long id;
     private Long userId;
     private String userName;
     private String name;
     private Integer age;
-    private String healthGoals;
-    private String notes;
+
+    private Gender gender;
+    private Float heightCm;
+    private Float weightKg;
+    private ActivityLevel activityLevel;
+    private Boolean isAccountOwner;
+
+    private String tastePreferences;
+    private String healthConditions;
+
     private Set<AllergyResponseDTO> allergies;
 
     public FamilyMemberResponseDTO() {
     }
+
+    // --- Getters and Setters ---
 
     public Long getId() {
         return id;
@@ -55,20 +68,60 @@ public class FamilyMemberResponseDTO {
         this.age = age;
     }
 
-    public String getHealthGoals() {
-        return healthGoals;
+    public Gender getGender() {
+        return gender;
     }
 
-    public void setHealthGoals(String healthGoals) {
-        this.healthGoals = healthGoals;
+    public void setGender(Gender gender) {
+        this.gender = gender;
     }
 
-    public String getNotes() {
-        return notes;
+    public Float getHeightCm() {
+        return heightCm;
     }
 
-    public void setNotes(String notes) {
-        this.notes = notes;
+    public void setHeightCm(Float heightCm) {
+        this.heightCm = heightCm;
+    }
+
+    public Float getWeightKg() {
+        return weightKg;
+    }
+
+    public void setWeightKg(Float weightKg) {
+        this.weightKg = weightKg;
+    }
+
+    public ActivityLevel getActivityLevel() {
+        return activityLevel;
+    }
+
+    public void setActivityLevel(ActivityLevel activityLevel) {
+        this.activityLevel = activityLevel;
+    }
+
+    public Boolean getIsAccountOwner() {
+        return isAccountOwner;
+    }
+
+    public void setIsAccountOwner(Boolean accountOwner) {
+        isAccountOwner = accountOwner;
+    }
+
+    public String getTastePreferences() {
+        return tastePreferences;
+    }
+
+    public void setTastePreferences(String tastePreferences) {
+        this.tastePreferences = tastePreferences;
+    }
+
+    public String getHealthConditions() {
+        return healthConditions;
+    }
+
+    public void setHealthConditions(String healthConditions) {
+        this.healthConditions = healthConditions;
     }
 
     public Set<AllergyResponseDTO> getAllergies() {
