@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "../../hooks/axios";
 import "./../../styles/FridgeManager.css";
 import bgIngredients from "../../assets/bgIg3.jpg";
-import { Plus, MoreVertical } from "lucide-react";
+import { Plus, MoreVertical, Package, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function FridgeManager() {
   const [ingredients, setIngredients] = useState([]); // Inventory items
   const [showModal, setShowModal] = useState(false);
-  
+
   // Ingredients list for dropdown
   const [availableIngredients, setAvailableIngredients] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -142,12 +142,12 @@ export default function FridgeManager() {
         ingredientId: Number(newIngredient.ingredientId),
         quantity: parseFloat(newIngredient.quantity),
       };
-      
+
       // Thêm expirationDate nếu có
       if (newIngredient.expirationDate) {
         payload.expirationDate = newIngredient.expirationDate;
       }
-      
+
       // Thêm purchasedAt (ngày mua) - nếu không có thì dùng ngày hiện tại
       if (newIngredient.purchasedAt) {
         payload.purchasedAt = newIngredient.purchasedAt;
@@ -217,6 +217,39 @@ export default function FridgeManager() {
         <div className="welcome-text">
           <h1>Welcome to Fridge Manager! Let’s check your fridge today</h1>
           <p>Keep your ingredients fresh and reduce food waste</p>
+        </div>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="stats-overview">
+        <div className="stat-card">
+          <div className="stat-icon total">
+            <Package size={28} />
+          </div>
+          <div className="stat-info">
+            <h3>{ingredients.length}</h3>
+            <p>Total Ingredients</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon fresh">
+            <CheckCircle size={28} />
+          </div>
+          <div className="stat-info">
+            <h3>{ingredients.filter(item => getStatus(item.expirationDate) === "Fresh").length}</h3>
+            <p>Fresh Items</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon expiring">
+            <AlertCircle size={28} />
+          </div>
+          <div className="stat-info">
+            <h3>{ingredients.filter(item => getStatus(item.expirationDate) === "Expiring Soon").length}</h3>
+            <p>Expiring Soon</p>
+          </div>
         </div>
       </div>
 

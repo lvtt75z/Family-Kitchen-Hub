@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "../../hooks/axios";
 import EditProfile from "../EditProfile";
 import "./../../styles/FamilyProfile.css";
-import { Pen, Trash2, PlusCircle, Users, Heart, Activity, Target, UserCircle } from "lucide-react";
+import { Pen, Trash2, PlusCircle, Users, Heart, Activity, Target } from "lucide-react";
 
 export default function FamilyProfiles() {
   const [members, setMembers] = useState([]);
@@ -11,9 +11,12 @@ export default function FamilyProfiles() {
   const [form, setForm] = useState({
     name: "",
     age: "",
-    role: "",
-    healthGoals: "",
-    notes: "",
+    gender: "",
+    heightCm: "",
+    weightKg: "",
+    activityLevel: "",
+    tastePreferences: "",
+    healthConditions: "",
   });
 
   // Fetch API thật khi load trang
@@ -54,10 +57,13 @@ export default function FamilyProfiles() {
       userId: user?.id,
       name: form.name,
       age: parseInt(form.age) || null,
-      role: form.role || null,
-      healthGoals: form.healthGoals,
-      notes: form.notes,
-      allergies: [],
+      gender: form.gender || null,
+      heightCm: parseFloat(form.heightCm) || null,
+      weightKg: parseFloat(form.weightKg) || null,
+      activityLevel: form.activityLevel || null,
+      tastePreferences: form.tastePreferences || null,
+      healthConditions: form.healthConditions || null,
+      allergyIds: [],
     };
 
     axios
@@ -82,9 +88,12 @@ export default function FamilyProfiles() {
     const payload = {
       name: form.name,
       age: parseInt(form.age) || null,
-      role: form.role || null,
-      healthGoals: form.healthGoals,
-      notes: form.notes,
+      gender: form.gender || null,
+      heightCm: parseFloat(form.heightCm) || null,
+      weightKg: parseFloat(form.weightKg) || null,
+      activityLevel: form.activityLevel || null,
+      tastePreferences: form.tastePreferences || null,
+      healthConditions: form.healthConditions || null,
     };
 
     axios
@@ -125,13 +134,16 @@ export default function FamilyProfiles() {
       setForm({
         name: member.name,
         age: member.age || "",
-        role: member.role || "",
-        healthGoals: member.healthGoals || "",
-        notes: member.notes || "",
+        gender: member.gender || "",
+        heightCm: member.heightCm || "",
+        weightKg: member.weightKg || "",
+        activityLevel: member.activityLevel || "",
+        tastePreferences: member.tastePreferences || "",
+        healthConditions: member.healthConditions || "",
       });
     } else {
       setEditing(null);
-      setForm({ name: "", age: "", role: "", healthGoals: "", notes: "" });
+      setForm({ name: "", age: "", gender: "", heightCm: "", weightKg: "", activityLevel: "", tastePreferences: "", healthConditions: "" });
     }
     setIsOpen(true);
   }
@@ -198,12 +210,6 @@ export default function FamilyProfiles() {
                     <div className="meta">
                       <h4>{m.name}</h4>
                       <p className="sub">
-                        {m.role && (
-                          <span className="role-badge">
-                            <UserCircle size={12} />
-                            {m.role}
-                          </span>
-                        )}
                         {m.age && (
                           <span className="age-badge">
                             {m.age} tuổi
@@ -213,16 +219,18 @@ export default function FamilyProfiles() {
                     </div>
                     <div className="actions">
                       <button
+                        type="button"
+                        className="btn ghost"
+                        title="Chỉnh sửa"
                         onClick={() => openModal(m)}
-                        className="icon-btn edit"
-                        title="Edit"
                       >
                         <Pen size={14} />
                       </button>
                       <button
+                        type="button"
+                        className="btn danger"
+                        title="Xóa"
                         onClick={() => handleDelete(m.id)}
-                        className="icon-btn delete"
-                        title="Delete"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -230,27 +238,42 @@ export default function FamilyProfiles() {
                   </div>
 
                   <div className="card-body">
-                    {m.healthGoals && (
+                    {(m.gender || m.heightCm || m.weightKg) && (
                       <div className="info-row">
                         <div className="info-icon">
-                          <Target size={14} />
+                          <Activity size={14} />
                         </div>
                         <div className="info-text">
-                          <strong>Mục tiêu:</strong> {m.healthGoals}
+                          {m.gender && <span>Giới tính: <strong>{m.gender === 'MALE' ? 'Nam' : m.gender === 'FEMALE' ? 'Nữ' : 'Khác'}</strong></span>}
+                          {m.heightCm && <span> • Cao: <strong>{m.heightCm}cm</strong></span>}
+                          {m.weightKg && <span> • Nặng: <strong>{m.weightKg}kg</strong></span>}
                         </div>
                       </div>
                     )}
-                    {m.notes && (
+
+                    {m.healthConditions && (
                       <div className="info-row">
                         <div className="info-icon">
                           <Heart size={14} />
                         </div>
                         <div className="info-text">
-                          <strong>Ghi chú:</strong> {m.notes}
+                          <strong>Sức khỏe:</strong> {m.healthConditions}
                         </div>
                       </div>
                     )}
-                    {!m.healthGoals && !m.notes && (
+
+                    {m.tastePreferences && (
+                      <div className="info-row">
+                        <div className="info-icon">
+                          <Target size={14} />
+                        </div>
+                        <div className="info-text">
+                          <strong>Sở thích:</strong> {m.tastePreferences}
+                        </div>
+                      </div>
+                    )}
+
+                    {!m.healthConditions && !m.tastePreferences && !m.gender && (
                       <p className="no-info">Chưa có thông tin bổ sung</p>
                     )}
                   </div>
@@ -262,100 +285,140 @@ export default function FamilyProfiles() {
       </div>
 
       {/* Modal for Add/Edit Member */}
-      {isOpen && (
-        <div className={`modal-overlay ${isOpen ? "active" : ""}`}>
-          <div className="modal">
-            <div className="modal-header">
-              <h3>
-                {editing ? "✏️ Chỉnh sửa thành viên" : "➕ Thêm thành viên mới"}
-              </h3>
-              <button className="icon-btn close-btn" onClick={closeModal}>
-                ✕
-              </button>
-            </div>
+      {
+        isOpen && (
+          <div className={`modal-overlay ${isOpen ? "active" : ""}`}>
+            <div className="modal">
+              <div className="modal-header">
+                <h3>
+                  {editing ? "✏️ Chỉnh sửa thành viên" : "➕ Thêm thành viên mới"}
+                </h3>
+                <button className="icon-btn close-btn" onClick={closeModal}>
+                  ✕
+                </button>
+              </div>
 
-            <form
-              className="modal-form"
-              onSubmit={editing ? handleEditSubmit : handleAdd}
-            >
-              <label>
-                Tên thành viên
-                <input
-                  type="text"
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="Ví dụ: Nguyễn Văn A"
-                  required
-                />
-              </label>
-
-              <div className="form-grid">
+              <form
+                className="modal-form"
+                onSubmit={editing ? handleEditSubmit : handleAdd}
+              >
                 <label>
-                  Tuổi
+                  Tên thành viên
                   <input
-                    type="number"
-                    name="age"
-                    value={form.age}
+                    type="text"
+                    name="name"
+                    value={form.name}
                     onChange={handleChange}
-                    placeholder="25"
+                    placeholder="Ví dụ: Nguyễn Văn A"
+                    required
                   />
                 </label>
+
+                <div className="form-grid">
+                  <label>
+                    Tuổi
+                    <input
+                      type="number"
+                      name="age"
+                      value={form.age}
+                      onChange={handleChange}
+                      placeholder="25"
+                    />
+                  </label>
+                  <label>
+                    Giới tính
+                    <select
+                      name="gender"
+                      value={form.gender}
+                      onChange={handleChange}
+                    >
+                      <option value="">-- Chọn giới tính --</option>
+                      <option value="MALE">Nam</option>
+                      <option value="FEMALE">Nữ</option>
+                      <option value="OTHER">Khác</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="form-grid">
+                  <label>
+                    Chiều cao (cm)
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="heightCm"
+                      value={form.heightCm}
+                      onChange={handleChange}
+                      placeholder="170"
+                    />
+                  </label>
+                  <label>
+                    Cân nặng (kg)
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="weightKg"
+                      value={form.weightKg}
+                      onChange={handleChange}
+                      placeholder="65"
+                    />
+                  </label>
+                </div>
+
                 <label>
-                  Vai trò
+                  Mức độ hoạt động
                   <select
-                    name="role"
-                    value={form.role}
+                    name="activityLevel"
+                    value={form.activityLevel}
                     onChange={handleChange}
                   >
-                    <option value="">-- Chọn vai trò --</option>
-                    <option value="Dad">👨 Bố</option>
-                    <option value="Mom">👩 Mẹ</option>
-                    <option value="Son">👦 Con trai</option>
-                    <option value="Daughter">👧 Con gái</option>
-                    <option value="Grandparent">👴 Ông/Bà</option>
-                    <option value="Other">👤 Khác</option>
+                    <option value="">-- Chọn mức độ --</option>
+                    <option value="SEDENTARY">Ít vận động</option>
+                    <option value="LIGHTLY_ACTIVE">Vận động nhẹ</option>
+                    <option value="MODERATELY_ACTIVE">Vận động vừa phải</option>
+                    <option value="VERY_ACTIVE">Vận động nhiều</option>
+                    <option value="EXTRA_ACTIVE">Vận động rất nhiều</option>
                   </select>
                 </label>
-              </div>
 
-              <label>
-                Mục tiêu sức khỏe
-                <input
-                  type="text"
-                  name="healthGoals"
-                  value={form.healthGoals}
-                  onChange={handleChange}
-                  placeholder="Giảm cân, tăng cơ..."
-                />
-              </label>
+                <label>
+                  Sở thích ẩm thực
+                  <input
+                    type="text"
+                    name="tastePreferences"
+                    value={form.tastePreferences}
+                    onChange={handleChange}
+                    placeholder="Thích ăn cay, ngọt..."
+                  />
+                </label>
 
-              <label>
-                Ghi chú (Dị ứng, sở thích...)
-                <textarea
-                  name="notes"
-                  value={form.notes}
-                  onChange={handleChange}
-                  placeholder="Ví dụ: Dị ứng hải sản, thích ăn chay..."
-                />
-              </label>
+                <label>
+                  Tình trạng sức khỏe
+                  <textarea
+                    name="healthConditions"
+                    value={form.healthConditions}
+                    onChange={handleChange}
+                    placeholder="Tiểu đường, cao huyết áp..."
+                  />
+                </label>
 
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn ghost"
-                  onClick={closeModal}
-                >
-                  Hủy
-                </button>
-                <button type="submit" className="btn primary">
-                  {editing ? "Cập nhật" : "Thêm mới"}
-                </button>
-              </div>
-            </form>
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={closeModal}
+                  >
+                    Hủy
+                  </button>
+                  <button type="submit" className="btn primary">
+                    {editing ? "Cập nhật" : "Thêm mới"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

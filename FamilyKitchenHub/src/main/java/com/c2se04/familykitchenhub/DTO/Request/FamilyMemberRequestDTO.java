@@ -6,6 +6,12 @@ public class FamilyMemberRequestDTO {
     private Long userId;
     private String name;
     private Integer age;
+    private String gender;
+    private Float heightCm;
+    private Float weightKg;
+    private String activityLevel;
+    private String tastePreferences;
+    private String healthConditions;
     private String healthGoals;
     private String notes;
     private Set<Long> allergyIds;
@@ -51,6 +57,54 @@ public class FamilyMemberRequestDTO {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Float getHeightCm() {
+        return heightCm;
+    }
+
+    public void setHeightCm(Float heightCm) {
+        this.heightCm = heightCm;
+    }
+
+    public Float getWeightKg() {
+        return weightKg;
+    }
+
+    public void setWeightKg(Float weightKg) {
+        this.weightKg = weightKg;
+    }
+
+    public String getActivityLevel() {
+        return activityLevel;
+    }
+
+    public void setActivityLevel(String activityLevel) {
+        this.activityLevel = activityLevel;
+    }
+
+    public String getTastePreferences() {
+        return tastePreferences;
+    }
+
+    public void setTastePreferences(String tastePreferences) {
+        this.tastePreferences = tastePreferences;
+    }
+
+    public String getHealthConditions() {
+        return healthConditions;
+    }
+
+    public void setHealthConditions(String healthConditions) {
+        this.healthConditions = healthConditions;
     }
 
     public Set<Long> getAllergyIds() {
