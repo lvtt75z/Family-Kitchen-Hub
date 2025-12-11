@@ -10,13 +10,23 @@ import {
   Apple,
   ShoppingCart,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import cookingAnimation from "../assets/kitchen_cooking.mp4";
 import axios from "../hooks/axios";
+import { getTopBookmarkedRecipes, addRecipeBookmark, removeRecipeBookmark, getRecipeById } from "../service/recipesApi";
+import { Heart } from "lucide-react";
 
 function Home() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [topBookmarked, setTopBookmarked] = useState([]);
+  const [loadingBookmarked, setLoadingBookmarked] = useState(true);
+  const [bookmarkedRecipes, setBookmarkedRecipes] = useState(new Set());
+  const [bookmarking, setBookmarking] = useState({});
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [slidesPerView, setSlidesPerView] = useState(3);
   const navigate = useNavigate();
 
   // 5.2 – Xem danh sách tất cả công thức: GET /api/recipes
@@ -25,7 +35,17 @@ function Home() {
       setLoading(true);
       try {
         const res = await axios.get("/recipes");
-        setRecipes(res.data || []);
+        const recipesData = res.data || [];
+        // Filter out recipes without valid IDs and log for debugging
+        const validRecipes = recipesData.filter(recipe => {
+          const id = recipe.id || recipe.recipeId;
+          if (!id) {
+            console.warn("Recipe without ID:", recipe);
+            return false;
+          }
+          return true;
+        });
+        setRecipes(validRecipes);
       } catch (error) {
         console.error("Error fetching recipes:", error);
       } finally {
@@ -35,6 +55,137 @@ function Home() {
 
     fetchRecipes();
   }, []);
+
+  // Fetch top bookmarked recipes
+  const fetchTopBookmarked = async () => {
+    setLoadingBookmarked(true);
+    try {
+      const data = await getTopBookmarkedRecipes(5);
+      const bookmarkedData = data || [];
+      
+      // Filter out recipes without valid IDs
+      const validBookmarked = bookmarkedData.filter(recipe => {
+        const id = recipe.id || recipe.recipeId;
+        if (!id) {
+          console.warn("Bookmarked recipe without ID:", recipe);
+          return false;
+        }
+        return true;
+      });
+      
+      // Fetch full recipe details for each bookmarked recipe
+      const recipesWithDetails = await Promise.all(
+        validBookmarked.map(async (recipe) => {
+          const recipeId = recipe.id || recipe.recipeId;
+          try {
+            // If recipe already has all needed fields, use it
+            if (recipe.title && recipe.imageUrl && recipe.cookingTimeMinutes !== undefined) {
+              return recipe;
+            }
+            
+            // Otherwise, fetch full details
+            const fullRecipe = await getRecipeById(recipeId);
+            return {
+              ...fullRecipe,
+              bookmarkCount: recipe.bookmarkCount || fullRecipe.bookmarkCount || 0,
+              id: recipeId
+            };
+          } catch (error) {
+            console.error(`Error fetching recipe ${recipeId} details:`, error);
+            // Return original recipe if fetch fails
+            return recipe;
+          }
+        })
+      );
+      
+      // Debug: Log first recipe to check structure
+      if (recipesWithDetails.length > 0) {
+        console.log("Sample bookmarked recipe structure:", recipesWithDetails[0]);
+      }
+      
+      setTopBookmarked(recipesWithDetails);
+    } catch (error) {
+      console.error("Error fetching top bookmarked recipes:", error);
+    } finally {
+      setLoadingBookmarked(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTopBookmarked();
+  }, []);
+
+  // Calculate slides per view based on window width
+  useEffect(() => {
+    const calculateSlidesPerView = () => {
+      if (window.innerWidth <= 640) return 1;
+      if (window.innerWidth <= 768) return 2;
+      return 3;
+    };
+
+    const updateSlidesPerView = () => {
+      const newSlidesPerView = calculateSlidesPerView();
+      setSlidesPerView(newSlidesPerView);
+      
+      // Adjust current slide if needed
+      const maxSlide = Math.max(0, topBookmarked.length - newSlidesPerView);
+      if (currentSlide > maxSlide) {
+        setCurrentSlide(maxSlide);
+      }
+    };
+
+    updateSlidesPerView();
+    window.addEventListener('resize', updateSlidesPerView);
+    return () => window.removeEventListener('resize', updateSlidesPerView);
+  }, [topBookmarked.length, currentSlide]);
+
+  // Handle bookmark toggle
+  const handleBookmark = async (e, recipeId) => {
+    e.stopPropagation(); // Prevent card click navigation
+    
+    const userDataString = localStorage.getItem("user");
+    const userData = userDataString ? JSON.parse(userDataString) : null;
+    const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
+    
+    if (!userId) {
+      alert("Vui lòng đăng nhập để bookmark công thức");
+      return;
+    }
+
+    const isBookmarked = bookmarkedRecipes.has(recipeId);
+    setBookmarking(prev => ({ ...prev, [recipeId]: true }));
+
+    try {
+      if (isBookmarked) {
+        await removeRecipeBookmark(recipeId, Number(userId));
+        setBookmarkedRecipes(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(recipeId);
+          return newSet;
+        });
+      } else {
+        await addRecipeBookmark(recipeId, { userId: Number(userId) });
+        setBookmarkedRecipes(prev => new Set(prev).add(recipeId));
+      }
+      
+      // Reload top bookmarked list
+      await fetchTopBookmarked();
+      
+      // Update bookmark count in recipes list
+      setRecipes(prevRecipes => 
+        prevRecipes.map(recipe => 
+          recipe.id === recipeId 
+            ? { ...recipe, bookmarkCount: (recipe.bookmarkCount || 0) + (isBookmarked ? -1 : 1) }
+            : recipe
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      alert("Có lỗi xảy ra khi bookmark công thức");
+    } finally {
+      setBookmarking(prev => ({ ...prev, [recipeId]: false }));
+    }
+  };
 
 
 
@@ -87,12 +238,102 @@ function Home() {
       </section>
 
       <div className="usually-recipes">
-        <h2>Usually Recipes</h2>
+        <h2>Top Bookmarked Recipes</h2>
 
         <div className="recipe-content">
-          <div className="circle"></div>
-          <div className="circle"></div>
-          <div className="circle"></div>
+          {loadingBookmarked ? (
+            <p>Đang tải công thức được bookmark nhiều nhất...</p>
+          ) : topBookmarked.length === 0 ? (
+            <p>Chưa có công thức nào được bookmark.</p>
+          ) : (
+            <div className="bookmarked-slider">
+              <div className="slider-container">
+                <button
+                  className="slider-btn slider-btn-prev"
+                  onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
+                  disabled={currentSlide === 0}
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                
+                <div className="slider-track" style={{ transform: `translateX(-${currentSlide * (100 / slidesPerView)}%)` }}>
+                  {topBookmarked.map((recipe, index) => {
+                    const recipeId = recipe.id || recipe.recipeId;
+                    if (!recipeId) return null;
+                    
+                    return (
+                      <div
+                        key={recipeId || `bookmarked-${index}`}
+                        className="bookmarked-slide"
+                      >
+                        <div
+                          className="bookmarked-card"
+                          onClick={() => recipeId && navigate(`/manage/recipesdetails/${recipeId}`)}
+                        >
+                          <div className="bookmarked-image">
+                            <img
+                              src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+                              alt={recipe.title}
+                            />
+                            <div className="bookmark-badge">
+                              ⭐ {recipe.bookmarkCount || 0} bookmarks
+                            </div>
+                            <button 
+                              className={`bookmark-btn ${bookmarkedRecipes.has(recipeId) ? 'bookmarked' : ''}`}
+                              onClick={(e) => handleBookmark(e, recipeId)}
+                              disabled={bookmarking[recipeId]}
+                              aria-label={bookmarkedRecipes.has(recipeId) ? "Remove bookmark" : "Add bookmark"}
+                            >
+                              <Heart 
+                                size={20} 
+                                fill={bookmarkedRecipes.has(recipeId) ? "#ea580c" : "none"}
+                                color={bookmarkedRecipes.has(recipeId) ? "#ea580c" : "#fff"}
+                              />
+                            </button>
+                          </div>
+                          <div className="bookmarked-content">
+                            <h3>{recipe.title}</h3>
+                            <div className="bookmarked-meta">
+                              <span className="time">
+                                ⏱ {recipe.cookingTimeMinutes || recipe.cookingTime || "--"} min
+                              </span>
+                              <span className="area">
+                                🍽 {recipe.servings ? `${recipe.servings} servings` : ""}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  className="slider-btn slider-btn-next"
+                  onClick={() => {
+                    const maxSlide = Math.max(0, topBookmarked.length - slidesPerView);
+                    setCurrentSlide(Math.min(maxSlide, currentSlide + 1));
+                  }}
+                  disabled={currentSlide >= Math.max(0, topBookmarked.length - slidesPerView)}
+                  aria-label="Next slide"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </div>
+              
+              <div className="slider-dots">
+                {Array.from({ length: Math.ceil(topBookmarked.length / slidesPerView) }).map((_, index) => (
+                  <button
+                    key={index}
+                    className={`slider-dot ${Math.floor(currentSlide / slidesPerView) === index ? 'active' : ''}`}
+                    onClick={() => setCurrentSlide(index * slidesPerView)}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <img src={blobs} alt="blobs" className="svg-wave" />
@@ -111,19 +352,32 @@ function Home() {
           <p>Chưa có công thức nào.</p>
         ) : (
           <div className="suggestions-grid">
-            {recipes.map((recipe) => (
+            {recipes.map((recipe, index) => {
+              const recipeId = recipe.id || recipe.recipeId;
+              if (!recipeId) return null;
+              
+              return (
               <div
-                key={recipe.id}
+                key={recipeId || `recipe-${index}`}
                 className="suggestion-card"
-                onClick={() => navigate(`/manage/recipesdetails/${recipe.id}`)}
+                onClick={() => recipeId && navigate(`/manage/recipesdetails/${recipeId}`)}
               >
                 <div className="suggestion-image">
                   <img
                     src={recipe.imageUrl || "/placeholder-recipe.jpg"}
                     alt={recipe.title}
                   />
-                  <button className="heart-btn" aria-label="Add to favorites">
-                    ♡
+                  <button 
+                    className={`heart-btn ${bookmarkedRecipes.has(recipeId) ? 'bookmarked' : ''}`}
+                    onClick={(e) => handleBookmark(e, recipeId)}
+                    disabled={bookmarking[recipeId]}
+                    aria-label={bookmarkedRecipes.has(recipeId) ? "Remove bookmark" : "Add bookmark"}
+                  >
+                    <Heart 
+                      size={20} 
+                      fill={bookmarkedRecipes.has(recipeId) ? "#ff6b6b" : "none"}
+                      color={bookmarkedRecipes.has(recipeId) ? "#ff6b6b" : "#fff"}
+                    />
                   </button>
                 </div>
                 <div className="suggestion-content">
@@ -138,7 +392,8 @@ function Home() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
