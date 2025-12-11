@@ -2,11 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "../../hooks/axios";
 import "./../../styles/FridgeManager.css";
 import bgIngredients from "../../assets/bgIg3.jpg";
-import { Plus, MoreVertical, Package, CheckCircle, AlertCircle } from "lucide-react";
+import { Plus, MoreVertical, Package, CheckCircle, AlertCircle, Trash2 } from "lucide-react";
+import ConfirmModal from "../ConfirmModal";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function FridgeManager() {
   const [ingredients, setIngredients] = useState([]); // Inventory items
   const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    itemId: null,
+    itemName: ''
+  });
 
   // Ingredients list for dropdown
   const [availableIngredients, setAvailableIngredients] = useState([]);
@@ -202,8 +211,57 @@ export default function FridgeManager() {
     return dt.toLocaleDateString();
   };
 
+  const handleDeleteClick = (item) => {
+    setConfirmModal({
+      isOpen: true,
+      itemId: item.id,
+      itemName: item.ingredientName
+    });
+  };
+
+  const executeDelete = async () => {
+    const id = confirmModal.itemId;
+    const userDataString = localStorage.getItem("user");
+    if (!userDataString) return toast.error("Vui lòng đăng nhập lại.");
+
+    setIsLoading(true);
+
+    try {
+      // Assuming endpoint is DELETE /inventory/{id}
+      await axios.delete(`/inventory/${id}`);
+
+      setTimeout(() => {
+        setIsLoading(false);
+        setIngredients((prev) => prev.filter((item) => item.id !== id));
+        setConfirmModal({ isOpen: false, itemId: null, itemName: '' });
+        toast.success("Xóa nguyên liệu thành công!", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+      }, 2000);
+    } catch (error) {
+      setTimeout(() => {
+        setIsLoading(false);
+        console.error("Error deleting ingredient:", error);
+        toast.error("Không thể xóa nguyên liệu!", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      }, 2000);
+    }
+  };
+
   return (
     <div className="fridge-manager">
+      <ToastContainer />
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={executeDelete}
+        title="Xóa nguyên liệu"
+        message={`Bạn có chắc chắn muốn xóa "${confirmModal.itemName}" khỏi tủ lạnh không?`}
+        isLoading={isLoading}
+      />
       {/* Welcome Section */}
       <div
         className="welcome-section"
@@ -275,7 +333,17 @@ export default function FridgeManager() {
             >
               <div className="card-header">
                 <h3>{item.ingredientName}</h3>
-                <MoreVertical size={16} />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    className="icon-btn"
+                    onClick={() => handleDeleteClick(item)}
+                    style={{ color: '#ef4444', padding: '4px', background: 'none', border: 'none', cursor: 'pointer' }}
+                    title="Xóa"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <MoreVertical size={16} />
+                </div>
               </div>
 
               <p className="info">

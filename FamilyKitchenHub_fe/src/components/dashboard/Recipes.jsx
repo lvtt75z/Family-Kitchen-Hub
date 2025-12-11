@@ -13,7 +13,11 @@ import {
   X,
   ChefHat,
   Search,
+  Filter,
 } from "lucide-react";
+import ConfirmModal from "../ConfirmModal";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function RecipeDashboard() {
   const navigate = useNavigate();
@@ -34,12 +38,18 @@ export default function RecipeDashboard() {
 
   const [recipes, setRecipes] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    itemId: null,
+    itemTitle: ''
+  });
   const [form, setForm] = useState(defaultForm);
   const [preview, setPreview] = useState(null);
   const [allIngredients, setAllIngredients] = useState([]);
   const [search, setSearch] = useState(""); // Recipe search
   const [searchResults, setSearchResults] = useState([]); // Recipe search results
-  
+
   // Ingredient search states for each ingredient row
   const [ingredientSearches, setIngredientSearches] = useState({}); // { index: keyword }
   const [ingredientDropdowns, setIngredientDropdowns] = useState({}); // { index: boolean }
@@ -237,18 +247,38 @@ export default function RecipeDashboard() {
   // =========================
   //   DELETE RECIPE
   // =========================
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa công thức này?")) return;
+  const handleDeleteClick = (recipe) => {
+    setConfirmModal({
+      isOpen: true,
+      itemId: recipe.id,
+      itemTitle: recipe.title
+    });
+  };
 
+  const executeDelete = async () => {
+    const id = confirmModal.itemId;
+    if (!id) return;
+
+    setIsLoading(true);
     try {
       await axios.delete(`/recipes/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setRecipes((prev) => prev.filter((r) => r.id !== id));
-      setSearchResults((prev) => prev.filter((r) => r.id !== id)); // ✅ UPDATE SEARCH RESULTS
+      setTimeout(() => {
+        setRecipes((prev) => prev.filter((r) => r.id !== id));
+        setSearchResults((prev) => prev.filter((r) => r.id !== id));
+        setIsLoading(false);
+        setConfirmModal({ isOpen: false, itemId: null, itemTitle: '' });
+        toast.success("Xóa công thức thành công!", { autoClose: 2000 });
+      }, 2000);
     } catch (err) {
-      console.error(" Lỗi khi xóa recipe:", err);
+      setTimeout(() => {
+        console.error("Lỗi khi xóa recipe:", err);
+        setIsLoading(false);
+        toast.error("Không thể xóa công thức.", { autoClose: 2000 });
+        setConfirmModal({ isOpen: false, itemId: null, itemTitle: '' });
+      }, 2000);
     }
   };
 
@@ -258,18 +288,19 @@ export default function RecipeDashboard() {
 
   return (
     <div className="recipe-dashboard">
+      <ToastContainer />
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={executeDelete}
+        title="Xóa công thức"
+        message={`Bạn có chắc muốn xóa công thức "${confirmModal.itemTitle}"?`}
+        isLoading={isLoading}
+      />
       {/* HEADER */}
       <header className="recipe-header">
         {/* Welcome Section */}
-        <div
-          className="welcome-section_recipe"
-          style={{
-            backgroundImage: `url(${bgRecipes})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            height: "110vh",
-          }}
-        >
+        <div className="welcome-section_recipe">
           <div className="welcome-recipe-text">
             <h1>Make a recipe just for you</h1>
           </div>
@@ -289,6 +320,12 @@ export default function RecipeDashboard() {
         />
         <button className="add-btn-recipe" onClick={openModal}>
           <PlusCircle size={16} /> Add Recipe
+        </button>
+      </div>
+
+      <div className="recipe-filter-step">
+        <button className="filter-step-btn">
+          <Filter size={16} /> Bộ lọc
         </button>
       </div>
       <div className="recipes-heading">
@@ -335,7 +372,7 @@ export default function RecipeDashboard() {
                       size={18}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(r.id);
+                        handleDeleteClick(r);
                       }}
                     />
                   </div>

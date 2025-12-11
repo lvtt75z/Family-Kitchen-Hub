@@ -9,10 +9,10 @@ public class FamilyMemberRequestDTO {
     private Long userId;
     private String name;
     private Integer age;
-    private Gender gender; // MALE, FEMALE, OTHER
+    private Gender gender;
     private Float heightCm;
     private Float weightKg;
-    private ActivityLevel activityLevel; // SEDENTARY, ACTIVE...
+    private ActivityLevel activityLevel;
     private Boolean isAccountOwner;
 
     private String tastePreferences;
@@ -20,12 +20,10 @@ public class FamilyMemberRequestDTO {
 
     private Set<Long> allergyIds;
 
-    // --- Constructors ---
     public FamilyMemberRequestDTO() {
     }
 
-    // --- Getters and Setters ---
-
+    // ---------- GETTERS / SETTERS ----------
     public Long getUserId() {
         return userId;
     }
@@ -86,56 +84,8 @@ public class FamilyMemberRequestDTO {
         return isAccountOwner;
     }
 
-    public void setIsAccountOwner(Boolean accountOwner) {
-        isAccountOwner = accountOwner;
-    }
-
-    public String getTastePreferences() {
-        return tastePreferences;
-    }
-
-    public void setTastePreferences(String tastePreferences) {
-        this.tastePreferences = tastePreferences;
-    }
-
-    public String getHealthConditions() {
-        return healthConditions;
-    }
-
-    public void setHealthConditions(String healthConditions) {
-        this.healthConditions = healthConditions;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public Float getHeightCm() {
-        return heightCm;
-    }
-
-    public void setHeightCm(Float heightCm) {
-        this.heightCm = heightCm;
-    }
-
-    public Float getWeightKg() {
-        return weightKg;
-    }
-
-    public void setWeightKg(Float weightKg) {
-        this.weightKg = weightKg;
-    }
-
-    public String getActivityLevel() {
-        return activityLevel;
-    }
-
-    public void setActivityLevel(String activityLevel) {
-        this.activityLevel = activityLevel;
+    public void setIsAccountOwner(Boolean isAccountOwner) {
+        this.isAccountOwner = isAccountOwner;
     }
 
     public String getTastePreferences() {

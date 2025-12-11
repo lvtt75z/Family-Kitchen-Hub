@@ -15,7 +15,7 @@
   background: none;
   pointer-events: none;
   color: #111827;
-  
+
 }
 
 .sidebar-tab-switcher {
@@ -23,8 +23,8 @@
   gap: 10px;
   background: rgb(254, 249, 245);
   border-radius: 20px;
-  
-  box-shadow: 0 2px 12px 0 rgba(31,38,135,0.10);
+
+  box-shadow: 0 2px 12px 0 rgba(31, 38, 135, 0.10);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   width: fit-content;
@@ -36,20 +36,21 @@
   align-items: center;
   gap: 6px;
   padding: 6px 22px;
-  border-radius: 16px;
+  border-radius: 44px;
   font-size: 15px;
   color: #6b7280;
   background: none;
   border: none;
   outline: none;
   cursor: pointer;
-  transition: 
+  transition:
     color 0.35s ease,
     box-shadow 0.35s ease,
     transform 0.2s ease;
   text-decoration: none;
   font-weight: 500;
-  position: relative; /* cần cho ::after */
+  position: relative;
+  /* cần cho ::after */
 }
 
 /* hiệu ứng nhấn nhẹ khi click */
@@ -61,16 +62,22 @@
 .tab-btn::after {
   content: '';
   position: absolute;
-  bottom: 4px;               /* cách đáy nút */
+  bottom: 4px;
+  /* cách đáy nút */
   left: 0;
-  height: 2px;               /* độ dày thanh underline */
+  height: 2px;
+  /* độ dày thanh underline */
   width: 50%;
-  background-color: #e25813; /* màu thanh */
-  transform: scaleX(0);      /* ban đầu ẩn */
-  transform-origin: left;    /* scale từ trái sang phải */
+  background-color: #e25813;
+  /* màu thanh */
+  transform: scaleX(0);
+  /* ban đầu ẩn */
+  transform-origin: left;
+  /* scale từ trái sang phải */
   transition: transform 0.5s ease;
-  border-radius: 2px; 
-  margin-left: 20px;       /* thanh cũng bo tròn nhẹ */
+  border-radius: 2px;
+  margin-left: 20px;
+  /* thanh cũng bo tròn nhẹ */
 }
 
 /* hover effect */
@@ -84,11 +91,13 @@
 }
 
 /* hiệu ứng chuyển tab mượt */
-/* .tab-btn.active {
-  background: linear-gradient(90deg,#fb923c,#f97316);
-  color: #fff;
-  /* box-shadow: 0 0 0 2px #000000; */
-  /* transition-delay: 0.05s; /* 👈 thêm delay nhỏ để cảm giác “pop” */
+/* hiệu ứng chuyển tab mượt */
+.tab-btn.active {
+  background-color: #ffffff;
+  color: #ea580c;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
 
 .tab-content {
   opacity: 0;
@@ -100,6 +109,7 @@
   opacity: 1;
   transform: translateY(0);
 }
+
 /* Logout button fixed bottom left */
 .sidebar-tab-switcher,
 .tab-logout-btn {
@@ -110,6 +120,7 @@
   background: #fee2e2;
   color: #b91c1c;
 }
+
 .tab-logout-btn {
   margin-top: 24px;
   display: flex;
@@ -125,7 +136,7 @@
   transition: all 0.2s ease;
   width: 100%;
   justify-content: flex-start;
-   width: 50%;    
+  width: 50%;
 }
 
 .tab-logout-btn:hover {
@@ -156,7 +167,7 @@
   background: #ffffff;
   border-radius: 6px;
   min-width: 180px;
-  box-shadow: 0 2px 3px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
   z-index: 10;
 
   opacity: 0;
@@ -179,6 +190,7 @@
   align-items: center;
   gap: 6px;
 }
+
 .pf-dropdown-editprofile {
   padding: 8px 12px;
   cursor: pointer;
@@ -188,10 +200,12 @@
   text-decoration: none;
   color: #000000;
 }
+
 .pf-dropdown-item:hover {
   background: #c4c1c1;
   color: #fff;
 }
+
 .pf-tab-icon2 {
   margin-left: 6px;
   transition: transform 0.25s ease;

@@ -26,7 +26,7 @@ const TABS = [
     path: "/manage/familyProfile",
     icon: <UserRound size={18} />,
   },
-{ label: "Profile", icon: <User size={20} />, icon2: <ChevronDown size={12} />, dropdown: true }
+  { label: "Profile", icon: <User size={20} />, icon2: <ChevronDown size={12} />, dropdown: true }
 
 ];
 
@@ -38,11 +38,15 @@ export default function Sidebar() {
   const sidebarRef = useRef(null);
   const [openDropdownIndex, setOpenDropdownIndex] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);
 
   // Update indicator
   useEffect(() => {
-    const activeIndex = TABS.findIndex((tab) => tab.path === location.pathname);
+    const activeIndex = TABS.findIndex((tab) =>
+      tab.path === '/home'
+        ? location.pathname === tab.path
+        : location.pathname.startsWith(tab.path)
+    );
     const activeTab = tabsRef.current[activeIndex];
 
     if (activeTab && indicatorRef.current) {
@@ -54,22 +58,22 @@ const [user, setUser] = useState(null);
   }, [location]);
 
   // Check login status
-useEffect(() => {
-  const userData = localStorage.getItem("user");
-  if (userData) {
-    try {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData)); // chuyển chuỗi JSON thành object
-    } catch (error) {
-      console.error("Invalid user data in localStorage");
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        setIsLoggedIn(true);
+        setUser(JSON.parse(userData)); // chuyển chuỗi JSON thành object
+      } catch (error) {
+        console.error("Invalid user data in localStorage");
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    } else {
       setIsLoggedIn(false);
       setUser(null);
     }
-  } else {
-    setIsLoggedIn(false);
-    setUser(null);
-  }
-}, []);
+  }, []);
 
 
   // Close dropdown when click outside
@@ -101,7 +105,7 @@ useEffect(() => {
             return (
               <div
                 key={i}
-                 className={`pf-tab-wrapper ${openDropdownIndex === i ? "open" : ""}`}
+                className={`pf-tab-wrapper ${openDropdownIndex === i ? "open" : ""}`}
                 ref={(el) => (tabsRef.current[i] = el)}
               >
                 <div
@@ -116,14 +120,13 @@ useEffect(() => {
                 </div>
 
                 <div
-                  className={`pf-dropdown-menu ${
-                    openDropdownIndex === i ? "open" : ""
-                  }`}
+                  className={`pf-dropdown-menu ${openDropdownIndex === i ? "open" : ""
+                    }`}
                 >
                   {isLoggedIn ? (
                     <>
                       <div className="pf-dropdown-item"> {user.fullName || user.username || "User"}</div>
-                                          <Link
+                      <Link
                         className="pf-dropdown-item pf-dropdown-editprofile"
                         to="/manage/editprofile"
                       >
@@ -154,9 +157,10 @@ useEffect(() => {
               key={tab.path}
               to={tab.path}
               ref={(el) => (tabsRef.current[i] = el)}
-              className={`tab-btn${
-                location.pathname === tab.path ? " active" : ""
-              }`}
+              className={`tab-btn${(tab.path === '/home'
+                ? location.pathname === tab.path
+                : location.pathname.startsWith(tab.path)) ? " active" : ""
+                }`}
             >
               {tab.icon}
               <span>{tab.label}</span>

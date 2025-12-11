@@ -75,6 +75,8 @@
   gap: 24px;
   align-items: flex-start;
   margin-top: 44px;
+  justify-content: center;
+  
 }
 
 .left-section {
@@ -85,8 +87,8 @@
 }
 
 .right-section {
-  flex: 0 0 380px;
-  max-width: 380px;
+  flex: 0 0 421px;
+  max-width: 421px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -104,7 +106,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 27px;
 }
 
 .members-header h2 {

@@ -1,14 +1,14 @@
 .recommendation-container {
   padding: 30px 40px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: white;
 }
 
 @media (max-width: 768px) {
   .recommendation-container {
     padding: 20px 16px;
   }
-  
+
   .recommendations-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -73,10 +73,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(1.1);
@@ -112,9 +115,13 @@
 }
 
 @keyframes bounce {
-  0%, 80%, 100% {
+
+  0%,
+  80%,
+  100% {
     transform: translateY(0);
   }
+
   40% {
     transform: translateY(-12px);
   }
@@ -159,15 +166,18 @@
   background: white;
   border-radius: 12px;
   overflow: hidden;
+  border: 2px solid #f3f4f6;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
 }
 
 .recommendation-card:hover {
+  border-color: #fed7aa;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+
 }
 
 .recipe-image-wrapper {
@@ -358,4 +368,3 @@
   box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
   background: linear-gradient(135deg, #ea580c, #c2410c);
 }
-

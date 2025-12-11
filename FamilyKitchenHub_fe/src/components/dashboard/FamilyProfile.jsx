@@ -3,11 +3,22 @@ import axios from "../../hooks/axios";
 import EditProfile from "../EditProfile";
 import "./../../styles/FamilyProfile.css";
 import { Pen, Trash2, PlusCircle, Users, Heart, Activity, Target } from "lucide-react";
+import Lottie from "lottie-react";
+import loadingAnimation from "../../assets/cooking animation.json";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import ConfirmModal from "../ConfirmModal";
 
 export default function FamilyProfiles() {
   const [members, setMembers] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    memberId: null,
+    memberName: ''
+  });
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -50,7 +61,7 @@ export default function FamilyProfiles() {
   function handleAdd(e) {
     e.preventDefault();
     const token = localStorage.getItem("token");
-    if (!token) return alert("Chưa đăng nhập!");
+    if (!token) return toast.error("Chưa đăng nhập!");
     const user = JSON.parse(localStorage.getItem("user"));
 
     const payload = {
@@ -66,24 +77,39 @@ export default function FamilyProfiles() {
       allergyIds: [],
     };
 
+    setIsLoading(true);
+
     axios
       .post("/family-members", payload, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
-        setMembers((prev) => [...prev, res.data]);
-        closeModal();
+        setTimeout(() => {
+          setIsLoading(false);
+          setMembers((prev) => [...prev, res.data]);
+          closeModal();
+          toast.success("Thêm thành viên thành công!", {
+            position: "top-center",
+            autoClose: 2000,
+          });
+        }, 2000);
       })
       .catch((err) => {
-        console.error("Lỗi khi thêm thành viên:", err);
-        alert("Không thể thêm thành viên!");
+        setTimeout(() => {
+          setIsLoading(false);
+          console.error("Lỗi khi thêm thành viên:", err);
+          toast.error("Không thể thêm thành viên!", {
+            position: "top-right",
+            autoClose: 2000,
+          });
+        }, 2000);
       });
   }
 
   function handleEditSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem("token");
-    if (!token) return alert("Chưa đăng nhập!");
+    if (!token) return toast.error("Chưa đăng nhập!");
 
     const payload = {
       name: form.name,
@@ -96,35 +122,77 @@ export default function FamilyProfiles() {
       healthConditions: form.healthConditions || null,
     };
 
+    setIsLoading(true);
+
     axios
       .put(`/family-members/${editing.id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
-        setMembers((prev) =>
-          prev.map((m) => (m.id === editing.id ? res.data : m))
-        );
-        closeModal();
+        setTimeout(() => {
+          setIsLoading(false);
+          setMembers((prev) =>
+            prev.map((m) => (m.id === editing.id ? res.data : m))
+          );
+          closeModal();
+          toast.success("Cập nhật thành công!", {
+            position: "top-center",
+            autoClose: 2000,
+          });
+        }, 2000);
       })
       .catch((err) => {
-        console.error("Lỗi khi cập nhật:", err);
-        alert("Không thể cập nhật thành viên!");
+        setTimeout(() => {
+          setIsLoading(false);
+          console.error("Lỗi khi chỉnh sửa:", err);
+          toast.error("Không thể cập nhật!", {
+            position: "top-right",
+            autoClose: 2000,
+          });
+        }, 2000);
       });
   }
 
-  function handleDelete(id) {
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Chưa đăng nhập!");
+  function handleDeleteClick(member) {
+    setConfirmModal({
+      isOpen: true,
+      memberId: member.id,
+      memberName: member.name
+    });
+  }
 
-    if (!window.confirm("Xóa thành viên này?")) return;
+  function executeDelete() {
+    const id = confirmModal.memberId;
+    const token = localStorage.getItem("token");
+    if (!token) return toast.error("Chưa đăng nhập!");
+
+    setIsLoading(true);
+
     axios
       .delete(`/family-members/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then(() => setMembers((prev) => prev.filter((m) => m.id !== id)))
+      .then(() => {
+        setTimeout(() => {
+          setIsLoading(false);
+          setMembers((prev) => prev.filter((m) => m.id !== id));
+          setConfirmModal({ isOpen: false, memberId: null, memberName: '' });
+          toast.success("Xóa thành viên thành công!", {
+            position: "top-center",
+            autoClose: 2000,
+          });
+        }, 2000);
+      })
       .catch((err) => {
-        console.error("Lỗi khi xóa:", err);
-        alert("Không thể xóa!");
+        setTimeout(() => {
+          setIsLoading(false);
+          console.error("Lỗi khi xóa:", err);
+          toast.error("Không thể xóa thành viên!", {
+            position: "top-right",
+            autoClose: 2000,
+          });
+          setConfirmModal({ isOpen: false, memberId: null, memberName: '' });
+        }, 2000);
       });
   }
 
@@ -162,6 +230,15 @@ export default function FamilyProfiles() {
 
   return (
     <div className="family-profiles-wrap">
+      <ToastContainer />
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={executeDelete}
+        title="Xóa thành viên"
+        message={`Bạn có chắc chắn muốn xóa thành viên "${confirmModal.memberName}" không? Hành động này không thể hoàn tác.`}
+        isLoading={isLoading}
+      />
 
 
       {/* Two Column Layout */}
@@ -230,7 +307,7 @@ export default function FamilyProfiles() {
                         type="button"
                         className="btn danger"
                         title="Xóa"
-                        onClick={() => handleDelete(m.id)}
+                        onClick={() => handleDeleteClick(m)}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -289,6 +366,17 @@ export default function FamilyProfiles() {
         isOpen && (
           <div className={`modal-overlay ${isOpen ? "active" : ""}`}>
             <div className="modal">
+              {isLoading && (
+                <div className="loading-overlay" style={{ position: 'absolute', zIndex: 9999 }}>
+                  <Lottie
+                    animationData={loadingAnimation}
+                    loop={true}
+                    style={{ width: 150, height: 150 }}
+                  />
+                  <p>Đang xử lý...</p>
+                </div>
+              )}
+
               <div className="modal-header">
                 <h3>
                   {editing ? "✏️ Chỉnh sửa thành viên" : "➕ Thêm thành viên mới"}
@@ -331,6 +419,7 @@ export default function FamilyProfiles() {
                       name="gender"
                       value={form.gender}
                       onChange={handleChange}
+                      style={{ color: "black" }}
                     >
                       <option value="">-- Chọn giới tính --</option>
                       <option value="MALE">Nam</option>
@@ -371,13 +460,13 @@ export default function FamilyProfiles() {
                     name="activityLevel"
                     value={form.activityLevel}
                     onChange={handleChange}
+                    style={{ color: "black" }}
                   >
                     <option value="">-- Chọn mức độ --</option>
                     <option value="SEDENTARY">Ít vận động</option>
-                    <option value="LIGHTLY_ACTIVE">Vận động nhẹ</option>
-                    <option value="MODERATELY_ACTIVE">Vận động vừa phải</option>
-                    <option value="VERY_ACTIVE">Vận động nhiều</option>
-                    <option value="EXTRA_ACTIVE">Vận động rất nhiều</option>
+                    <option value="LIGHT">Vận động nhẹ</option>
+                    <option value="MODERATE">Vận động vừa phải</option>
+                    <option value="ACTIVE">Năng động</option>
                   </select>
                 </label>
 

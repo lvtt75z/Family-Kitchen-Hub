@@ -25,7 +25,7 @@ public class FamilyMemberResponseDTO {
     public FamilyMemberResponseDTO() {
     }
 
-    // --- Getters and Setters ---
+    // ---------- GETTERS / SETTERS ----------
 
     public Long getId() {
         return id;
@@ -103,56 +103,8 @@ public class FamilyMemberResponseDTO {
         return isAccountOwner;
     }
 
-    public void setIsAccountOwner(Boolean accountOwner) {
-        isAccountOwner = accountOwner;
-    }
-
-    public String getTastePreferences() {
-        return tastePreferences;
-    }
-
-    public void setTastePreferences(String tastePreferences) {
-        this.tastePreferences = tastePreferences;
-    }
-
-    public String getHealthConditions() {
-        return healthConditions;
-    }
-
-    public void setHealthConditions(String healthConditions) {
-        this.healthConditions = healthConditions;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public Float getHeightCm() {
-        return heightCm;
-    }
-
-    public void setHeightCm(Float heightCm) {
-        this.heightCm = heightCm;
-    }
-
-    public Float getWeightKg() {
-        return weightKg;
-    }
-
-    public void setWeightKg(Float weightKg) {
-        this.weightKg = weightKg;
-    }
-
-    public String getActivityLevel() {
-        return activityLevel;
-    }
-
-    public void setActivityLevel(String activityLevel) {
-        this.activityLevel = activityLevel;
+    public void setIsAccountOwner(Boolean isAccountOwner) {
+        this.isAccountOwner = isAccountOwner;
     }
 
     public String getTastePreferences() {

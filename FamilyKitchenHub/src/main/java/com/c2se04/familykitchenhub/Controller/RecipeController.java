@@ -127,7 +127,7 @@ public class RecipeController {
     /**
      * POST /api/recipes/{id}/categories
      * Update recipe categories
-     * MATCHES YOUR DOCUMENT ✅
+     * MATCHES YOUR DOCUMENT 
      * Body: { "categoryIds": [1, 5, 8] }
      */
     @PostMapping("/{id}/categories")

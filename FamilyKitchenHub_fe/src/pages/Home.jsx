@@ -195,7 +195,7 @@ function Home() {
       <section className="hero">
         <div className="hero-container">
           <div className="hero-left">
-            <span className="badge">
+            <span className="badge-home">
               🌟 New with AI-powered meal suggestions
             </span>
             <h1>
@@ -401,7 +401,7 @@ function Home() {
       {/* ===== FEATURES SECTION ===== */}
       <section className="features">
         <div className="features-header">
-          <span className="badge badge-blue">Features</span>
+          <span className="badge-home badge-blue">Features</span>
           <h2>Everything your family needs for healthy eating</h2>
         </div>
 

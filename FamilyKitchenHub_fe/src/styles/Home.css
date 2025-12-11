@@ -29,7 +29,7 @@
   gap: 16px;
 }
 
-.badge {
+.badge-home {
   font-size: 13px;
   font-weight: 600;
   background: #ffedd5;
@@ -543,8 +543,12 @@ h1 {
 }
 
 .bookmarked-card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  transform: translateY(-8px);
+  /* box-shadow: 0 10px 25px rgba(250, 45, 45, 0.15);
+  transform: translateY(-8px); */
+    border-color: #fed7aa;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.1);
+  transform: translateY(-2px);
+ 
 }
 
 .bookmarked-image {
@@ -565,7 +569,9 @@ h1 {
 
 .bookmarked-card:hover .bookmarked-image img {
   transform: scale(1.05);
+ 
 }
+
 
 .bookmark-badge {
   position: absolute;
@@ -594,7 +600,7 @@ h1 {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: white;
+  background: rgb(255, 255, 255);
   border: none;
   cursor: pointer;
   display: flex;
