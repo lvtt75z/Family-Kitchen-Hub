@@ -133,6 +133,18 @@ public class RecipeAnalyticsService {
     }
 
     @Transactional(readOnly = true)
+    public List<RecipePopularityResponseDTO> getTopBookmarkedRecipes(int limit) {
+        if (limit <= 0) {
+            throw new BadRequestException("Limit phải lớn hơn 0");
+        }
+        Pageable pageable = PageRequest.of(0, limit);
+        return recipePopularityRepository.findTopByBookmarkCount(pageable)
+                .stream()
+                .map(this::mapToPopularityResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public EngagementFeedResponse getEngagementFeed(int page, int size) {
         if (page < 0) {
             throw new BadRequestException("Page phải >= 0");

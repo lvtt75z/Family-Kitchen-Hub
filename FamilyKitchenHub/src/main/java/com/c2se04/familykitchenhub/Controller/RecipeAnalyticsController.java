@@ -46,5 +46,11 @@ public class RecipeAnalyticsController {
             @RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(recipeAnalyticsService.getPopularRecipes(limit));
     }
+
+    @GetMapping("/top-bookmarked")
+    public ResponseEntity<List<RecipePopularityResponseDTO>> topBookmarkedRecipes(
+            @RequestParam(defaultValue = "5") int limit) {
+        return ResponseEntity.ok(recipeAnalyticsService.getTopBookmarkedRecipes(limit));
+    }
 }
 

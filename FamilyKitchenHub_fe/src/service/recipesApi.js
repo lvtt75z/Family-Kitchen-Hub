@@ -54,6 +54,15 @@ export const getPopularRecipes = async (limit = 20) => {
   return res.data;
 };
 
+// GET /api/recipes/top-bookmarked?limit=5
+// Trả về danh sách công thức được bookmark nhiều nhất
+export const getTopBookmarkedRecipes = async (limit = 5) => {
+  const res = await axios.get("/recipes/top-bookmarked", {
+    params: { limit },
+  });
+  return res.data;
+};
+
 // ============================
 // Comments & Media
 // ============================
@@ -113,6 +122,7 @@ export default {
   addRecipeBookmark,
   removeRecipeBookmark,
   getPopularRecipes,
+  getTopBookmarkedRecipes,
   getRecipeComments,
   createRecipeComment,
   uploadCommentMedia,
