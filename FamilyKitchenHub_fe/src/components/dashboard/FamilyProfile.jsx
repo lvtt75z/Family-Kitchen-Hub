@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "../../hooks/axios";
 import EditProfile from "../EditProfile";
 import "./../../styles/FamilyProfile.css";
-import { Pen, Trash2, PlusCircle, Users, Heart, Activity, Target } from "lucide-react";
+import { Pen, Trash2, PlusCircle, Users, Heart, Activity, Target, ChevronDown } from "lucide-react";
 import Lottie from "lottie-react";
 import loadingAnimation from "../../assets/cooking animation.json";
 import { toast, ToastContainer } from "react-toastify";
@@ -28,7 +28,10 @@ export default function FamilyProfiles() {
     activityLevel: "",
     tastePreferences: "",
     healthConditions: "",
+    allergyIds: [],
   });
+  const [allAllergies, setAllAllergies] = useState([]);
+  const [showAllergies, setShowAllergies] = useState(false);
 
   // Fetch API thật khi load trang
   useEffect(() => {
@@ -50,12 +53,30 @@ export default function FamilyProfiles() {
       .catch((err) => {
         console.error("Lỗi khi lấy danh sách:", err.response || err.message || err);
       });
+
+    axios
+      .get("/allergies", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setAllAllergies(res.data))
+      .catch((err) => console.error("Lỗi khi lấy danh sách dị ứng:", err));
   }, []);
 
   // Form handler
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
+  }
+
+  function handleAllergyToggle(id) {
+    setForm((prev) => {
+      const current = prev.allergyIds || [];
+      if (current.includes(id)) {
+        return { ...prev, allergyIds: current.filter((x) => x !== id) };
+      } else {
+        return { ...prev, allergyIds: [...current, id] };
+      }
+    });
   }
 
   function handleAdd(e) {
@@ -74,7 +95,7 @@ export default function FamilyProfiles() {
       activityLevel: form.activityLevel || null,
       tastePreferences: form.tastePreferences || null,
       healthConditions: form.healthConditions || null,
-      allergyIds: [],
+      allergyIds: form.allergyIds || [],
     };
 
     setIsLoading(true);
@@ -120,6 +141,7 @@ export default function FamilyProfiles() {
       activityLevel: form.activityLevel || null,
       tastePreferences: form.tastePreferences || null,
       healthConditions: form.healthConditions || null,
+      allergyIds: form.allergyIds || [],
     };
 
     setIsLoading(true);
@@ -208,10 +230,21 @@ export default function FamilyProfiles() {
         activityLevel: member.activityLevel || "",
         tastePreferences: member.tastePreferences || "",
         healthConditions: member.healthConditions || "",
+        allergyIds: member.allergies ? member.allergies.map((a) => a.id) : [],
       });
     } else {
       setEditing(null);
-      setForm({ name: "", age: "", gender: "", heightCm: "", weightKg: "", activityLevel: "", tastePreferences: "", healthConditions: "" });
+      setForm({
+        name: "",
+        age: "",
+        gender: "",
+        heightCm: "",
+        weightKg: "",
+        activityLevel: "",
+        tastePreferences: "",
+        healthConditions: "",
+        allergyIds: [],
+      });
     }
     setIsOpen(true);
   }
@@ -219,6 +252,7 @@ export default function FamilyProfiles() {
   function closeModal() {
     setIsOpen(false);
     setEditing(null);
+    setShowAllergies(false);
   }
 
   // Calculate stats
@@ -286,14 +320,20 @@ export default function FamilyProfiles() {
                     </div>
                     <div className="meta">
                       <h4>{m.name}</h4>
-                      <p className="sub">
-                        {m.age && (
+                      <div className="sub-info">
+                        {m.age && <span className="age-badge">{m.age} tuổi</span>}
+                        {m.gender && (
                           <span className="age-badge">
-                            {m.age} tuổi
+                            {m.gender === "MALE"
+                              ? "Nam"
+                              : m.gender === "FEMALE"
+                                ? "Nữ"
+                                : "Khác"}
                           </span>
                         )}
-                      </p>
+                      </div>
                     </div>
+
                     <div className="actions">
                       <button
                         type="button"
@@ -350,8 +390,21 @@ export default function FamilyProfiles() {
                       </div>
                     )}
 
-                    {!m.healthConditions && !m.tastePreferences && !m.gender && (
+                    {!m.healthConditions && !m.tastePreferences && !m.gender && (!m.allergies || m.allergies.length === 0) && (
                       <p className="no-info">Chưa có thông tin bổ sung</p>
+                    )}
+
+                    {m.allergies && m.allergies.length > 0 && (
+                      <div className="section">
+                        <div className="section-title">Dị ứng:</div>
+                        <div className="chips">
+                          {m.allergies.map((algo) => (
+                            <span key={algo.id} className="chip danger">
+                              {algo.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -490,6 +543,35 @@ export default function FamilyProfiles() {
                     placeholder="Tiểu đường, cao huyết áp..."
                   />
                 </label>
+
+                <div className="form-group" style={{ marginBottom: 16 }}>
+                  <label>Dị ứng</label>
+                  <div className="custom-combobox">
+                    <div
+                      className="combobox-trigger"
+                      onClick={() => setShowAllergies(!showAllergies)}
+                    >
+                      {form.allergyIds && form.allergyIds.length > 0
+                        ? `Đã chọn ${form.allergyIds.length} dị ứng`
+                        : "-- Chọn dị ứng --"}
+                      <ChevronDown size={16} />
+                    </div>
+                    {showAllergies && (
+                      <div className="combobox-options">
+                        {allAllergies.map((allergy) => (
+                          <label key={allergy.id} className="checkbox-option">
+                            <input
+                              type="checkbox"
+                              checked={form.allergyIds?.includes(allergy.id)}
+                              onChange={() => handleAllergyToggle(allergy.id)}
+                            />
+                            {allergy.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <div className="modal-actions">
                   <button
