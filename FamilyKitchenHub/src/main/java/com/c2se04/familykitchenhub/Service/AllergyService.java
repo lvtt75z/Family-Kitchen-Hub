@@ -4,6 +4,7 @@ import com.c2se04.familykitchenhub.Exception.BadRequestException;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import com.c2se04.familykitchenhub.model.Allergy;
 import com.c2se04.familykitchenhub.Repository.AllergyRepository;
+import com.c2se04.familykitchenhub.Repository.MemberAllergyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +16,13 @@ import java.util.Optional;
 public class AllergyService {
 
     private final AllergyRepository allergyRepository;
+    private final MemberAllergyRepository memberAllergyRepository;
 
     @Autowired
-    public AllergyService(AllergyRepository allergyRepository) {
+    public AllergyService(AllergyRepository allergyRepository,
+            MemberAllergyRepository memberAllergyRepository) {
         this.allergyRepository = allergyRepository;
+        this.memberAllergyRepository = memberAllergyRepository;
     }
 
     // CREATE
@@ -68,6 +72,11 @@ public class AllergyService {
         if (!allergyRepository.existsById(id)) {
             throw new ResourceNotFoundException("Allergy", "id", id);
         }
+
+        // Cascade delete: Remove all member_allergies entries first
+        memberAllergyRepository.deleteByAllergyId(id);
+
+        // Then delete the allergy
         allergyRepository.deleteById(id);
     }
 }

@@ -54,7 +54,7 @@
 /* Form Card with Orange Border */
 .form-card {
     margin-bottom: 24px;
-    min-height: 500px;
+    min-height: 600px;
     border-radius: 16px !important;
     border: 2px solid #ffe8dc !important;
     box-shadow: 0 4px 16px rgba(249, 115, 22, 0.08) !important;

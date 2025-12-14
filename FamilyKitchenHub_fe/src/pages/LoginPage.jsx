@@ -42,9 +42,16 @@ export default function LoginPage() {
           autoClose: 1500,
         });
 
-        // Đợi toast hiện 1.5s rồi chuyển trang và reload
+        // Đợi toast hiện 1.5s rồi chuyển trang dựa vào role
         setTimeout(() => {
-          window.location.href = "/home";
+          const user = res.data.user;
+          if (user && user.role === 'ADMIN') {
+            // Admin: redirect to admin dashboard
+            window.location.href = "/admin/dashboard";
+          } else {
+            // Regular user: redirect to home
+            window.location.href = "/home";
+          }
         }, 1500);
       }, 3000);
     } catch (err) {
@@ -120,11 +127,9 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="divider">OR</div>
-          <button className="demo-btn">Try Demo Account</button>
-          <a href="#" className="forgot">
+          <Link to="/forgot-password" className="forgot">
             Forgot your password?
-          </a>
+          </Link>
           <p className="signup-link">
             Don't have an account? <Link to="/register">Sign up here</Link>
           </p>

@@ -1,5 +1,6 @@
 package com.c2se04.familykitchenhub.Repository;
 
+import com.c2se04.familykitchenhub.Entity.User;
 import com.c2se04.familykitchenhub.enums.CommentStatus;
 import com.c2se04.familykitchenhub.model.Recipe;
 import com.c2se04.familykitchenhub.model.RecipeComment;
@@ -14,5 +15,9 @@ public interface RecipeCommentRepository extends JpaRepository<RecipeComment, Lo
     List<RecipeComment> findByRecipeOrderByCreatedAtDesc(Recipe recipe);
 
     List<RecipeComment> findByRecipeAndStatusOrderByCreatedAtDesc(Recipe recipe, CommentStatus status);
-}
 
+    void deleteByUser(User user);
+
+    // Cascade deletion method for recipe deletion
+    void deleteByRecipeId(Long recipeId);
+}

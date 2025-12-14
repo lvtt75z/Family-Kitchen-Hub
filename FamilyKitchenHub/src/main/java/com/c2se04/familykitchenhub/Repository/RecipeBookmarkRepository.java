@@ -14,5 +14,9 @@ public interface RecipeBookmarkRepository extends JpaRepository<RecipeBookmark, 
     boolean existsByUserAndRecipe(User user, Recipe recipe);
 
     Optional<RecipeBookmark> findByUserAndRecipe(User user, Recipe recipe);
-}
 
+    void deleteByUser(User user);
+
+    // Cascade deletion method for recipe deletion
+    void deleteByRecipeId(Long recipeId);
+}

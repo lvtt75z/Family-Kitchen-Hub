@@ -31,4 +31,9 @@ public interface UserRecipeReminderRepository extends JpaRepository<UserRecipeRe
     List<UserRecipeReminder> findByUserIdAndReminderAtAfter(Long userId, LocalDateTime now);
 
     List<UserRecipeReminder> findByUserIdAndReminderAtBefore(Long userId, LocalDateTime now);
+
+    void deleteByUserId(Long userId);
+
+    // Cascade deletion method for recipe deletion
+    void deleteByRecipeId(Long recipeId);
 }

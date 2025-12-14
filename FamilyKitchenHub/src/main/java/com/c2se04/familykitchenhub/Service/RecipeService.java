@@ -1,8 +1,8 @@
 package com.c2se04.familykitchenhub.Service;
+
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
-import com.c2se04.familykitchenhub.Repository.IngredientRepository;
-import com.c2se04.familykitchenhub.Repository.RecipeRepository;
+import com.c2se04.familykitchenhub.Repository.*;
 import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Ingredient;
 import com.c2se04.familykitchenhub.model.Recipe;
@@ -20,14 +20,37 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
     private final RecipeMapper recipeMapper;
+    private final RecipeSearchLogRepository recipeSearchLogRepository;
+    private final RecipeCommentRepository recipeCommentRepository;
+    private final RecipeBookmarkRepository recipeBookmarkRepository;
+    private final RecipePopularityRepository recipePopularityRepository;
+    private final RecipeScheduleRepository recipeScheduleRepository;
+    private final UserRecipeReminderRepository userRecipeReminderRepository;
+    private final MealPlanEntryRepository mealPlanEntryRepository;
 
     @Autowired
-    public RecipeService(RecipeRepository recipeRepository, IngredientRepository ingredientRepository, RecipeMapper recipeMapper) {
+    public RecipeService(RecipeRepository recipeRepository,
+            IngredientRepository ingredientRepository,
+            RecipeMapper recipeMapper,
+            RecipeSearchLogRepository recipeSearchLogRepository,
+            RecipeCommentRepository recipeCommentRepository,
+            RecipeBookmarkRepository recipeBookmarkRepository,
+            RecipePopularityRepository recipePopularityRepository,
+            RecipeScheduleRepository recipeScheduleRepository,
+            UserRecipeReminderRepository userRecipeReminderRepository,
+            MealPlanEntryRepository mealPlanEntryRepository) {
         this.recipeRepository = recipeRepository;
         this.ingredientRepository = ingredientRepository;
         this.recipeMapper = recipeMapper;
+        this.recipeSearchLogRepository = recipeSearchLogRepository;
+        this.recipeCommentRepository = recipeCommentRepository;
+        this.recipeBookmarkRepository = recipeBookmarkRepository;
+        this.recipePopularityRepository = recipePopularityRepository;
+        this.recipeScheduleRepository = recipeScheduleRepository;
+        this.userRecipeReminderRepository = userRecipeReminderRepository;
+        this.mealPlanEntryRepository = mealPlanEntryRepository;
     }
-    // CREATE
+
     @Transactional
     public Recipe createRecipe(Recipe recipe) {
         if (recipe.getRecipeIngredients() != null) {
@@ -36,10 +59,10 @@ public class RecipeService {
                     throw new ResourceNotFoundException("Ingredient", "id", null);
                 }
                 Ingredient ingredient = ingredientRepository.findById(recipeIngredient.getIngredient().getId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Ingredient", "id", recipeIngredient.getIngredient().getId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("Ingredient", "id",
+                                recipeIngredient.getIngredient().getId()));
                 recipeIngredient.setIngredient(ingredient);
                 recipeIngredient.setRecipe(recipe);
-                // Nếu unit chưa được set, lấy từ Ingredient.defaultUnit
                 if (recipeIngredient.getUnit() == null || recipeIngredient.getUnit().trim().isEmpty()) {
                     recipeIngredient.setUnit(ingredient.getUnit() != null ? ingredient.getUnit() : "gram");
                 }
@@ -48,34 +71,27 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
-    // READ ALL
     public List<Recipe> getAllRecipes() {
         return recipeRepository.findAll();
     }
 
-    // READ BY ID
     public Optional<Recipe> getRecipeById(Long id) {
         return recipeRepository.findById(id);
     }
 
-    // READ BY MEAL TYPE
     public List<Recipe> getRecipesByMealType(MealType mealType) {
         return recipeRepository.findByMealType(mealType);
     }
 
-    // READ BY TITLE (SEARCH)
     public List<Recipe> searchRecipesByTitle(String title) {
         return recipeRepository.findByTitleContainingIgnoreCase(title);
     }
 
-    // UPDATE
     @Transactional
     public Recipe updateRecipe(Long id, Recipe updatedRecipeDetails) {
-        // Tìm kiếm và ném Custom Exception nếu không tìm thấy
         Recipe existingRecipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
 
-        // Cập nhật các trường dữ liệu
         existingRecipe.setTitle(updatedRecipeDetails.getTitle());
         existingRecipe.setInstructions(updatedRecipeDetails.getInstructions());
         existingRecipe.setCookingTimeMinutes(updatedRecipeDetails.getCookingTimeMinutes());
@@ -83,7 +99,6 @@ public class RecipeService {
         existingRecipe.setImageUrl(updatedRecipeDetails.getImageUrl());
         existingRecipe.setMealType(updatedRecipeDetails.getMealType());
 
-        // Cập nhật danh sách thành phần nếu có
         if (updatedRecipeDetails.getRecipeIngredients() != null) {
             if (existingRecipe.getRecipeIngredients() != null) {
                 existingRecipe.getRecipeIngredients().clear();
@@ -93,10 +108,10 @@ public class RecipeService {
                     throw new ResourceNotFoundException("Ingredient", "id", null);
                 }
                 Ingredient ingredient = ingredientRepository.findById(newIngredient.getIngredient().getId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Ingredient", "id", newIngredient.getIngredient().getId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("Ingredient", "id",
+                                newIngredient.getIngredient().getId()));
                 newIngredient.setRecipe(existingRecipe);
                 newIngredient.setIngredient(ingredient);
-                // Nếu unit chưa được set, lấy từ Ingredient.defaultUnit
                 if (newIngredient.getUnit() == null || newIngredient.getUnit().trim().isEmpty()) {
                     newIngredient.setUnit(ingredient.getUnit() != null ? ingredient.getUnit() : "gram");
                 }
@@ -107,13 +122,30 @@ public class RecipeService {
         return recipeRepository.save(existingRecipe);
     }
 
-    // DELETE
     @Transactional
     public void deleteRecipe(Long id) {
-        // Kiểm tra sự tồn tại và ném Custom Exception nếu không tìm thấy
         if (!recipeRepository.existsById(id)) {
             throw new ResourceNotFoundException("Recipe", "id", id);
         }
+
+        // Get the recipe to clear ManyToMany relationships
+        Recipe recipe = recipeRepository.findById(id).get();
+
+        // Clear ManyToMany categories relationship (recipe_categories table)
+        recipe.getCategories().clear();
+        recipeRepository.save(recipe);
+
+        // Delete from other tables
+        recipeCommentRepository.deleteByRecipeId(id);
+        recipeBookmarkRepository.deleteByRecipeId(id);
+        recipePopularityRepository.deleteByRecipeId(id);
+        recipeSearchLogRepository.deleteByRecipeId(id);
+        recipeScheduleRepository.deleteByRecipeId(id);
+        userRecipeReminderRepository.deleteByRecipeId(id);
+        mealPlanEntryRepository.deleteByRecipeId(id);
+
+        // Then delete the recipe (recipeIngredients and steps will cascade via JPA
+        // CascadeType.ALL)
         recipeRepository.deleteById(id);
     }
 }

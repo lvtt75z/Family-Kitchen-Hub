@@ -103,7 +103,7 @@ public class EmailService {
                                     <h2>Welcome to Family Kitchen Hub!</h2>
                                     <p>Thank you for registering. Please use the following OTP code to verify your email address:</p>
                                     <div class="otp-code">%s</div>
-                                    <p>This code will expire in 10 minutes.</p>
+                                    <p>This code will expire in 2 minutes.</p>
                                 </div>
                                 <div class="footer"><p>&copy; 2025 Family Kitchen Hub. All rights reserved.</p></div>
                             </div>

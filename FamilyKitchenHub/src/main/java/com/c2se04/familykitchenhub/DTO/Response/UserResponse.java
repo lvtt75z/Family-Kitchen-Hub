@@ -5,7 +5,7 @@ import com.c2se04.familykitchenhub.enums.Role;
 import java.time.LocalDateTime;
 
 public class UserResponse {
-    
+
     private Long id;
     private String username;
     private String email;
@@ -13,19 +13,21 @@ public class UserResponse {
     private Role role;
     private Boolean isVerified;
     private LocalDateTime createdAt;
+    private String country;
 
     // Constructors
     public UserResponse() {
     }
 
-    public UserResponse(Long id, String username, String email, String fullName, Role role, 
-                       Boolean isVerified, LocalDateTime createdAt) {
+    public UserResponse(Long id, String username, String email, String fullName, Role role,
+            Boolean isVerified, LocalDateTime createdAt, String country) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.fullName = fullName;
         this.role = role;
         this.isVerified = isVerified;
+        this.country = country;
         this.createdAt = createdAt;
     }
 
@@ -85,5 +87,12 @@ public class UserResponse {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
-}
 
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+}

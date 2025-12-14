@@ -36,6 +36,7 @@ public class CategoryService {
     /**
      * Get categories for a recipe (simple DTO)
      */
+    @Transactional(readOnly = true)
     public List<CategoryDTO> getCategoriesForRecipe(Long recipeId) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with id: " + recipeId));
@@ -64,8 +65,41 @@ public class CategoryService {
                         .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId)))
                 .collect(Collectors.toSet());
 
-        // Update recipe categories using JPA M2M
-        recipe.setCategories(categories);
+        // Clear existing categories and set new ones
+        recipe.getCategories().clear();
+        recipe.getCategories().addAll(categories);
+
+        // Flush to ensure immediate persistence
+        recipeRepository.saveAndFlush(recipe);
+    }
+
+    /**
+     * Add a single category to a recipe
+     */
+    @Transactional
+    public void addCategoryToRecipe(Long recipeId, Long categoryId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with id: " + recipeId));
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+
+        recipe.getCategories().add(category);
+        recipeRepository.save(recipe);
+    }
+
+    /**
+     * Remove a category from a recipe
+     */
+    @Transactional
+    public void removeCategoryFromRecipe(Long recipeId, Long categoryId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with id: " + recipeId));
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+
+        recipe.getCategories().remove(category);
         recipeRepository.save(recipe);
     }
 
