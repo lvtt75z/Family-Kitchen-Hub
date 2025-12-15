@@ -29,22 +29,36 @@ function Home() {
   const [slidesPerView, setSlidesPerView] = useState(3);
   const navigate = useNavigate();
 
-  // 5.2 – Xem danh sách tất cả công thức: GET /api/recipes
+  // 5.2 – Xem danh sách tất cả công thức: GET /api/dashboard/popular-recipes
   useEffect(() => {
     const fetchRecipes = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("/recipes");
-        const recipesData = res.data || [];
-        // Filter out recipes without valid IDs and log for debugging
-        const validRecipes = recipesData.filter(recipe => {
-          const id = recipe.id || recipe.recipeId;
-          if (!id) {
-            console.warn("Recipe without ID:", recipe);
-            return false;
-          }
-          return true;
+        const res = await axios.get("/dashboard/popular-recipes", {
+          params: { limit: 10 } // Get top 10 popular recipes
         });
+        const recipesData = res.data || [];
+
+        // Map RecipePopularityResponseDTO fields to match expected format
+        const validRecipes = recipesData
+          .map(recipe => ({
+            id: recipe.recipeId,           // Map recipeId -> id
+            title: recipe.recipeTitle,      // Map recipeTitle -> title
+            imageUrl: recipe.imageUrl,
+            bookmarkCount: recipe.bookmarkCount,
+            popularityScore: recipe.popularityScore,
+            searchCount: recipe.searchCount,
+            cookingTimeMinutes: recipe.cookingTimeMinutes || 30, // Default if not provided
+            servings: recipe.servings || 4  // Default if not provided
+          }))
+          .filter(recipe => {
+            if (!recipe.id) {
+              console.warn("Recipe without ID:", recipe);
+              return false;
+            }
+            return true;
+          });
+
         setRecipes(validRecipes);
       } catch (error) {
         console.error("Error fetching recipes:", error);
@@ -308,11 +322,13 @@ function Home() {
                               onClick={(e) => handleBookmark(e, recipeId)}
                               disabled={bookmarking[recipeId]}
                               aria-label={bookmarkedRecipes.has(recipeId) ? "Remove bookmark" : "Add bookmark"}
+                              title={bookmarkedRecipes.has(recipeId) ? "Remove from favorites" : "Add to favorites"}
                             >
                               <Heart
-                                size={20}
+                                size={22}
                                 fill={bookmarkedRecipes.has(recipeId) ? "#ea580c" : "none"}
-                                color={bookmarkedRecipes.has(recipeId) ? "#ea580c" : "#fff"}
+                                color="#ea580c"
+                                strokeWidth={2.5}
                               />
                             </button>
                           </div>
@@ -383,9 +399,8 @@ function Home() {
               return (
                 <div
                   key={recipeId || `recipe-${index}`}
-                  className="suggestion-card scroll-reveal"
+                  className="suggestion-card"
                   onClick={() => recipeId && navigate(`/manage/recipesdetails/${recipeId}`)}
-                  style={{ transitionDelay: `${index * 0.1}s` }}
                 >
                   <div className="suggestion-image">
                     <img
@@ -397,11 +412,13 @@ function Home() {
                       onClick={(e) => handleBookmark(e, recipeId)}
                       disabled={bookmarking[recipeId]}
                       aria-label={bookmarkedRecipes.has(recipeId) ? "Remove bookmark" : "Add bookmark"}
+                      title={bookmarkedRecipes.has(recipeId) ? "Remove from favorites" : "Add to favorites"}
                     >
                       <Heart
-                        size={20}
+                        size={22}
                         fill={bookmarkedRecipes.has(recipeId) ? "#ff6b6b" : "none"}
-                        color={bookmarkedRecipes.has(recipeId) ? "#ff6b6b" : "#fff"}
+                        color={bookmarkedRecipes.has(recipeId) ? "#ff6b6b" : "#2d3748"}
+                        strokeWidth={2.5}
                       />
                     </button>
                   </div>

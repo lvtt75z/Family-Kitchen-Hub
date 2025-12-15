@@ -44,8 +44,19 @@ export default function FamilyProfiles() {
       return;
     }
 
+    // Get userId from localStorage
+    const userDataString = localStorage.getItem("user");
+    const userData = userDataString ? JSON.parse(userDataString) : null;
+    const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
+
+    if (!userId) {
+      console.error("No userId found in localStorage");
+      return;
+    }
+
+    // Use the correct endpoint: /family-members/user/{userId}
     axios
-      .get("/family-members", {
+      .get(`/family-members/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

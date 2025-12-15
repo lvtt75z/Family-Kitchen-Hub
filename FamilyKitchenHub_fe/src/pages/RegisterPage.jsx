@@ -196,9 +196,6 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="divider">OR</div>
-          <button className="demo-btn">Try Demo Account</button>
-
           <p className="signup-link">
             Already have an account? <Link to="/login">Sign in here</Link>
           </p>

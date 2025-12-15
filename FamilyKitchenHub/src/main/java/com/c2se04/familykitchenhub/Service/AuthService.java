@@ -9,8 +9,7 @@ import com.c2se04.familykitchenhub.Exception.BadRequestException;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import com.c2se04.familykitchenhub.Jwt.JwtTokenProvider;
 import com.c2se04.familykitchenhub.Mapper.UserMapper;
-import com.c2se04.familykitchenhub.Repository.FamilyMemberRepository;
-import com.c2se04.familykitchenhub.Repository.UserRepository;
+import com.c2se04.familykitchenhub.Repository.*;
 import com.c2se04.familykitchenhub.Util.PasswordUtil;
 import com.c2se04.familykitchenhub.Util.ValidationUtil;
 import com.c2se04.familykitchenhub.enums.ActivityLevel;
@@ -31,6 +30,13 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final FamilyMemberRepository familyMemberRepository;
+    private final RecipeBookmarkRepository recipeBookmarkRepository;
+    private final RecipeCommentRepository recipeCommentRepository;
+    private final InventoryItemRepository inventoryItemRepository;
+    private final RecipeSearchLogRepository recipeSearchLogRepository;
+    private final UserNotificationRepository userNotificationRepository;
+    private final UserRecipeReminderRepository userRecipeReminderRepository;
+    private final MealPlanEntryRepository mealPlanEntryRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
     private final UserMapper userMapper;
@@ -42,10 +48,12 @@ public class AuthService {
     public MessageResponse register(RegisterRequest request) {
         // Validate inputs
         String usernameError = ValidationUtil.getUsernameValidationError(request.getUsername());
-        if (usernameError != null) throw new BadRequestException(usernameError);
+        if (usernameError != null)
+            throw new BadRequestException(usernameError);
 
         String passwordError = ValidationUtil.getPasswordValidationError(request.getPassword());
-        if (passwordError != null) throw new BadRequestException(passwordError);
+        if (passwordError != null)
+            throw new BadRequestException(passwordError);
 
         if (!request.getPassword().equals(request.getRepeatPassword())) {
             throw new BadRequestException("Password and repeat password do not match");
@@ -71,7 +79,7 @@ public class AuthService {
         user.setRole(Role.USER);
         user.setIsVerified(false);
         user.setVerificationCode(otpCode);
-        user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(10));
+        user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(2));
 
         User savedUser = userRepository.save(user);
 
@@ -155,8 +163,8 @@ public class AuthService {
         // Đảm bảo UserRepository có hàm findByUsernameOrEmail
         User user = userRepository.findByUsernameOrEmail(
                 request.getUsernameOrEmail(),
-                request.getUsernameOrEmail()
-        ).orElseThrow(() -> new BadRequestException("Invalid username/email or password"));
+                request.getUsernameOrEmail())
+                .orElseThrow(() -> new BadRequestException("Invalid username/email or password"));
 
         if (!PasswordUtil.verifyPassword(request.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid username/email or password");
@@ -217,6 +225,87 @@ public class AuthService {
         userRepository.save(user);
 
         return new MessageResponse("Password has been reset successfully", true);
+    }
+
+    /**
+     * 7. GET ALL USERS (Excluding Admins)
+     */
+    public java.util.List<UserResponse> getAllUsers() {
+        java.util.List<User> users = userRepository.findByRole(Role.USER);
+        return users.stream()
+                .map(userMapper::toUserResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * 8. UPDATE USER
+     */
+    @Transactional
+    public UserResponse updateUser(Long userId, UpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        // Update email if provided and different
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new BadRequestException("Email is already in use");
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        // Update username if provided and different
+        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
+            String usernameError = ValidationUtil.getUsernameValidationError(request.getUsername());
+            if (usernameError != null)
+                throw new BadRequestException(usernameError);
+
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new BadRequestException("Username is already taken");
+            }
+            user.setUsername(request.getUsername());
+        }
+
+        // Update full name if provided
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+
+        // Update country if provided
+        if (request.getCountry() != null) {
+            user.setCountry(request.getCountry());
+        }
+
+        User updatedUser = userRepository.save(user);
+        return userMapper.toUserResponse(updatedUser);
+    }
+
+    /**
+     * 9. DELETE USER (with cascade deletion)
+     */
+    @Transactional
+    public MessageResponse deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        // Prevent deletion of admin users
+        if (user.getRole() == Role.ADMIN) {
+            throw new BadRequestException("Cannot delete admin users");
+        }
+
+        // Delete all related records (cascade deletion)
+        // Note: FamilyMembers will be auto-deleted via JPA cascade settings
+        recipeBookmarkRepository.deleteByUser(user);
+        recipeCommentRepository.deleteByUser(user);
+        inventoryItemRepository.deleteByUserId(userId);
+        recipeSearchLogRepository.deleteByUserId(userId);
+        userNotificationRepository.deleteByUserId(userId);
+        userRecipeReminderRepository.deleteByUserId(userId);
+        mealPlanEntryRepository.deleteByUserId(userId);
+
+        // Finally, delete the user
+        userRepository.delete(user);
+
+        return new MessageResponse("User deleted successfully", true);
     }
 
     private String generateOtpCode() {

@@ -10,32 +10,31 @@ import java.util.List;
 
 @Repository
 public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredient, Long> {
-    
+
     /**
      * Find all ingredients for a recipe
      */
     List<RecipeIngredient> findByRecipeId(Long recipeId);
-    
+
     /**
      * Find all recipes that use a specific ingredient
      */
     @Query("SELECT ri FROM RecipeIngredient ri WHERE ri.ingredient.id = :ingredientId")
     List<RecipeIngredient> findByIngredientId(@Param("ingredientId") Long ingredientId);
-    
+
     /**
      * Count ingredients for a recipe
      */
     long countByRecipeId(Long recipeId);
-    
+
     /**
      * Delete all ingredients for a recipe
      */
     void deleteByRecipeId(Long recipeId);
+
+    /**
+     * Delete all recipe-ingredient relationships for a specific ingredient (for
+     * cascade deletion)
+     */
+    void deleteByIngredientId(Long ingredientId);
 }
-
-
-
-
-
-
-

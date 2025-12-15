@@ -31,14 +31,17 @@ instance.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token không hợp lệ hoặc đã hết hạn
       console.warn("Unauthorized: Token invalid or expired");
-      
+
       // Xóa token và user data khỏi localStorage
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      
-      // Chỉ redirect nếu không phải đang ở trang login/register
+
+      // Chỉ redirect nếu không phải đang ở trang public (login/register/home)
       const currentPath = window.location.pathname;
-      if (!currentPath.includes("/login") && !currentPath.includes("/register")) {
+      const publicPaths = ["/login", "/register", "/home", "/", "/verify-email", "/forgot-password"];
+      const isPublicPath = publicPaths.some(path => currentPath === path || currentPath.startsWith(path));
+
+      if (!isPublicPath) {
         // Redirect về trang login sau 1 giây để user thấy thông báo
         setTimeout(() => {
           window.location.href = "/login";

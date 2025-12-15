@@ -24,7 +24,8 @@ public class UserMapper {
                 user.getFullName(),
                 user.getRole(),
                 user.getIsVerified(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getCountry()
         );
     }
 }

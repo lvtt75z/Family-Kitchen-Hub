@@ -16,5 +16,6 @@ public interface RecipePopularityRepository extends JpaRepository<RecipePopulari
     
     @Query("SELECT rp FROM RecipePopularity rp WHERE rp.bookmarkCount > 0 ORDER BY rp.bookmarkCount DESC")
     List<RecipePopularity> findTopByBookmarkCount(Pageable pageable);
+    // Cascade deletion method for recipe deletion
+    void deleteByRecipeId(Long recipeId);
 }
-

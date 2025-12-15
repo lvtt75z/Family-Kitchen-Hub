@@ -68,8 +68,9 @@ public class RecipeController {
     public ResponseEntity<RecipeResponseDTO> getRecipeById(@PathVariable Long id) {
         return recipeService.getRecipeById(id)
                 .map(recipeMapper::toResponseDTO) // Chuyển Entity thành DTO
-                .map(ResponseEntity::ok)        // Nếu tìm thấy, trả về 200 OK
-                .orElse(ResponseEntity.notFound().build()); // Nếu không tìm thấy, Exception sẽ không ném ra đây, mà là 404 (do Optional)
+                .map(ResponseEntity::ok) // Nếu tìm thấy, trả về 200 OK
+                .orElse(ResponseEntity.notFound().build()); // Nếu không tìm thấy, Exception sẽ không ném ra đây, mà là
+                                                            // 404 (do Optional)
     }
 
     // GET /api/recipes/meal-type/{mealType} - READ BY MEAL TYPE
@@ -90,7 +91,8 @@ public class RecipeController {
 
     // PUT /api/recipes/{id} - UPDATE
     @PutMapping("/{id}")
-    public ResponseEntity<RecipeResponseDTO> updateRecipe(@PathVariable Long id, @RequestBody RecipeRequestDTO recipeDTO) {
+    public ResponseEntity<RecipeResponseDTO> updateRecipe(@PathVariable Long id,
+            @RequestBody RecipeRequestDTO recipeDTO) {
         // 1. Dùng Mapper: DTO -> Entity tạm thời để truyền dữ liệu cập nhật
         Recipe updateDetails = recipeMapper.toEntity(recipeDTO);
 
@@ -136,6 +138,30 @@ public class RecipeController {
             @RequestBody SetRecipeCategoriesDTO requestDTO) {
         categoryService.setRecipeCategories(id, requestDTO.getCategoryIds());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /api/recipes/{recipeId}/categories/{categoryId}
+     * Add a single category to a recipe
+     */
+    @PostMapping("/{recipeId}/categories/{categoryId}")
+    public ResponseEntity<Void> addCategoryToRecipe(
+            @PathVariable Long recipeId,
+            @PathVariable Long categoryId) {
+        categoryService.addCategoryToRecipe(recipeId, categoryId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * DELETE /api/recipes/{recipeId}/categories/{categoryId}
+     * Remove a category from a recipe
+     */
+    @DeleteMapping("/{recipeId}/categories/{categoryId}")
+    public ResponseEntity<Void> removeCategoryFromRecipe(
+            @PathVariable Long recipeId,
+            @PathVariable Long categoryId) {
+        categoryService.removeCategoryFromRecipe(recipeId, categoryId);
+        return ResponseEntity.noContent().build();
     }
 
     // ========== SIMILAR RECIPES ENDPOINT (7.2) ==========

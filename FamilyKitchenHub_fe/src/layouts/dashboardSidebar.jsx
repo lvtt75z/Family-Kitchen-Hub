@@ -8,16 +8,17 @@ import {
   UserRound,
   User,
   HomeIcon,
-  ChevronDown
+  ChevronDown,
+  UtensilsCrossed
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const TABS = [
   { label: "Home", path: "/home", icon: <HomeIcon size={18} /> },
   {
-    label: "MealPlan",
-    path: "/manage/mealPlaner",
-    icon: <LayoutDashboard size={18} />,
+    label: "Recommend",
+    path: "/manage/Dashboard",
+    icon: <UtensilsCrossed size={18} />,
   },
   { label: "Recipes", path: "/manage/recipes", icon: <BookOpen size={18} /> },
   { label: "Fridge", path: "/manage/fridge", icon: <Snowflake size={18} /> },

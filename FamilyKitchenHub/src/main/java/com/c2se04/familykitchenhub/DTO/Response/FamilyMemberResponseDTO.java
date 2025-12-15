@@ -1,7 +1,8 @@
 package com.c2se04.familykitchenhub.DTO.Response;
 
-import com.c2se04.familykitchenhub.enums.ActivityLevel;
 import com.c2se04.familykitchenhub.enums.Gender;
+import com.c2se04.familykitchenhub.enums.ActivityLevel;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 public class FamilyMemberResponseDTO {
@@ -16,10 +17,9 @@ public class FamilyMemberResponseDTO {
     private Float weightKg;
     private ActivityLevel activityLevel;
     private Boolean isAccountOwner;
-
     private String tastePreferences;
     private String healthConditions;
-
+    private LocalDateTime createdAt;
     private Set<AllergyResponseDTO> allergies;
 
     public FamilyMemberResponseDTO() {
@@ -121,6 +121,14 @@ public class FamilyMemberResponseDTO {
 
     public void setHealthConditions(String healthConditions) {
         this.healthConditions = healthConditions;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Set<AllergyResponseDTO> getAllergies() {

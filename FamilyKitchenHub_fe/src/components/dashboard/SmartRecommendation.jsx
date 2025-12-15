@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import { getMealRecommendations } from "../../service/recommendationApi"; // Tạm comment để dùng mock data
+import { getMealRecommendations } from "../../service/recommendationApi";
 import { Sparkles, ArrowLeft, Clock, Users, Zap } from "lucide-react";
 import "../../styles/SmartRecommendation.css";
 
@@ -15,7 +15,7 @@ export default function SmartRecommendation() {
     const fetchRecommendations = async () => {
       try {
         setLoading(true);
-        
+
         // Simulate loading steps
         const messages = [
           "Đang kiểm tra tủ lạnh...",
@@ -23,7 +23,7 @@ export default function SmartRecommendation() {
           "Đang phân tích sở thích...",
           "Đang tìm món phù hợp nhất...",
         ];
-        
+
         let messageIndex = 0;
         const messageInterval = setInterval(() => {
           if (messageIndex < messages.length - 1) {
@@ -32,102 +32,12 @@ export default function SmartRecommendation() {
           }
         }, 1500);
 
-        // Tạm thời dùng mock data để xem giao diện
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate API call
-        
-        const mockData = {
-          targetMealCalories: 2000,
-          recipes: [
-            {
-              id: 1,
-              title: "Cơm Gà Nướng",
-              imageUrl: "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400",
-              matchScore: 95,
-              totalCalories: 1800,
-              cookingTimeMinutes: 45,
-              servings: 4,
-              availableIngredients: 5,
-              totalIngredients: 7,
-              missingIngredients: ["Hành tây", "Gừng"],
-              reasons: [
-                { type: "Giải cứu", message: "Dùng 2 nguyên liệu sắp hết hạn" },
-                { type: "Kinh tế", message: "Có sẵn 80% nguyên liệu" },
-                { type: "Dinh dưỡng", message: "Vừa đủ Calo cho cả nhà" },
-                { type: "Sở thích", message: "Hợp khẩu vị Bố & Mẹ" },
-              ],
-            },
-            {
-              id: 2,
-              title: "Canh Chua Cá",
-              imageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400",
-              matchScore: 88,
-              totalCalories: 1200,
-              cookingTimeMinutes: 30,
-              servings: 4,
-              availableIngredients: 6,
-              totalIngredients: 8,
-              missingIngredients: ["Cà chua", "Dứa"],
-              reasons: [
-                { type: "Giải cứu", message: "Dùng 3 nguyên liệu sắp hết hạn" },
-                { type: "Kinh tế", message: "Có sẵn 75% nguyên liệu" },
-              ],
-            },
-            {
-              id: 3,
-              title: "Bún Bò Huế",
-              imageUrl: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400",
-              matchScore: 72,
-              totalCalories: 2100,
-              cookingTimeMinutes: 60,
-              servings: 4,
-              availableIngredients: 4,
-              totalIngredients: 10,
-              missingIngredients: ["Bún", "Chả", "Rau thơm", "Ớt", "Chanh", "Hành"],
-              reasons: [
-                { type: "Sở thích", message: "Món yêu thích của cả nhà" },
-                { type: "Dinh dưỡng", message: "Đủ protein và chất xơ" },
-              ],
-            },
-            {
-              id: 4,
-              title: "Salad Rau Củ",
-              imageUrl: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400",
-              matchScore: 65,
-              totalCalories: 800,
-              cookingTimeMinutes: 15,
-              servings: 4,
-              availableIngredients: 7,
-              totalIngredients: 9,
-              missingIngredients: ["Dầu olive", "Giấm"],
-              reasons: [
-                { type: "Dinh dưỡng", message: "Ít calo, nhiều vitamin" },
-                { type: "Kinh tế", message: "Có sẵn 78% nguyên liệu" },
-              ],
-            },
-            {
-              id: 5,
-              title: "Phở Bò",
-              imageUrl: "https://images.unsplash.com/photo-1558030006-450675393462?w=400",
-              matchScore: 55,
-              totalCalories: 1500,
-              cookingTimeMinutes: 90,
-              servings: 4,
-              availableIngredients: 3,
-              totalIngredients: 12,
-              missingIngredients: ["Bánh phở", "Thịt bò", "Hành", "Ngò gai", "Chanh", "Ớt", "Tương", "Bánh quẩy"],
-              reasons: [
-                { type: "Sở thích", message: "Món truyền thống yêu thích" },
-              ],
-            },
-          ],
-        };
-        
+
+
+        // Fetch real recommendations from Flask AI API
+        const data = await getMealRecommendations();
         clearInterval(messageInterval);
-        setRecommendations(mockData);
-        
-        // Uncomment để dùng API thật:
-        // const data = await getMealRecommendations();
-        // setRecommendations(data);
+        setRecommendations(data);
       } catch (err) {
         console.error("Error fetching recommendations:", err);
         setError(err.response?.data?.message || "Không thể tải gợi ý. Vui lòng thử lại.");

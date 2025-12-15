@@ -1,9 +1,12 @@
 package com.c2se04.familykitchenhub.Service;
+
 import com.c2se04.familykitchenhub.DTO.Response.IngredientWithTagsDTO;
 import com.c2se04.familykitchenhub.DTO.TagDTO;
 import com.c2se04.familykitchenhub.model.Ingredient;
 import com.c2se04.familykitchenhub.Repository.IngredientRepository;
-import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException; // Cần thiết cho các thao tác tìm kiếm
+import com.c2se04.familykitchenhub.Repository.IngredientTagRepository;
+import com.c2se04.familykitchenhub.Repository.RecipeIngredientRepository;
+import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +19,19 @@ import java.util.stream.Collectors;
 public class IngredientService {
 
     private final IngredientRepository ingredientRepository;
+    private final IngredientTagRepository ingredientTagRepository;
+    private final RecipeIngredientRepository recipeIngredientRepository;
 
     @Autowired
     private TagService tagService;
 
     @Autowired
-    public IngredientService(IngredientRepository ingredientRepository) {
+    public IngredientService(IngredientRepository ingredientRepository,
+            IngredientTagRepository ingredientTagRepository,
+            RecipeIngredientRepository recipeIngredientRepository) {
         this.ingredientRepository = ingredientRepository;
+        this.ingredientTagRepository = ingredientTagRepository;
+        this.recipeIngredientRepository = recipeIngredientRepository;
     }
 
     // CREATE: Thêm thành phần mới
@@ -55,6 +64,7 @@ public class IngredientService {
         // Cập nhật các trường
         existingIngredient.setName(updatedDetails.getName());
         existingIngredient.setUnit(updatedDetails.getUnit());
+        existingIngredient.setCaloriesPer100g(updatedDetails.getCaloriesPer100g());
         existingIngredient.setNutritionalInfo(updatedDetails.getNutritionalInfo());
 
         return ingredientRepository.save(existingIngredient);
@@ -66,6 +76,14 @@ public class IngredientService {
         if (!ingredientRepository.existsById(id)) {
             throw new ResourceNotFoundException("Ingredient", "id", id);
         }
+
+        // Cascade delete: Remove all ingredient_tags entries first
+        ingredientTagRepository.deleteByIngredientId(id);
+
+        // Cascade delete: Remove all recipe_ingredients entries
+        recipeIngredientRepository.deleteByIngredientId(id);
+
+        // Then delete the ingredient
         ingredientRepository.deleteById(id);
     }
 
@@ -81,8 +99,7 @@ public class IngredientService {
                     ingredient.getId(),
                     ingredient.getName(),
                     ingredient.getUnit(),
-                    tags
-            );
+                    tags);
         }).collect(Collectors.toList());
     }
 }

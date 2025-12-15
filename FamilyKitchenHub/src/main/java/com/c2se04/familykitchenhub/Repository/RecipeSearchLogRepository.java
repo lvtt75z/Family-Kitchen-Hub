@@ -6,5 +6,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RecipeSearchLogRepository extends JpaRepository<RecipeSearchLog, Long> {
-}
 
+    void deleteByUserId(Long userId);
+
+    // Cascade deletion method for recipe deletion
+    void deleteByRecipeId(Long recipeId);
+}

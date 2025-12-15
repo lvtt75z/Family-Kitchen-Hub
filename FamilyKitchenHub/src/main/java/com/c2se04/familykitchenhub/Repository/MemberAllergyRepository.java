@@ -10,9 +10,15 @@ import java.util.Optional;
 @Repository
 public interface MemberAllergyRepository extends JpaRepository<MemberAllergy, Long> {
     List<MemberAllergy> findByMemberId(Long memberId);
-    List<MemberAllergy> findByAllergyId(Long allergyId);
-    Optional<MemberAllergy> findByMemberIdAndAllergyId(Long memberId, Long allergyId);
-    void deleteByMemberIdAndAllergyId(Long memberId, Long allergyId);
-    boolean existsByMemberIdAndAllergyId(Long memberId, Long allergyId);
-}
 
+    List<MemberAllergy> findByAllergyId(Long allergyId);
+
+    Optional<MemberAllergy> findByMemberIdAndAllergyId(Long memberId, Long allergyId);
+
+    void deleteByMemberIdAndAllergyId(Long memberId, Long allergyId);
+
+    boolean existsByMemberIdAndAllergyId(Long memberId, Long allergyId);
+
+    // Cascade deletion methods
+    void deleteByAllergyId(Long allergyId);
+}

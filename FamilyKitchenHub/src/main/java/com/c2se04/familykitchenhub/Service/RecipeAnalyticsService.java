@@ -41,10 +41,10 @@ public class RecipeAnalyticsService {
 
     @Autowired
     public RecipeAnalyticsService(RecipeSearchLogRepository recipeSearchLogRepository,
-                                  RecipeBookmarkRepository recipeBookmarkRepository,
-                                  RecipePopularityRepository recipePopularityRepository,
-                                  RecipeRepository recipeRepository,
-                                  UserRepository userRepository) {
+            RecipeBookmarkRepository recipeBookmarkRepository,
+            RecipePopularityRepository recipePopularityRepository,
+            RecipeRepository recipeRepository,
+            UserRepository userRepository) {
         this.recipeSearchLogRepository = recipeSearchLogRepository;
         this.recipeBookmarkRepository = recipeBookmarkRepository;
         this.recipePopularityRepository = recipePopularityRepository;
@@ -113,7 +113,8 @@ public class RecipeAnalyticsService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         RecipeBookmark bookmark = recipeBookmarkRepository.findByUserAndRecipe(user, recipe)
-                .orElseThrow(() -> new ResourceNotFoundException("Bookmark", "recipeId/userId", recipeId + "/" + userId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Bookmark", "recipeId/userId", recipeId + "/" + userId));
 
         recipeBookmarkRepository.delete(bookmark);
         decrementBookmarkCount(recipe);
@@ -124,10 +125,23 @@ public class RecipeAnalyticsService {
         if (limit <= 0) {
             throw new BadRequestException("Limit phải lớn hơn 0");
         }
+
         Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "popularityScore"));
-        return recipePopularityRepository.findAll(pageable)
-                .getContent()
-                .stream()
+        List<RecipePopularity> popularities = recipePopularityRepository.findAll(pageable)
+                .getContent();
+
+        // If no popularity data exists, fetch recipes directly and create DTOs with
+        // zero scores
+        if (popularities.isEmpty()) {
+            Pageable recipePageable = PageRequest.of(0, limit);
+            return recipeRepository.findAll(recipePageable)
+                    .getContent()
+                    .stream()
+                    .map(this::mapRecipeToPopularityResponse)
+                    .collect(Collectors.toList());
+        }
+
+        return popularities.stream()
                 .map(this::mapToPopularityResponse)
                 .collect(Collectors.toList());
     }
@@ -168,8 +182,7 @@ public class RecipeAnalyticsService {
                 size,
                 engagementPage.getTotalElements(),
                 engagementPage.getTotalPages(),
-                cacheable
-        );
+                cacheable);
     }
 
     private RecipePopularityResponseDTO mapToPopularityResponse(RecipePopularity popularity) {
@@ -181,6 +194,17 @@ public class RecipeAnalyticsService {
         dto.setPopularityScore(popularity.getPopularityScore());
         dto.setSearchCount(popularity.getSearchCount());
         dto.setBookmarkCount(popularity.getBookmarkCount());
+        return dto;
+    }
+
+    private RecipePopularityResponseDTO mapRecipeToPopularityResponse(Recipe recipe) {
+        RecipePopularityResponseDTO dto = new RecipePopularityResponseDTO();
+        dto.setRecipeId(recipe.getId());
+        dto.setRecipeTitle(recipe.getTitle());
+        dto.setImageUrl(recipe.getImageUrl());
+        dto.setPopularityScore(0.0);
+        dto.setSearchCount(0L);
+        dto.setBookmarkCount(0L);
         return dto;
     }
 
@@ -246,4 +270,3 @@ public class RecipeAnalyticsService {
         return value != null ? value : 0L;
     }
 }
-

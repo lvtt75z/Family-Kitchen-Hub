@@ -86,6 +86,11 @@ public class TagService {
         if (!tagRepository.existsById(id)) {
             throw new ResourceNotFoundException("Tag not found with id: " + id);
         }
+
+        // Cascade delete: Remove all ingredient_tags entries first
+        ingredientTagRepository.deleteByTagId(id);
+
+        // Then delete the tag
         tagRepository.deleteById(id);
     }
 

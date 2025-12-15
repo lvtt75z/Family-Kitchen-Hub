@@ -30,4 +30,9 @@ public interface IngredientTagRepository extends JpaRepository<IngredientTag, Lo
     // Get ingredients by tag
     @Query("SELECT it FROM IngredientTag it WHERE it.tag.id = :tagId")
     List<IngredientTag> findByTagId(@Param("tagId") Long tagId);
+
+    // Cascade deletion methods
+    void deleteByTagId(Long tagId);
+
+    void deleteByIngredientId(Long ingredientId);
 }

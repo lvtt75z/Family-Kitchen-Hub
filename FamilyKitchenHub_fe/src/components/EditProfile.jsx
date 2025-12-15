@@ -348,7 +348,6 @@ const EditProfile = () => {
                                     }}
                                 />
 
-
                                 <FormControl fullWidth sx={{ mb: 3 }}>
                                     <InputLabel>Country</InputLabel>
                                     <Select
