@@ -148,8 +148,8 @@ export default function SmartRecommendation() {
                   className="recipe-image"
                 />
                 <div className="match-score-circle" style={{ borderColor: scoreColor }}>
-                  <span style={{ color: scoreColor }}>{matchScore}%</span>
-                  <small>Phù hợp</small>
+                  <span style={{ color: scoreColor }}>Phù hợp</span>
+                  
                 </div>
               </div>
 
