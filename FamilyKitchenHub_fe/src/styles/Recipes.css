@@ -308,22 +308,51 @@
   gap: 6px;
 }
 
+
 .fh-recipe-input,
 .fh-recipe-textarea,
 .fh-modal select {
   padding: 11px 13px 13px;
   font-size: 14px;
   line-height: 100%;
-  font-family: PlusJaS-Medium;
+  font-family: "Quicksand", sans-serif;
   color: #222222;
   background: #FFFFFF;
-  border: 0.5px solid #C7C7C7;
-  border-radius: 5px;
-  -webkit-transition: 0.15s ease;
+  border: 1px solid #d1d5db;
+  /* Standardized border */
+  border-radius: 8px;
+  /* Standardized radius */
   transition: 0.15s ease;
   width: 100%;
-  -webkit-box-sizing: border-box;
   box-sizing: border-box;
+}
+
+/* Custom Combobox Container to match Input style */
+.custom-combobox {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.custom-combobox:hover {
+  border-color: #0a5c36;
+  /* Match focus color or similar */
+}
+
+.combobox-trigger {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 13px;
+  /* Match input padding */
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  color: #222;
 }
 
 .fh-recipe-input:focus,
@@ -489,7 +518,6 @@
 =================================*/
 .recipe-grid {
 
-
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 30px;
@@ -506,7 +534,6 @@
   /* ⬅ chuyển từ row → column */
   height: auto;
   /* ⬅ card cao theo nội dung */
-
   background: #ffffff;
   border-radius: 12px;
   overflow: hidden;
@@ -516,6 +543,10 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  /* Stagger Effect */
+  opacity: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .recipe-card:hover {
@@ -801,6 +832,48 @@
   margin-bottom: 0;
 }
 
+/* ===============================
+   CATEGORY FILTERS (Chips)
+   =============================== */
+.category-filters {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 10px 0 20px;
+  margin-bottom: 20px;
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.category-filters::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari */
+}
+
+.category-chip {
+  padding: 8px 16px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.category-chip:hover {
+  background: #e5e7eb;
+}
+
+.category-chip.active {
+  background: linear-gradient(135deg, #ff964f, #ea580c);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
 .ingredient-row select,
 .ingredient-row .recipe-input {
   padding: 8px;
@@ -1076,4 +1149,132 @@
   color: #ff8a37;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(255, 138, 55, 0.2);
+}
+
+/* Custom ComboBox for Recipes (Matched to Design) */
+.custom-combobox {
+  position: relative;
+  width: 100%;
+}
+
+.combobox-trigger {
+  width: 100%;
+  padding: 11px 13px 13px !important;
+  border-radius: 5px;
+  border: 0.5px solid #C7C7C7;
+  background: #FFFFFF;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: #222222;
+  font-family: PlusJaS-Medium;
+  font-size: 14px;
+  line-height: 100%;
+}
+
+.combobox-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 0.5px solid #C7C7C7;
+  border-radius: 5px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1001;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+}
+
+.checkbox-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+  margin: 0 !important;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: #222;
+}
+
+.checkbox-option:hover {
+  background: #f3f4f6;
+}
+
+.checkbox-option input {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+/* ===========================
+   DROPDOWN & COMBOBOX (NEW)
+=========================== */
+.fh-dropdown,
+.combobox-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #FF8A37;
+  /* Orange border matching input focus */
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(255, 138, 55, 0.15);
+  /* Warmer shadow */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 6px 0;
+}
+
+.fh-dropdown::-webkit-scrollbar,
+.combobox-options::-webkit-scrollbar {
+  display: none;
+}
+
+.fh-dropdown-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #374151;
+  transition: all 0.2s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  /* Push unit to right */
+}
+
+.fh-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.fh-dropdown-item:hover {
+  background-color: #FFF4EC;
+  color: #FF8A37;
+}
+
+.fh-dropdown-item span {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.fh-dropdown-item:hover span {
+  color: #FF8A37;
+}
+
+/* Ensure input gets orange border on focus to match dropdown */
+.fh-recipe-input:focus {
+  border-color: #FF8A37 !important;
+  outline: none;
 }

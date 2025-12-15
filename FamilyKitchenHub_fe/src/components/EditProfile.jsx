@@ -28,7 +28,7 @@ const EditProfile = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-    
+
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -52,7 +52,7 @@ const EditProfile = () => {
                 const userDataString = localStorage.getItem("user");
                 const userData = userDataString ? JSON.parse(userDataString) : null;
                 let userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
-                
+
                 // Convert to number if it's a string
                 if (userId) {
                     userId = Number(userId);
@@ -112,7 +112,7 @@ const EditProfile = () => {
         const userDataString = localStorage.getItem("user");
         const userData = userDataString ? JSON.parse(userDataString) : null;
         let userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
-        
+
         // Validate userId
         if (!userId) {
             setSnackbar({
@@ -122,7 +122,7 @@ const EditProfile = () => {
             });
             return;
         }
-        
+
         // Convert to number
         userId = Number(userId);
         if (isNaN(userId) || userId <= 0) {
@@ -139,7 +139,7 @@ const EditProfile = () => {
         // numberOfFamilyMembers and ageGroups are calculated automatically
         // Only include fields that have values to avoid sending null/empty strings
         const requestBody = {};
-        
+
         if (formData.fullName && formData.fullName.trim()) {
             requestBody.fullName = formData.fullName.trim();
         }
@@ -158,7 +158,7 @@ const EditProfile = () => {
         if (formData.favorite && formData.favorite.trim()) {
             requestBody.favorite = formData.favorite.trim();
         }
-        
+
         console.log('Submitting profile update:', requestBody);
 
         setIsLoading(true);
@@ -167,7 +167,7 @@ const EditProfile = () => {
             // Dùng axios instance với baseURL http://localhost:8080/api
             const { data } = await axios.put(`/users/${userId}/profile`, requestBody);
             console.log('Profile updated successfully:', data);
-            
+
             setSnackbar({
                 open: true,
                 message: 'Profile updated successfully!',
@@ -176,14 +176,14 @@ const EditProfile = () => {
 
             // Navigate after a short delay to show success message
             setTimeout(() => {
-                navigate('/manage/Dashboard');
+               
             }, 1500);
 
         } catch (error) {
             console.error('Error updating profile:', error);
             console.error('Error response:', error.response?.data);
             console.error('Error status:', error.response?.status);
-            
+
             // Extract error message from response
             let errorMessage = 'Failed to update profile. Please try again.';
             if (error.response?.data) {
@@ -197,7 +197,7 @@ const EditProfile = () => {
             } else if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             setSnackbar({
                 open: true,
                 message: errorMessage,
@@ -222,14 +222,14 @@ const EditProfile = () => {
                             src="https://images.unsplash.com/photo-1522770179533-24471fcdba45"
                             sx={{ width: 64, height: 64, border: '3px solid white' }}
                         />
-                    <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                            {formData.fullName}
-                        </Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            {formData.email}
-                        </Typography>
-                    </Box>
+                        <Box>
+                            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                                {formData.fullName}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                {formData.email}
+                            </Typography>
+                        </Box>
                     </Box>
                     <Button
                         variant="contained"
@@ -244,156 +244,160 @@ const EditProfile = () => {
 
                 {/* Form Content */}
                 <Card className="form-card">
-                <CardContent className="form-card-content">
-                    <Grid container spacing={10} className="form-grid">
-                        {/* Left Column */}
-                        <Grid item xs={12} md={6} className="form-column">
-                            <Typography variant="h6" className="section-title">
-                                Personal Details
-                            </Typography>
+                    <CardContent className="form-card-content">
+                        <Grid container spacing={10} className="form-grid">
+                            {/* Left Column */}
+                            <Grid item xs={12} md={6} className="form-column">
+                                <Typography variant="h6" className="section-title">
+                                    Personal Details
+                                </Typography>
 
-                            <TextField
-                                fullWidth
-                                label="Full Name"
-                                value={formData.fullName}
-                                onChange={(e) => handleChange('fullName', e.target.value)}
-                                placeholder="Your First Name"
-                                sx={{ 
-                                    mb: 3,
-                                    '& .MuiInputBase-input': {
-                                        textAlign: 'center'
-                                    }
-                                }}
-                            />
-
-                            <FormControl fullWidth sx={{ mb: 3 }}>
-                                <InputLabel>Gender</InputLabel>
-                                <Select
-                                    label="Gender"
-                                    value={formData.gender}
-                                    onChange={(e) => handleChange('gender', e.target.value)}
+                                <TextField
+                                    fullWidth
+                                    label="Full Name"
+                                    value={formData.fullName}
+                                    onChange={(e) => handleChange('fullName', e.target.value)}
                                     placeholder="Your First Name"
                                     sx={{
-                                        '& .MuiSelect-select': {
+                                        mb: 3,
+                                        '& .MuiInputBase-input': {
                                             textAlign: 'center'
                                         }
                                     }}
-                                >
-                                    <MenuItem value="male">Male</MenuItem>
-                                    <MenuItem value="female">Female</MenuItem>
-                                    <MenuItem value="other">Other</MenuItem>
-                                </Select>
-                            </FormControl>
+                                />
 
-                            <FormControl fullWidth sx={{ mb: 3 }}>
-                                <InputLabel>Pathology</InputLabel>
-                                <Select
-                                    label="Pathology"
-                                    value={formData.pathology}
-                                    onChange={(e) => handleChange('pathology', e.target.value)}
-                                    placeholder="allergy...."
+                                <FormControl fullWidth sx={{ mb: 3 }}>
+                                    <InputLabel>Gender</InputLabel>
+                                    <Select
+                                        label="Gender"
+                                        value={formData.gender}
+                                        onChange={(e) => handleChange('gender', e.target.value)}
+                                        placeholder="Your First Name"
+                                        sx={{
+                                            '& .MuiSelect-select': {
+                                                textAlign: 'center'
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value="male">Male</MenuItem>
+                                        <MenuItem value="female">Female</MenuItem>
+                                        <MenuItem value="other">Other</MenuItem>
+                                    </Select>
+                                </FormControl>
+
+                                <FormControl fullWidth sx={{ mb: 3 }}>
+                                    <InputLabel>Pathology</InputLabel>
+                                    <Select
+                                        label="Pathology"
+                                        value={formData.pathology}
+                                        onChange={(e) => handleChange('pathology', e.target.value)}
+                                        placeholder="allergy...."
+                                        sx={{
+                                            '& .MuiSelect-select': {
+                                                textAlign: 'center'
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value="allergy">Allergy</MenuItem>
+                                        <MenuItem value="diabetes">Diabetes</MenuItem>
+                                        <MenuItem value="hypertension">Hypertension</MenuItem>
+                                        <MenuItem value="none">None</MenuItem>
+                                    </Select>
+                                </FormControl>
+
+                                <TextField
+                                    fullWidth
+                                    label="Email Address"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => handleChange('email', e.target.value)}
+                                    placeholder="your.email@example.com"
                                     sx={{
-                                        '& .MuiSelect-select': {
+                                        mb: 3,
+                                        '& .MuiInputBase-input': {
                                             textAlign: 'center'
                                         }
                                     }}
-                                >
-                                    <MenuItem value="allergy">Allergy</MenuItem>
-                                    <MenuItem value="diabetes">Diabetes</MenuItem>
-                                    <MenuItem value="hypertension">Hypertension</MenuItem>
-                                    <MenuItem value="none">None</MenuItem>
-                                </Select>
-                            </FormControl>
+                                    InputProps={{
+                                        startAdornment: <Email sx={{ color: '#1976d2', mr: 1 }} />,
+                                        readOnly:true
+                                    }}
+                                />
+                            </Grid>
 
-                            <TextField
-                                fullWidth
-                                label="Email Address"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => handleChange('email', e.target.value)}
-                                placeholder="your.email@example.com"
-                                sx={{ 
-                                    mb: 3,
-                                    '& .MuiInputBase-input': {
-                                        textAlign: 'center'
-                                    }
-                                }}
-                                InputProps={{
-                                    startAdornment: <Email sx={{ color: '#1976d2', mr: 1 }} />
-                                }}
-                            />
-                        </Grid>
-
-                        {/* Right Column */}
-                        <Grid item xs={12} md={6} className="form-column">
-                            <Typography variant="h6" className="section-title">
-                                Family and Preferences
-                            </Typography>
-
-                            <TextField
-                                fullWidth
-                                label="Number of family members"
-                                type="number"
-                                value={formData.numberOfFamilyMembers}
-                                onChange={(e) => handleChange('numberOfFamilyMembers', e.target.value)}
-                                inputProps={{ min: 1 }}
-                                sx={{ 
-                                    mb: 3,
-                                    '& .MuiInputBase-input': {
-                                        textAlign: 'center'
-                                    }
-                                }}
-                            />
-
-                            <FormControl fullWidth sx={{ mb: 3 }}>
-                                <InputLabel>Country</InputLabel>
-                                <Select
-                                    label="Country"
-                                    value={formData.country}
-                                    onChange={(e) => handleChange('country', e.target.value)}
-                                    placeholder="Your First Name"
+                            {/* Right Column */}
+                            <Grid item xs={12} md={6} className="form-column">
+                                <Typography variant="h6" className="section-title">
+                                    Family and Preferences
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    label="Number of family members"
+                                    type="number"
+                                    value={formData.numberOfFamilyMembers}
+                                    onChange={(e) => handleChange('numberOfFamilyMembers', e.target.value)}
+                                    inputProps={{
+                                        min: 1,
+                                        readOnly: true   // QUAN TRỌNG
+                                    }}
                                     sx={{
-                                        '& .MuiSelect-select': {
+                                        mb: 3,
+                                        '& .MuiInputBase-input': {
                                             textAlign: 'center'
                                         }
                                     }}
-                                >
-                                    <MenuItem value="vietnam">Vietnam</MenuItem>
-                                    <MenuItem value="usa">United States</MenuItem>
-                                    <MenuItem value="uk">United Kingdom</MenuItem>
-                                    <MenuItem value="france">France</MenuItem>
-                                </Select>
-                            </FormControl>
+                                />
 
-                            <FormControl fullWidth sx={{ mb: 3 }}>
-                                <InputLabel>Favorite</InputLabel>
-                                <Select
-                                    label="Favorite"
-                                    value={formData.favorite}
-                                    onChange={(e) => handleChange('favorite', e.target.value)}
-                                    sx={{
-                                        '& .MuiSelect-select': {
-                                            textAlign: 'center'
-                                        }
-                                    }}
-                                >
-                                    <MenuItem value="Vegetarian">Vegetarian</MenuItem>
-                                    <MenuItem value="Vegan">Vegan</MenuItem>
-                                    <MenuItem value="Meat Lover">Meat Lover</MenuItem>
-                                    <MenuItem value="Balanced">Balanced</MenuItem>
-                                </Select>
-                            </FormControl>
 
-                            {/* Age Groups */}
-                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
+                                <FormControl fullWidth sx={{ mb: 3 }}>
+                                    <InputLabel>Country</InputLabel>
+                                    <Select
+                                        label="Country"
+                                        value={formData.country}
+                                        onChange={(e) => handleChange('country', e.target.value)}
+                                        placeholder="Your First Name"
+                                        sx={{
+                                            '& .MuiSelect-select': {
+                                                textAlign: 'center'
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value="vietnam">Vietnam</MenuItem>
+                                        <MenuItem value="usa">United States</MenuItem>
+                                        <MenuItem value="uk">United Kingdom</MenuItem>
+                                        <MenuItem value="france">France</MenuItem>
+                                    </Select>
+                                </FormControl>
+
+                                <FormControl fullWidth sx={{ mb: 3 }}>
+                                    <InputLabel>Favorite</InputLabel>
+                                    <Select
+                                        label="Favorite"
+                                        value={formData.favorite}
+                                        onChange={(e) => handleChange('favorite', e.target.value)}
+                                        sx={{
+                                            '& .MuiSelect-select': {
+                                                textAlign: 'center'
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value="Vegetarian">Vegetarian</MenuItem>
+                                        <MenuItem value="Vegan">Vegan</MenuItem>
+                                        <MenuItem value="Meat Lover">Meat Lover</MenuItem>
+                                        <MenuItem value="Balanced">Balanced</MenuItem>
+                                    </Select>
+                                </FormControl>
+
+                                {/* Age Groups */}
+                                {/* <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
                                 Age of family members:
                             </Typography>
-                            
-                        
+                             */}
+
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
             </Box>
 
             {/* Snackbar for notifications */}

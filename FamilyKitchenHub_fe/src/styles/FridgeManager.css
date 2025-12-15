@@ -455,6 +455,52 @@
   margin-bottom: 0 !important;
 }
 
+.ingredient-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 8px;
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.15);
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  padding: 8px 0;
+}
+
+.ingredient-dropdown::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari */
+}
+
+.ingredient-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #fff7ed;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: #374151;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ingredient-item:last-child {
+  border-bottom: none;
+}
+
+.ingredient-item:hover {
+  background-color: #fff7ed;
+  color: #ea580c;
+  padding-left: 20px;
+}
+
 /* ===========================
    EMPTY STATE
 =========================== */

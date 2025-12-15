@@ -19,9 +19,11 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Test from"./layouts/header";
 import AddIngredientScreen from "./components/AddIngredientScreen";
+import ScrollToTop from "./components/dashboard/ScrollToTop";
 function App() {  
   return (
     <BrowserRouter>
+        <ScrollToTop />
         <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
         

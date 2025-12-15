@@ -317,7 +317,7 @@ export default function RecipeDetail() {
                     <h3>{item.title}</h3>
                     {typeof item.similarityScore === "number" && (
                       <span className="similar-badge">
-                        Gợi ý • {(item.similarityScore * 100).toFixed(0)}%
+                        Gợi ý cho bạn
                       </span>
                     )}
                   </div>

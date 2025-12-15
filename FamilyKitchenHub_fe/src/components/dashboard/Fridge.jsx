@@ -6,6 +6,11 @@ import { Plus, MoreVertical, Package, CheckCircle, AlertCircle, Trash2 } from "l
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import { Tooltip } from "@mui/material";
 
 export default function FridgeManager() {
   const [ingredients, setIngredients] = useState([]); // Inventory items
@@ -32,6 +37,28 @@ export default function FridgeManager() {
     expirationDate: "",
     purchasedAt: "",
   });
+
+  // Scroll Animation Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    setTimeout(() => {
+      const elements = document.querySelectorAll(".scroll-reveal");
+      elements.forEach((el) => observer.observe(el));
+    }, 100);
+
+    return () => observer.disconnect();
+  }, [ingredients]);
 
   // GET inventory list
   useEffect(() => {
@@ -205,6 +232,26 @@ export default function FridgeManager() {
     return "Fresh";
   };
 
+  const getItemsByStatus = (statusType) => {
+    let items = [];
+    if (statusType === "Total") items = ingredients;
+    else if (statusType === "Fresh") items = ingredients.filter(item => getStatus(item.expirationDate) === "Fresh");
+    else if (statusType === "Expired") items = ingredients.filter(item => getStatus(item.expirationDate) === "Expired");
+
+    if (items.length === 0) return "No items";
+
+    const MAX_ITEMS_SHOW = 10;
+    const names = items.map(i => i.ingredientName);
+
+    if (names.length <= MAX_ITEMS_SHOW) {
+      return names.join(", ");
+    }
+
+    const shown = names.slice(0, MAX_ITEMS_SHOW).join(", ");
+    const remaining = names.length - MAX_ITEMS_SHOW;
+    return `${shown}, ... +${remaining} more`;
+  };
+
   const formatDate = (d) => {
     if (!d) return "N/A";
     const dt = new Date(d);
@@ -280,35 +327,41 @@ export default function FridgeManager() {
 
       {/* Stats Overview */}
       <div className="stats-overview">
-        <div className="stat-card">
-          <div className="stat-icon total">
-            <Package size={28} />
+        <Tooltip title={getItemsByStatus("Total")} arrow>
+          <div className="stat-card scroll-reveal" style={{ transitionDelay: '0.1s' }}>
+            <div className="stat-icon total">
+              <Package size={28} />
+            </div>
+            <div className="stat-info">
+              <h3>{ingredients.length}</h3>
+              <p>Total Ingredients</p>
+            </div>
           </div>
-          <div className="stat-info">
-            <h3>{ingredients.length}</h3>
-            <p>Total Ingredients</p>
-          </div>
-        </div>
+        </Tooltip>
 
-        <div className="stat-card">
-          <div className="stat-icon fresh">
-            <CheckCircle size={28} />
+        <Tooltip title={getItemsByStatus("Fresh")} arrow>
+          <div className="stat-card scroll-reveal" style={{ transitionDelay: '0.2s' }}>
+            <div className="stat-icon fresh">
+              <CheckCircle size={28} />
+            </div>
+            <div className="stat-info">
+              <h3>{ingredients.filter(item => getStatus(item.expirationDate) === "Fresh").length}</h3>
+              <p>Fresh Items</p>
+            </div>
           </div>
-          <div className="stat-info">
-            <h3>{ingredients.filter(item => getStatus(item.expirationDate) === "Fresh").length}</h3>
-            <p>Fresh Items</p>
-          </div>
-        </div>
+        </Tooltip>
 
-        <div className="stat-card">
-          <div className="stat-icon expiring">
-            <AlertCircle size={28} />
+        <Tooltip title={getItemsByStatus("Expired")} arrow>
+          <div className="stat-card scroll-reveal" style={{ transitionDelay: '0.3s' }}>
+            <div className="stat-icon expiring">
+              <AlertCircle size={28} />
+            </div>
+            <div className="stat-info">
+              <h3>{ingredients.filter(item => getStatus(item.expirationDate) === "Expired").length}</h3>
+              <p>Expired</p>
+            </div>
           </div>
-          <div className="stat-info">
-            <h3>{ingredients.filter(item => getStatus(item.expirationDate) === "Expiring Soon").length}</h3>
-            <p>Expiring Soon</p>
-          </div>
-        </div>
+        </Tooltip>
       </div>
 
       {/* Header */}
@@ -321,7 +374,7 @@ export default function FridgeManager() {
 
       {/* Ingredient Grid */}
       <div className="ingredient-grid">
-        {ingredients.map((item) => {
+        {ingredients.map((item, index) => {
           const status = getStatus(item.expirationDate);
 
           return (
@@ -329,7 +382,8 @@ export default function FridgeManager() {
               key={item.id}
               className={`ingredient-card ${status
                 .toLowerCase()
-                .replace(" ", "-")}`}
+                .replace(" ", "-")} scroll-reveal`}
+              style={{ transitionDelay: `${index * 0.05}s` }}
             >
               <div className="card-header">
                 <h3>{item.ingredientName}</h3>
@@ -397,11 +451,8 @@ export default function FridgeManager() {
                       setSearchKeyword(e.target.value);
                       setShowDropdown(true);
                     }}
-                    onFocus={() => {
-                      if (availableIngredients.length > 0) {
-                        setShowDropdown(true);
-                      }
-                    }}
+                    onClick={() => setShowDropdown(true)}
+                    onFocus={() => setShowDropdown(true)}
                     placeholder="Tìm kiếm nguyên liệu..."
                     required
                     style={{ width: "100%" }}
@@ -412,25 +463,11 @@ export default function FridgeManager() {
                     </span>
                   )}
                   {showDropdown && availableIngredients.length > 0 && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        right: 0,
-                        backgroundColor: "white",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        maxHeight: "200px",
-                        overflowY: "auto",
-                        zIndex: 1000,
-                        marginTop: "4px",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      }}
-                    >
+                    <div className="ingredient-dropdown">
                       {availableIngredients.map((ing) => (
                         <div
                           key={ing.id}
+                          className="ingredient-item"
                           onClick={() => {
                             setNewIngredient({
                               ...newIngredient,
@@ -441,19 +478,9 @@ export default function FridgeManager() {
                             setSearchKeyword(`${ing.name} (${ing.unit})`);
                             setShowDropdown(false);
                           }}
-                          style={{
-                            padding: "8px 12px",
-                            cursor: "pointer",
-                            borderBottom: "1px solid #eee",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#f5f5f5";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "white";
-                          }}
                         >
-                          {ing.name} ({ing.unit})
+                          <span>{ing.name}</span>
+                          <span style={{ fontSize: '12px', color: '#9ca3af' }}>{ing.unit}</span>
                         </div>
                       ))}
                     </div>
@@ -500,33 +527,35 @@ export default function FridgeManager() {
                 />
               </label>
 
-              <label>
-                Expiration Date
-                <input
-                  type="date"
-                  value={newIngredient.expirationDate}
-                  onChange={(e) =>
-                    setNewIngredient({
-                      ...newIngredient,
-                      expirationDate: e.target.value,
-                    })
-                  }
-                />
-              </label>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
+                  <DatePicker
+                    disablePast
+                    label="Expiration Date"
+                    value={newIngredient.expirationDate ? dayjs(newIngredient.expirationDate) : null}
+                    onChange={(newValue) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        expirationDate: newValue ? newValue.format('YYYY-MM-DD') : "",
+                      })
+                    }
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
 
-              <label>
-                Purchased Date (Ngày mua)
-                <input
-                  type="date"
-                  value={newIngredient.purchasedAt}
-                  onChange={(e) =>
-                    setNewIngredient({
-                      ...newIngredient,
-                      purchasedAt: e.target.value,
-                    })
-                  }
-                />
-              </label>
+                  <DatePicker
+                    disablePast
+                    label="Purchased Date (Ngày mua)"
+                    value={newIngredient.purchasedAt ? dayjs(newIngredient.purchasedAt) : null}
+                    onChange={(newValue) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        purchasedAt: newValue ? newValue.format('YYYY-MM-DD') : "",
+                      })
+                    }
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
+                </div>
+              </LocalizationProvider>
 
               <div className="modal-actions">
                 <button

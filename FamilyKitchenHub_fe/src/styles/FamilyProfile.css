@@ -72,9 +72,9 @@
 =========================== */
 .family-profile-layout {
   display: flex;
-  gap: 24px;
+  gap: 54px;
   align-items: flex-start;
-  margin-top: 44px;
+  margin-top: 78px;
   justify-content: center;
 
 }
@@ -419,7 +419,7 @@
    LAYOUT
 =========================== */
 .family-profiles-wrap {
-  padding: 28px;
+  padding: 74px;
   max-width: 1400px;
   margin: 0 auto;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;

@@ -11,9 +11,11 @@ import {
   Trash2,
   PlusCircle,
   X,
-  ChefHat,
   Search,
   Filter,
+  Pen,
+  ChevronDown,
+  ChefHat,
 } from "lucide-react";
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
@@ -34,6 +36,7 @@ export default function RecipeDashboard() {
     mealType: "",
     imageUrl: "",
     ingredients: [],
+    categoryIds: [],
   };
 
   const [recipes, setRecipes] = useState([]);
@@ -49,6 +52,10 @@ export default function RecipeDashboard() {
   const [allIngredients, setAllIngredients] = useState([]);
   const [search, setSearch] = useState(""); // Recipe search
   const [searchResults, setSearchResults] = useState([]); // Recipe search results
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // Ingredient search states for each ingredient row
   const [ingredientSearches, setIngredientSearches] = useState({}); // { index: keyword }
@@ -70,6 +77,12 @@ export default function RecipeDashboard() {
     };
 
     fetchIngredients();
+
+    // Fetch Categories
+    axios
+      .get("/categories")
+      .then((res) => setCategories(res.data))
+      .catch((err) => console.error("Error loading categories:", err));
   }, []);
 
   // =========================
@@ -131,10 +144,21 @@ export default function RecipeDashboard() {
   // =========================
   //   LOAD RECIPES
   // =========================
+  // =========================
+  //   LOAD RECIPES
+  // =========================
   useEffect(() => {
+    // If searching text not empty, skip category fetch to avoid conflict
+    if (search.trim()) return;
+
     const fetchRecipes = async () => {
       try {
-        const res = await axios.get("/recipes", {
+        let url = "/recipes";
+        if (selectedCategory) {
+          url = `/categories/${selectedCategory}/recipes`;
+        }
+
+        const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRecipes(res.data);
@@ -144,7 +168,12 @@ export default function RecipeDashboard() {
       }
     };
     fetchRecipes();
-  }, [token]);
+  }, [token, selectedCategory]);
+
+  const handleCategoryClick = (id) => {
+    setSelectedCategory((prev) => (prev === id ? null : id));
+    setSearch(""); // Reset search text when choosing category
+  };
 
   // =========================
   //   SEARCH RECIPES
@@ -153,7 +182,9 @@ export default function RecipeDashboard() {
     const query = e.target.value;
     setSearch(query);
 
-    if (!query.trim()) {
+    if (query.trim()) {
+      setSelectedCategory(null);
+    } else {
       setSearchResults(recipes);
       return;
     }
@@ -180,6 +211,8 @@ export default function RecipeDashboard() {
     setIngredientSearches({});
     setIngredientDropdowns({});
     setIngredientSearching({});
+    setEditingId(null);
+    setShowCategoryDropdown(false);
   };
 
   const closeModal = () => setIsOpen(false);
@@ -189,6 +222,10 @@ export default function RecipeDashboard() {
   // =========================
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if ((name === "cookingTimeMinutes" || name === "servings") && Number(value) < 0) {
+      return;
+    }
 
     setForm((prev) => ({ ...prev, [name]: value }));
 
@@ -200,13 +237,57 @@ export default function RecipeDashboard() {
   // =========================
   //   ADD RECIPE
   // =========================
-  const handleAdd = async (e) => {
-    e.preventDefault();
+  // =========================
+  //   HANDLE CATEGORY TOGGLE
+  // =========================
+  const handleCategoryToggle = (id) => {
+    setForm((prev) => {
+      const current = prev.categoryIds || [];
+      if (current.includes(id)) {
+        return { ...prev, categoryIds: current.filter((x) => x !== id) };
+      } else {
+        return { ...prev, categoryIds: [...current, id] };
+      }
+    });
+  };
+
+  // =========================
+  //   HANDLE EDIT CLICK
+  // =========================
+  const handleEditClick = async (recipe) => {
+    setEditingId(recipe.id);
+    setForm({
+      title: recipe.title,
+      instructions: recipe.instructions,
+      cookingTimeMinutes: recipe.cookingTimeMinutes || "",
+      servings: recipe.servings || "",
+      mealType: recipe.mealType || "",
+      imageUrl: recipe.imageUrl || "",
+      ingredients: recipe.ingredients || [], // Might need mapping if structure differs
+      categoryIds: [], // Will fetch below
+    });
+    setPreview(recipe.imageUrl);
+    setIsOpen(true);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Missing auth token");
+      // Fetch categories for this recipe
+      const res = await axios.get(`/recipes/${recipe.id}/categories`);
+      const catIds = res.data.map((c) => c.id);
+      setForm((prev) => ({ ...prev, categoryIds: catIds }));
+    } catch (err) {
+      console.error("Error fetching recipe categories:", err);
+    }
+  };
 
+  // =========================
+  //   SUBMIT (ADD / UPDATE)
+  // =========================
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) return alert("Missing auth token");
+
+    try {
       const payload = {
         title: form.title,
         instructions: form.instructions,
@@ -223,24 +304,54 @@ export default function RecipeDashboard() {
         })),
       };
 
-      const res = await axios.post("/recipes", payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      let savedRecipe;
 
-      setRecipes((prev) => [res.data, ...prev]);
-      setSearchResults((prev) => [res.data, ...prev]); // UPDATE SEARCH RESULTS
+      if (editingId) {
+        // UPDATE
+        const res = await axios.put(`/recipes/${editingId}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        savedRecipe = res.data;
 
-      setForm(defaultForm);
-      setPreview(null);
+        // Update Categories
+        await axios.post(
+          `/recipes/${editingId}/categories`,
+          { categoryIds: form.categoryIds },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setRecipes((prev) =>
+          prev.map((r) => (r.id === editingId ? savedRecipe : r))
+        );
+        setSearchResults((prev) =>
+          prev.map((r) => (r.id === editingId ? savedRecipe : r))
+        );
+        toast.success("Cập nhật công thức thành công!");
+      } else {
+        // CREATE
+        const res = await axios.post("/recipes", payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        savedRecipe = res.data;
+
+        // Set Categories
+        if (form.categoryIds.length > 0) {
+          await axios.post(
+            `/recipes/${savedRecipe.id}/categories`,
+            { categoryIds: form.categoryIds },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+
+        setRecipes((prev) => [savedRecipe, ...prev]);
+        setSearchResults((prev) => [savedRecipe, ...prev]);
+        toast.success("Thêm công thức thành công!");
+      }
+
       closeModal();
-
-      alert("Thêm công thức thành công!");
     } catch (err) {
-      console.error("Lỗi khi thêm recipe:", err.response || err);
-      alert(err.response?.data?.message || "Không thể thêm công thức.");
+      console.error("Lỗi khi lưu recipe:", err);
+      toast.error("Không thể lưu công thức.");
     }
   };
 
@@ -248,6 +359,7 @@ export default function RecipeDashboard() {
   //   DELETE RECIPE
   // =========================
   const handleDeleteClick = (recipe) => {
+
     setConfirmModal({
       isOpen: true,
       itemId: recipe.id,
@@ -257,10 +369,15 @@ export default function RecipeDashboard() {
 
   const executeDelete = async () => {
     const id = confirmModal.itemId;
-    if (!id) return;
+    console.log("Executing delete for ID:", id);
+    if (!id) {
+      console.error("No ID found for delete");
+      return;
+    }
 
     setIsLoading(true);
     try {
+      console.log("Calling API delete:", `/recipes/${id}`);
       await axios.delete(`/recipes/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -328,6 +445,26 @@ export default function RecipeDashboard() {
           <Filter size={16} /> Bộ lọc
         </button>
       </div>
+
+      {/* Category Chips */}
+      <div className="category-filters">
+        <button
+          className={`category-chip ${selectedCategory === null ? "active" : ""}`}
+          onClick={() => handleCategoryClick(null)}
+        >
+          All
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            className={`category-chip ${selectedCategory === cat.id ? "active" : ""
+              }`}
+            onClick={() => handleCategoryClick(cat.id)}
+          >
+            {cat.name}
+          </button>
+        ))}
+      </div>
       <div className="recipes-heading">
         <h2 className="all-recipes">All Recipes</h2>
       </div>
@@ -337,11 +474,12 @@ export default function RecipeDashboard() {
             {search ? "No recipes found." : "No recipes yet. Create one!"}
           </div>
         ) : (
-          searchResults.map((r) => (
+          searchResults.map((r, index) => (
             <div
               key={r.id}
               className="recipe-card"
               onClick={() => handleCardClick(r.id)}
+              style={{ animationDelay: `${index * 0.2}s` }}
             >
               {/* IMAGE */}
               <div className="card-image-side">
@@ -361,20 +499,24 @@ export default function RecipeDashboard() {
                   </div>
 
                   <div className="card-actions">
-                    {r.favorite ? (
-                      <Heart color="red" size={18} />
-                    ) : (
-                      <HeartOff size={18} />
-                    )}
+                    <HeartOff size={18} />
+                    <Pen
+                      color="gray"
+                      size={18}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditClick(r);
+                      }}
+                    />
 
-                    <Trash2
+                    {/* <Trash2
                       color="gray"
                       size={18}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteClick(r);
                       }}
-                    />
+                    /> */}
                   </div>
                 </div>
                 <div className="card-meta">
@@ -415,9 +557,11 @@ export default function RecipeDashboard() {
           >
             <div className="fh-modal-header">
               <img className="fh-recipesBook" src={RecipesBook} alt="" />
-              <h3 className="fh-modal-title">Add Recipe</h3>
+              <h3 className="fh-modal-title">
+                {editingId ? "Edit Recipe" : "Add Recipe"}
+              </h3>
             </div>
-            <form className="fh-modal-form" onSubmit={handleAdd}>
+            <form className="fh-modal-form" onSubmit={handleSubmit}>
               <label className="fh-recipe-label">
                 Title
                 <input
@@ -449,6 +593,7 @@ export default function RecipeDashboard() {
                   <input
                     placeholder="30 minutes"
                     type="number"
+                    min="0"
                     name="cookingTimeMinutes"
                     value={form.cookingTimeMinutes}
                     onChange={handleChange}
@@ -460,6 +605,7 @@ export default function RecipeDashboard() {
                   Servings
                   <input
                     type="number"
+                    min="0"
                     name="servings"
                     value={form.servings}
                     onChange={handleChange}
@@ -481,6 +627,35 @@ export default function RecipeDashboard() {
                   <option value="LUNCH">Lunch</option>
                   <option value="DINNER">Dinner</option>
                 </select>
+              </label>
+
+              <label className="fh-recipe-label">
+                Categories
+                <div className="custom-combobox">
+                  <div
+                    className="combobox-trigger"
+                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  >
+                    {form.categoryIds && form.categoryIds.length > 0
+                      ? `Selected ${form.categoryIds.length} categories`
+                      : "-- Select Categories --"}
+                    <ChevronDown size={16} />
+                  </div>
+                  {showCategoryDropdown && (
+                    <div className="combobox-options">
+                      {categories.map((cat) => (
+                        <label key={cat.id} className="checkbox-option">
+                          <input
+                            type="checkbox"
+                            checked={form.categoryIds?.includes(cat.id)}
+                            onChange={() => handleCategoryToggle(cat.id)}
+                          />
+                          {cat.name}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </label>
 
               <label className="fh-recipe-label">
@@ -540,14 +715,11 @@ export default function RecipeDashboard() {
                       <div className="ingredient-search-container" style={{ position: "relative", flex: 1 }}>
                         <input
                           type="text"
-                          placeholder="Tìm kiếm nguyên liệu..."
-                          value={searchKeyword}
+                          placeholder={selectedIngredient ? selectedIngredient.name : ""}
+                          value={searchKeyword || selectedIngredient?.name}
                           onChange={(e) => handleIngredientSearch(index, e.target.value)}
-                          onFocus={() => {
-                            if (allIngredients.length > 0) {
-                              setIngredientDropdowns((prev) => ({ ...prev, [index]: true }));
-                            }
-                          }}
+                          onClick={() => setIngredientDropdowns((prev) => ({ ...prev, [index]: true }))}
+                          onFocus={() => setIngredientDropdowns((prev) => ({ ...prev, [index]: true }))}
                           className="fh-recipe-input fh-small"
                           required
                           style={{ width: "100%" }}
@@ -558,25 +730,11 @@ export default function RecipeDashboard() {
                           </span>
                         )}
                         {showDropdown && allIngredients.length > 0 && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "100%",
-                              left: 0,
-                              right: 0,
-                              backgroundColor: "white",
-                              border: "1px solid #ddd",
-                              borderRadius: "4px",
-                              maxHeight: "150px",
-                              overflowY: "auto",
-                              zIndex: 1000,
-                              marginTop: "4px",
-                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            }}
-                          >
+                          <div className="fh-dropdown">
                             {allIngredients.map((opt) => (
                               <div
                                 key={opt.id}
+                                className="fh-dropdown-item"
                                 onClick={() => {
                                   const newList = [...form.ingredients];
                                   newList[index] = {
@@ -597,20 +755,8 @@ export default function RecipeDashboard() {
                                     [index]: false,
                                   }));
                                 }}
-                                style={{
-                                  padding: "6px 10px",
-                                  cursor: "pointer",
-                                  borderBottom: "1px solid #eee",
-                                  fontSize: "13px",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.target.style.backgroundColor = "#f5f5f5";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.backgroundColor = "white";
-                                }}
                               >
-                                {opt.name} ({opt.unit})
+                                {opt.name} <span>{opt.unit}</span>
                               </div>
                             ))}
                           </div>
@@ -701,7 +847,8 @@ export default function RecipeDashboard() {
             </form>
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
