@@ -38,6 +38,7 @@ public interface RecipeMapper {
 
     // Chuyển đổi Entity thành DTO (Output) để trả về API
     @Mapping(source = "recipeIngredients", target = "ingredients")
+    @Mapping(target = "imageUrls", ignore = true) // Map manually in @AfterMapping
     RecipeResponseDTO toResponseDTO(Recipe entity);
 
     @Mapping(source = "ingredient.id", target = "ingredientId")
@@ -56,6 +57,22 @@ public interface RecipeMapper {
             for (RecipeIngredient ri : recipe.getRecipeIngredients()) {
                 ri.setRecipe(recipe);
             }
+        }
+    }
+
+    // Map images to imageUrls list
+    @AfterMapping
+    default void mapImagesToUrls(@MappingTarget RecipeResponseDTO dto, Recipe entity) {
+        try {
+            if (entity.getImages() != null && !entity.getImages().isEmpty()) {
+                dto.setImageUrls(entity.getImages().stream()
+                        .map(img -> img.getImageUrl())
+                        .filter(url -> url != null && !url.isEmpty())
+                        .collect(java.util.stream.Collectors.toList()));
+            }
+        } catch (Exception e) {
+            // If images are lazy loaded and not fetched, ignore
+            dto.setImageUrls(new java.util.ArrayList<>());
         }
     }
 

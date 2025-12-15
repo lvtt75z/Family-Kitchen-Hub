@@ -7,10 +7,12 @@ import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Ingredient;
 import com.c2se04.familykitchenhub.model.Recipe;
 import com.c2se04.familykitchenhub.model.RecipeIngredient;
+import com.c2se04.familykitchenhub.model.RecipeImage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class RecipeService {
     private final RecipeScheduleRepository recipeScheduleRepository;
     private final UserRecipeReminderRepository userRecipeReminderRepository;
     private final MealPlanEntryRepository mealPlanEntryRepository;
+    private final RecipeImageRepository recipeImageRepository;
 
     @Autowired
     public RecipeService(RecipeRepository recipeRepository,
@@ -38,7 +41,8 @@ public class RecipeService {
             RecipePopularityRepository recipePopularityRepository,
             RecipeScheduleRepository recipeScheduleRepository,
             UserRecipeReminderRepository userRecipeReminderRepository,
-            MealPlanEntryRepository mealPlanEntryRepository) {
+            MealPlanEntryRepository mealPlanEntryRepository,
+            RecipeImageRepository recipeImageRepository) {
         this.recipeRepository = recipeRepository;
         this.ingredientRepository = ingredientRepository;
         this.recipeMapper = recipeMapper;
@@ -49,6 +53,7 @@ public class RecipeService {
         this.recipeScheduleRepository = recipeScheduleRepository;
         this.userRecipeReminderRepository = userRecipeReminderRepository;
         this.mealPlanEntryRepository = mealPlanEntryRepository;
+        this.recipeImageRepository = recipeImageRepository;
     }
 
     @Transactional
@@ -92,12 +97,34 @@ public class RecipeService {
         Recipe existingRecipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", id));
 
-        existingRecipe.setTitle(updatedRecipeDetails.getTitle());
-        existingRecipe.setInstructions(updatedRecipeDetails.getInstructions());
-        existingRecipe.setCookingTimeMinutes(updatedRecipeDetails.getCookingTimeMinutes());
-        existingRecipe.setServings(updatedRecipeDetails.getServings());
-        existingRecipe.setImageUrl(updatedRecipeDetails.getImageUrl());
-        existingRecipe.setMealType(updatedRecipeDetails.getMealType());
+        // Update basic fields only if provided
+        if (updatedRecipeDetails.getTitle() != null) {
+            existingRecipe.setTitle(updatedRecipeDetails.getTitle());
+        }
+        if (updatedRecipeDetails.getInstructions() != null) {
+            existingRecipe.setInstructions(updatedRecipeDetails.getInstructions());
+        }
+        if (updatedRecipeDetails.getCookingTimeMinutes() != null) {
+            existingRecipe.setCookingTimeMinutes(updatedRecipeDetails.getCookingTimeMinutes());
+        }
+        if (updatedRecipeDetails.getServings() != null) {
+            existingRecipe.setServings(updatedRecipeDetails.getServings());
+        }
+        if (updatedRecipeDetails.getImageUrl() != null) {
+            existingRecipe.setImageUrl(updatedRecipeDetails.getImageUrl());
+        }
+        if (updatedRecipeDetails.getMealType() != null) {
+            existingRecipe.setMealType(updatedRecipeDetails.getMealType());
+        }
+        if (updatedRecipeDetails.getDescription() != null) {
+            existingRecipe.setDescription(updatedRecipeDetails.getDescription());
+        }
+        if (updatedRecipeDetails.getTotalCalories() != null) {
+            existingRecipe.setTotalCalories(updatedRecipeDetails.getTotalCalories());
+        }
+        if (updatedRecipeDetails.getDifficultyLevel() != null) {
+            existingRecipe.setDifficultyLevel(updatedRecipeDetails.getDifficultyLevel());
+        }
 
         if (updatedRecipeDetails.getRecipeIngredients() != null) {
             if (existingRecipe.getRecipeIngredients() != null) {
@@ -144,8 +171,51 @@ public class RecipeService {
         userRecipeReminderRepository.deleteByRecipeId(id);
         mealPlanEntryRepository.deleteByRecipeId(id);
 
+        // Delete recipe images
+        recipeImageRepository.deleteByRecipeId(id);
+
         // Then delete the recipe (recipeIngredients and steps will cascade via JPA
         // CascadeType.ALL)
         recipeRepository.deleteById(id);
+    }
+
+    /**
+     * Add images to a recipe
+     */
+    @Transactional
+    public List<RecipeImage> addImagesToRecipe(Long recipeId, List<String> imageUrls, List<String> fileNames) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", recipeId));
+
+        List<RecipeImage> images = new ArrayList<>();
+        for (int i = 0; i < imageUrls.size(); i++) {
+            RecipeImage image = new RecipeImage();
+            image.setRecipe(recipe);
+            image.setImageUrl(imageUrls.get(i));
+            if (fileNames != null && i < fileNames.size()) {
+                image.setFileName(fileNames.get(i));
+            }
+            image.setDisplayOrder(i);
+            images.add(recipeImageRepository.save(image));
+        }
+        return images;
+    }
+
+    /**
+     * Get all images for a recipe
+     */
+    public List<RecipeImage> getRecipeImages(Long recipeId) {
+        return recipeImageRepository.findByRecipeIdOrderByDisplayOrderAsc(recipeId);
+    }
+
+    /**
+     * Delete an image from a recipe
+     */
+    @Transactional
+    public void deleteRecipeImage(Long imageId) {
+        if (!recipeImageRepository.existsById(imageId)) {
+            throw new ResourceNotFoundException("RecipeImage", "id", imageId);
+        }
+        recipeImageRepository.deleteById(imageId);
     }
 }

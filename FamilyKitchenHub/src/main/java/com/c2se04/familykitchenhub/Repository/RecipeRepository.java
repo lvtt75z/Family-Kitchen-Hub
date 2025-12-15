@@ -4,17 +4,23 @@ import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Recipe;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     // Tìm kiếm công thức theo kiểu món ăn
     List<Recipe> findByMealType(MealType mealType);
+    
+    // Fetch recipe with images and recipeIngredients
+    @EntityGraph(attributePaths = {"images", "recipeIngredients", "recipeIngredients.ingredient"})
+    Optional<Recipe> findById(Long id);
     
     // Tìm kiếm công thức theo tên (không phân biệt hoa thường)
     @Query("SELECT r FROM Recipe r WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :name, '%'))")
@@ -80,4 +86,8 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
                     ") engaged_recipes",
             nativeQuery = true)
     Page<RecipeEngagementProjection> findRecipesByEngagement(Pageable pageable);
+    
+    // Fetch all recipes with images
+    @EntityGraph(attributePaths = {"images"})
+    List<Recipe> findAll();
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 // import { getMealRecommendations } from "../../service/recommendationApi"; // Tạm comment để dùng mock data
 import { Sparkles, ArrowLeft, Clock, Users, Zap } from "lucide-react";
+import { convertMediaUrl } from "../../utils/mediaUtils";
 import "../../styles/SmartRecommendation.css";
 
 export default function SmartRecommendation() {
@@ -233,7 +234,7 @@ export default function SmartRecommendation() {
               {/* Image & Title */}
               <div className="recipe-image-wrapper">
                 <img
-                  src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+                  src={convertMediaUrl(recipe.imageUrl) || "/placeholder-recipe.jpg"}
                   alt={recipe.title}
                   className="recipe-image"
                 />

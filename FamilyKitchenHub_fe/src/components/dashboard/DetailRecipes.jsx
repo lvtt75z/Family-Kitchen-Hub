@@ -8,6 +8,7 @@ import {
   uploadCommentMedia,
 } from "../../service/recipesApi";
 import { getUsernameById } from "../../service/usersApi";
+import { convertMediaUrl } from "../../utils/mediaUtils";
 import "./../../styles/DetailRecipes.css";
 
 export default function RecipeDetail() {
@@ -24,6 +25,7 @@ export default function RecipeDetail() {
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [usernames, setUsernames] = useState({});
+  const [fetchingUsernames, setFetchingUsernames] = useState(new Set()); // Track các userId đang được fetch
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [mediaPreviews, setMediaPreviews] = useState([]);
@@ -132,44 +134,86 @@ export default function RecipeDetail() {
   // Fetch username cho các comment chỉ có userId
   useEffect(() => {
     const loadUsernames = async () => {
+      // Lọc các userId cần fetch: có userId, không có userName trong comment, chưa có trong usernames state, và chưa đang được fetch
       const missingIds = Array.from(
         new Set(
           comments
-            .filter((c) => c.userId && !c.userName && !usernames[c.userId])
+            .filter((c) => {
+              if (!c.userId || c.userName) return false;
+              // Đã có trong state (kể cả null - đã thử fetch nhưng fail)
+              if (c.userId in usernames) return false;
+              // Đang được fetch
+              if (fetchingUsernames.has(c.userId)) return false;
+              return true;
+            })
             .map((c) => c.userId)
         )
       );
 
       if (missingIds.length === 0) return;
 
+      // Đánh dấu các userId đang được fetch
+      setFetchingUsernames((prev) => {
+        const next = new Set(prev);
+        missingIds.forEach((uid) => next.add(uid));
+        return next;
+      });
+
       try {
         const results = await Promise.all(
           missingIds.map(async (uid) => {
             try {
               const name = await getUsernameById(uid);
-              return { uid, name };
-            } catch {
-              return { uid, name: null };
+              return { uid, name, success: true };
+            } catch (err) {
+              // Log error nhưng không throw để không làm gián đoạn các request khác
+              console.warn(`Failed to load username for user ${uid}:`, err.response?.status || err.message);
+              return { uid, name: null, success: false };
             }
           })
         );
 
+        // Cập nhật usernames state và xóa khỏi fetching set
         setUsernames((prev) => {
           const next = { ...prev };
           results.forEach(({ uid, name }) => {
-            if (name) next[uid] = name;
+            // Chỉ set nếu có name và đảm bảo name là string
+            if (name && typeof name === 'string') {
+              next[uid] = name;
+            } else if (name && typeof name === 'object' && name.username) {
+              // Nếu name là object, extract username
+              next[uid] = String(name.username || name.userName || '');
+            } else {
+              // Đánh dấu đã thử fetch nhưng fail để không fetch lại
+              next[uid] = null;
+            }
           });
+          return next;
+        });
+
+        // Xóa khỏi fetching set
+        setFetchingUsernames((prev) => {
+          const next = new Set(prev);
+          missingIds.forEach((uid) => next.delete(uid));
           return next;
         });
       } catch (err) {
         console.error("Failed to load usernames", err);
+        // Xóa khỏi fetching set khi có lỗi
+        setFetchingUsernames((prev) => {
+          const next = new Set(prev);
+          missingIds.forEach((uid) => next.delete(uid));
+          return next;
+        });
       }
     };
 
     if (comments.length > 0) {
       loadUsernames();
     }
-  }, [comments, usernames]);
+    // Chỉ phụ thuộc vào comments, không phụ thuộc vào usernames hoặc fetchingUsernames để tránh vòng lặp vô hạn
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comments]);
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -278,7 +322,7 @@ export default function RecipeDetail() {
 
         {/* RIGHT SIDE IMAGE */}
         <div className="right-image">
-          <img src={recipe.imageUrl} alt={recipe.title} />
+          <img src={convertMediaUrl(recipe.imageUrl)} alt={recipe.title} />
           <div className="badge top-left">
             {recipe.mealType && <span>{recipe.mealType}</span>}
           </div>
@@ -309,7 +353,7 @@ export default function RecipeDetail() {
                 onClick={() => navigate(`/manage/recipes/${item.id}`)}
               >
                 <img
-                  src={item.imageUrl || "/placeholder-recipe.jpg"}
+                  src={convertMediaUrl(item.imageUrl) || "/placeholder-recipe.jpg"}
                   alt={item.title}
                 />
                 <div className="similar-content">
@@ -413,7 +457,7 @@ export default function RecipeDetail() {
                     <div className="comment-meta-left">
                       <span className="comment-author">
                         {c.userName ||
-                          usernames[c.userId] ||
+                          (typeof usernames[c.userId] === 'string' ? usernames[c.userId] : null) ||
                           `User #${c.userId || ""}`}
                       </span>
                       {c.createdAt && (

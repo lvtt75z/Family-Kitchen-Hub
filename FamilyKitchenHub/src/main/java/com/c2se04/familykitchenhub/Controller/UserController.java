@@ -66,6 +66,21 @@ public class UserController {
         return ResponseEntity.ok(convertToDto(user));
     }
 
+    // 3.1. GET USERNAME BY ID (Public endpoint)
+    @GetMapping("/{id}/username")
+    public ResponseEntity<java.util.Map<String, String>> getUsernameById(@PathVariable Long id) {
+        try {
+            User user = userService.getUserById(id);
+            java.util.Map<String, String> response = new java.util.HashMap<>();
+            response.put("username", user.getUsername() != null ? user.getUsername() : "");
+            return ResponseEntity.ok(response);
+        } catch (com.c2se04.familykitchenhub.Exception.ResourceNotFoundException e) {
+            java.util.Map<String, String> response = new java.util.HashMap<>();
+            response.put("username", "");
+            return ResponseEntity.ok(response);
+        }
+    }
+
     // 4. UPDATE USER (Chỉ update thông tin tài khoản: Email, FullName)
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @RequestBody UserRequestDTO userDTO) {

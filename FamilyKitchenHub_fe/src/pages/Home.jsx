@@ -17,6 +17,7 @@ import cookingAnimation from "../assets/kitchen_cooking.mp4";
 import axios from "../hooks/axios";
 import { getTopBookmarkedRecipes, addRecipeBookmark, removeRecipeBookmark, getRecipeById } from "../service/recipesApi";
 import { Heart } from "lucide-react";
+import { convertMediaUrl } from "../utils/mediaUtils";
 
 function Home() {
   const [recipes, setRecipes] = useState([]);
@@ -273,7 +274,7 @@ function Home() {
                         >
                           <div className="bookmarked-image">
                             <img
-                              src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+                              src={convertMediaUrl(recipe.imageUrl) || "/placeholder-recipe.jpg"}
                               alt={recipe.title}
                             />
                             <div className="bookmark-badge">
@@ -364,7 +365,7 @@ function Home() {
               >
                 <div className="suggestion-image">
                   <img
-                    src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+                    src={convertMediaUrl(recipe.imageUrl) || "/placeholder-recipe.jpg"}
                     alt={recipe.title}
                   />
                   <button 
