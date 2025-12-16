@@ -11,7 +11,7 @@
 
 ### 1. Tạo Request Mới
 - Method: **POST**
-- URL: `http://127.0.0.1:5001/recommend`
+- URL: `http://127.0.0.1:5002/recommend`
 
 ### 2. Headers
 ```
@@ -114,8 +114,9 @@ Mỗi recipe gồm:
 
 ## Lưu Ý
 
-- Đảm bảo Flask server đang chạy trên `http://127.0.0.1:5001`
+- Đảm bảo Flask server đang chạy trên `http://127.0.0.1:5002`
 - Các món có nguyên liệu gây dị ứng sẽ bị loại bỏ hoàn toàn
 - Các món thiếu nguyên liệu chính sẽ bị phạt điểm nặng
 - Món sử dụng nguyên liệu sắp hết hạn (< 3 ngày) sẽ được cộng điểm bonus
+
 

@@ -175,14 +175,20 @@ public class RecipeController {
 
             return ResponseEntity.ok(response);
         } catch (com.c2se04.familykitchenhub.Exception.ResourceNotFoundException e) {
+            // Let GlobalExceptionHandler handle 404
+            throw e;
+        } catch (BadRequestException e) {
+            // Let GlobalExceptionHandler handle 400 - don't wrap it
             throw e;
         } catch (RuntimeException e) {
+            // Convert RuntimeException to BadRequestException with clear message
             String errorMessage = e.getMessage();
             if (errorMessage == null || errorMessage.trim().isEmpty()) {
                 errorMessage = "Đã xảy ra lỗi khi thực hiện nấu món ăn: " + e.getClass().getSimpleName();
             }
             throw new BadRequestException(errorMessage);
         } catch (Exception e) {
+            // Fallback for any other unexpected exceptions
             String errorMessage = e.getMessage();
             if (errorMessage == null || errorMessage.trim().isEmpty()) {
                 errorMessage = "Đã xảy ra lỗi không xác định khi thực hiện nấu món ăn";

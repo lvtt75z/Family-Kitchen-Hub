@@ -290,9 +290,37 @@ export default function FridgeManager() {
       setTimeout(() => {
         setIsLoading(false);
         console.error("Error deleting ingredient:", error);
-        toast.error("Không thể xóa nguyên liệu!", {
+        
+        // Xử lý lỗi chi tiết hơn
+        let errorMessage = "Không thể xóa nguyên liệu!";
+        
+        if (error.response) {
+          const status = error.response.status;
+          const data = error.response.data;
+          const errorMsg = data?.message || data?.error || "";
+          
+          // Kiểm tra lỗi foreign key constraint
+          if (errorMsg.includes("foreign key constraint") || 
+              errorMsg.includes("Cannot delete or update a parent row") ||
+              errorMsg.includes("user_notifications") ||
+              errorMsg.includes("inventory_item_id")) {
+            errorMessage = "Không thể xóa nguyên liệu này vì nó đang được sử dụng trong thông báo. Vui lòng xóa các thông báo liên quan trước.";
+          } else if (status === 404) {
+            errorMessage = "Không tìm thấy nguyên liệu cần xóa.";
+          } else if (status === 403) {
+            errorMessage = "Bạn không có quyền xóa nguyên liệu này.";
+          } else if (status === 500) {
+            errorMessage = errorMsg || "Lỗi server. Vui lòng thử lại sau.";
+          } else {
+            errorMessage = errorMsg || `Lỗi ${status}: Không thể xóa nguyên liệu.`;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        toast.error(errorMessage, {
           position: "top-right",
-          autoClose: 2000,
+          autoClose: 5000,
         });
       }, 2000);
     }

@@ -575,6 +575,8 @@ export default function RecipeDashboard() {
   //   COOK RECIPE - Trừ nguyên liệu từ tủ lạnh
   // =========================
   const handleCookRecipe = async (recipeId, recipeTitle) => {
+    let loadingToast = null;
+    
     try {
       // Kiểm tra authentication token
       const token = localStorage.getItem("token");
@@ -595,37 +597,89 @@ export default function RecipeDashboard() {
         }
 
         // Hiển thị loading toast
-        const loadingToast = toast.loading("Đang kiểm tra nguyên liệu...", { autoClose: false });
+        loadingToast = toast.loading("Đang kiểm tra nguyên liệu...", { autoClose: false });
 
         // Gọi API cook recipe với userId (vì không có token)
         const response = await cookRecipe(recipeId, userId);
 
         // Đóng loading toast
         toast.dismiss(loadingToast);
+        loadingToast = null;
 
         // Hiển thị thông báo thành công và chuyển trang
         showCookSuccessMessage(response, recipeTitle, recipeId);
       } else {
         // Có token → userId sẽ tự động lấy từ token, không cần gửi userId
+        // Nhưng nếu backend không parse được User từ token, sẽ cần userId fallback
+        let userIdFallback = null;
+        try {
+          const userDataString = localStorage.getItem("user");
+          if (userDataString) {
+            const userData = JSON.parse(userDataString);
+            userIdFallback = userData.user?.id || userData.id;
+          }
+        } catch (e) {
+          console.warn("Không thể lấy userId từ localStorage:", e);
+        }
+
         // Hiển thị loading toast
-        const loadingToast = toast.loading("Đang kiểm tra nguyên liệu...", { autoClose: false });
+        loadingToast = toast.loading("Đang kiểm tra nguyên liệu...", { autoClose: false });
 
-        // Gọi API cook recipe không cần userId (sẽ lấy từ token)
-        const response = await cookRecipe(recipeId);
+        try {
+          // Thử gọi API cook recipe không cần userId (sẽ lấy từ token)
+          const response = await cookRecipe(recipeId);
 
-        // Đóng loading toast
-        toast.dismiss(loadingToast);
+          // Đóng loading toast
+          toast.dismiss(loadingToast);
+          loadingToast = null;
 
-        // Hiển thị thông báo thành công và chuyển trang
-        showCookSuccessMessage(response, recipeTitle, recipeId);
+          // Hiển thị thông báo thành công và chuyển trang
+          showCookSuccessMessage(response, recipeTitle, recipeId);
+        } catch (firstError) {
+          // Nếu lỗi liên quan đến userId và có userId fallback, thử lại với userId
+          const errorMsg = firstError.response?.data?.message || firstError.response?.data?.error || "";
+          const isUserIdError = errorMsg.toLowerCase().includes("userid") || 
+                                errorMsg.toLowerCase().includes("user id") ||
+                                errorMsg.toLowerCase().includes("đăng nhập") ||
+                                errorMsg.toLowerCase().includes("authentication") ||
+                                (errorMsg.toLowerCase().includes("bắt buộc") && errorMsg.toLowerCase().includes("user"));
+          
+          if (isUserIdError && userIdFallback) {
+            console.log("Token không hợp lệ, thử lại với userId:", userIdFallback);
+            try {
+              const response = await cookRecipe(recipeId, userIdFallback);
+              
+              // Đóng loading toast
+              toast.dismiss(loadingToast);
+              loadingToast = null;
+
+              // Hiển thị thông báo thành công và chuyển trang
+              showCookSuccessMessage(response, recipeTitle, recipeId);
+              return; // Thành công, không cần throw error
+            } catch {
+              // Nếu retry cũng fail, throw error gốc
+              throw firstError;
+            }
+          } else {
+            // Không phải lỗi userId hoặc không có userId fallback, throw error gốc
+            throw firstError;
+          }
+        }
       }
     } catch (err) {
+      // Đóng loading toast nếu có
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
+      
       console.error("Lỗi khi nấu recipe:", err);
       console.error("Error details:", {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        statusText: err.response?.statusText
+        statusText: err.response?.statusText,
+        recipeId: recipeId,
+        recipeTitle: recipeTitle
       });
 
       let errorMessage = "Không thể nấu món ăn. Vui lòng thử lại.";
@@ -634,35 +688,55 @@ export default function RecipeDashboard() {
         const status = err.response.status;
         const data = err.response.data;
 
+        // Ưu tiên hiển thị message từ backend nếu có
+        const backendMessage = data?.message || data?.error || "";
+        
         if (status === 400) {
           // Kiểm tra các loại lỗi 400 khác nhau
-          const errorMsg = data?.message || data?.error || "";
+          const errorMsg = backendMessage.toLowerCase();
 
-          if (errorMsg.includes("Query did not return a unique result") ||
+          // Kiểm tra message về userId trước (quan trọng nhất)
+          if (errorMsg.includes("userid") || 
+              errorMsg.includes("user id") ||
+              errorMsg.includes("đăng nhập") ||
+              errorMsg.includes("authentication") ||
+              (errorMsg.includes("bắt buộc") && errorMsg.includes("user"))) {
+            // Hiển thị message từ backend hoặc message mặc định
+            errorMessage = backendMessage || "Vui lòng đăng nhập hoặc cung cấp userId để nấu món ăn.";
+          } else if (errorMsg.includes("nullpointerexception") || 
+              errorMsg.includes("null pointer") ||
+              errorMsg.includes("null reference")) {
+            errorMessage = backendMessage || "Dữ liệu không hợp lệ. Có thể công thức, nguyên liệu hoặc thông tin người dùng không tồn tại. Vui lòng thử lại hoặc liên hệ hỗ trợ.";
+          } else if (errorMsg.includes("query did not return a unique result") ||
             errorMsg.includes("2 results were returned") ||
             errorMsg.includes("multiple results")) {
             errorMessage = "Có nhiều nguyên liệu cùng loại trong tủ lạnh. Vui lòng kiểm tra và xóa các nguyên liệu trùng lặp trước khi nấu.";
-          } else if (errorMsg.includes("Không đủ nguyên liệu") ||
+          } else if (errorMsg.includes("không đủ nguyên liệu") ||
             errorMsg.includes("không có trong tủ lạnh")) {
-            errorMessage = errorMsg;
-          } else if (errorMsg.includes("userId")) {
-            errorMessage = "Vui lòng đăng nhập hoặc cung cấp userId để nấu món ăn.";
+            errorMessage = backendMessage;
+          } else if (errorMsg.includes("recipe") || errorMsg.includes("công thức")) {
+            errorMessage = backendMessage || "Không tìm thấy công thức. Vui lòng thử lại.";
           } else {
-            errorMessage = errorMsg || "Không đủ nguyên liệu để nấu món ăn này.";
+            // Nếu có message từ backend, ưu tiên hiển thị nó
+            errorMessage = backendMessage || "Không đủ nguyên liệu để nấu món ăn này.";
           }
         } else if (status === 404) {
-          errorMessage = data?.message || "Không tìm thấy công thức hoặc người dùng.";
+          errorMessage = backendMessage || "Không tìm thấy công thức hoặc người dùng.";
         } else if (status === 401) {
-          errorMessage = "Bạn cần đăng nhập để nấu món ăn.";
+          errorMessage = backendMessage || "Bạn cần đăng nhập để nấu món ăn.";
         } else if (status === 500) {
-          const errorMsg = data?.message || data?.error || "";
-          if (errorMsg.includes("Query did not return a unique result")) {
+          const errorMsg = backendMessage.toLowerCase();
+          if (errorMsg.includes("nullpointerexception") || 
+              errorMsg.includes("null pointer") ||
+              errorMsg.includes("null reference")) {
+            errorMessage = backendMessage || "Lỗi server: Dữ liệu không hợp lệ. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.";
+          } else if (errorMsg.includes("query did not return a unique result")) {
             errorMessage = "Có nhiều nguyên liệu cùng loại trong tủ lạnh. Vui lòng kiểm tra và xóa các nguyên liệu trùng lặp trước khi nấu.";
           } else {
-            errorMessage = `Lỗi server: ${errorMsg || "Vui lòng thử lại sau."}`;
+            errorMessage = backendMessage || "Lỗi server: Vui lòng thử lại sau.";
           }
         } else {
-          errorMessage = data?.message || data?.error || `Lỗi ${status}: Không thể nấu món ăn.`;
+          errorMessage = backendMessage || `Lỗi ${status}: Không thể nấu món ăn.`;
         }
       } else if (err.message) {
         errorMessage = err.message;

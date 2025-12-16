@@ -83,7 +83,7 @@ test_data = {
 }
 
 # Send POST request
-url = "http://127.0.0.1:5001/recommend"
+url = "http://127.0.0.1:5002/recommend"
 headers = {"Content-Type": "application/json"}
 
 print("🚀 Sending test request to /recommend endpoint...")
@@ -113,7 +113,8 @@ try:
     
 except requests.exceptions.ConnectionError:
     print("❌ Error: Could not connect to the server.")
-    print("   Make sure Flask app is running on http://127.0.0.1:5001")
+    print("   Make sure Flask app is running on http://127.0.0.1:5002")
 except Exception as e:
     print(f"❌ Error: {str(e)}")
+
 

@@ -1,7 +1,7 @@
 import axios from "../hooks/axios";
 
 // Flask AI API base URL (running on separate port)
-const FLASK_API_URL = "http://localhost:5001";
+const FLASK_API_URL = "http://localhost:5002";
 
 /**
  * Get smart meal recommendations from Flask AI API

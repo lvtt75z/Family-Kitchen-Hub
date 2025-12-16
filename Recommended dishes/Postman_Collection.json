@@ -27,7 +27,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:5001/recommend",
+					"raw": "http://127.0.0.1:5002/recommend",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -35,7 +35,7 @@
 						"0",
 						"1"
 					],
-					"port": "5001",
+					"port": "5002",
 					"path": [
 						"recommend"
 					]
@@ -109,7 +109,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:5001/recommend",
+					"raw": "http://127.0.0.1:5002/recommend",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -117,7 +117,7 @@
 						"0",
 						"1"
 					],
-					"port": "5001",
+					"port": "5002",
 					"path": [
 						"recommend"
 					]
@@ -147,7 +147,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:5001/recommend",
+					"raw": "http://127.0.0.1:5002/recommend",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -155,7 +155,7 @@
 						"0",
 						"1"
 					],
-					"port": "5001",
+					"port": "5002",
 					"path": [
 						"recommend"
 					]
@@ -166,4 +166,5 @@
 		}
 	]
 }
+
 

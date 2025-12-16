@@ -9,6 +9,7 @@ import com.c2se04.familykitchenhub.Repository.InventoryItemRepository;
 import com.c2se04.familykitchenhub.Repository.UserRepository;
 import com.c2se04.familykitchenhub.Repository.IngredientRepository;
 import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
+import com.c2se04.familykitchenhub.Exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -197,60 +198,85 @@ public class InventoryItemService {
      */
     @Transactional
     public DeductResult deductIngredientsForRecipeWithDetails(Long userId, Long recipeId) {
+        // Validate userId
+        if (userId == null || userId <= 0) {
+            throw new BadRequestException("User ID không hợp lệ: " + userId);
+        }
+        
+        // Validate recipeId
+        if (recipeId == null || recipeId <= 0) {
+            throw new BadRequestException("Recipe ID không hợp lệ: " + recipeId);
+        }
+        
         // 1. Lấy công thức và các thành phần yêu cầu
         Recipe recipe = recipeService.getRecipeById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", recipeId));
 
-        if (recipe == null) {
-            throw new RuntimeException("Recipe không tồn tại với id: " + recipeId);
-        }
-
         java.util.Set<RecipeIngredient> recipeIngredients = recipe.getRecipeIngredients();
         if (recipeIngredients == null || recipeIngredients.isEmpty()) {
-            throw new RuntimeException("Recipe không có nguyên liệu nào. Recipe ID: " + recipeId);
+            throw new BadRequestException("Recipe không có nguyên liệu nào. Recipe ID: " + recipeId);
         }
 
         java.util.List<DeductedIngredientInfo> deductedIngredients = new java.util.ArrayList<>();
 
         // 2. Kiểm tra tồn kho cho tất cả nguyên liệu (tổng hợp từ tất cả InventoryItem)
         for (RecipeIngredient requiredIngredient : recipeIngredients) {
-            // Validate requiredIngredient
-            if (requiredIngredient == null) {
-                throw new RuntimeException("Recipe ingredient không hợp lệ (null) trong recipe ID: " + recipeId);
-            }
-            
-            if (requiredIngredient.getIngredient() == null) {
-                throw new RuntimeException("Ingredient không hợp lệ (null) trong recipe ingredient. Recipe ID: " + recipeId);
-            }
-            
-            Long requiredIngredientId = requiredIngredient.getIngredient().getId();
-            if (requiredIngredientId == null) {
-                throw new RuntimeException("Ingredient ID không hợp lệ (null). Recipe ID: " + recipeId);
-            }
-            
-            Double requiredQuantity = requiredIngredient.getQuantity();
-            if (requiredQuantity == null || requiredQuantity <= 0) {
-                String ingredientName = requiredIngredient.getIngredient().getName() != null ? 
-                                       requiredIngredient.getIngredient().getName() : "Unknown";
-                throw new RuntimeException("Số lượng nguyên liệu không hợp lệ cho: " + ingredientName + 
-                                         ". Số lượng: " + requiredQuantity + ". Recipe ID: " + recipeId);
-            }
+            try {
+                // Validate requiredIngredient
+                if (requiredIngredient == null) {
+                    throw new BadRequestException("Recipe ingredient không hợp lệ (null) trong recipe ID: " + recipeId);
+                }
+                
+                if (requiredIngredient.getIngredient() == null) {
+                    throw new BadRequestException("Ingredient không hợp lệ (null) trong recipe ingredient. Recipe ID: " + recipeId);
+                }
+                
+                Long requiredIngredientId = requiredIngredient.getIngredient().getId();
+                if (requiredIngredientId == null) {
+                    throw new BadRequestException("Ingredient ID không hợp lệ (null). Recipe ID: " + recipeId);
+                }
+                
+                Double requiredQuantity = requiredIngredient.getQuantity();
+                if (requiredQuantity == null || requiredQuantity <= 0) {
+                    String ingredientName = requiredIngredient.getIngredient().getName() != null ? 
+                                           requiredIngredient.getIngredient().getName() : "Unknown";
+                    throw new BadRequestException("Số lượng nguyên liệu không hợp lệ cho: " + ingredientName + 
+                                             ". Số lượng: " + requiredQuantity + ". Recipe ID: " + recipeId);
+                }
 
-            // Lấy tất cả InventoryItem của ingredient này (có thể có nhiều items)
-            List<InventoryItem> inventoryItems = inventoryItemRepository
-                    .findAllByUserIdAndIngredientIdOrderByExpirationDateAsc(userId, requiredIngredientId);
+                // Lấy tất cả InventoryItem của ingredient này (có thể có nhiều items)
+                List<InventoryItem> inventoryItems = inventoryItemRepository
+                        .findAllByUserIdAndIngredientIdOrderByExpirationDateAsc(userId, requiredIngredientId);
 
-            // Tổng hợp số lượng từ tất cả items
-            Float totalQuantity = inventoryItems.stream()
-                    .map(InventoryItem::getQuantity)
-                    .reduce(0.0f, Float::sum);
+                // Validate inventoryItems
+                if (inventoryItems == null) {
+                    throw new BadRequestException("Không thể lấy danh sách nguyên liệu từ tủ lạnh. Ingredient ID: " + requiredIngredientId);
+                }
 
-            if (inventoryItems.isEmpty() || totalQuantity < requiredQuantity.floatValue()) {
-                String ingredientName = requiredIngredient.getIngredient().getName() != null ? 
-                                       requiredIngredient.getIngredient().getName() : "Unknown";
-                throw new RuntimeException("Không đủ nguyên liệu: " + ingredientName +
-                        ". Cần: " + requiredQuantity +
-                        ". Có: " + totalQuantity);
+                // Tổng hợp số lượng từ tất cả items (filter null items và null quantities)
+                Float totalQuantity = inventoryItems.stream()
+                        .filter(item -> item != null && item.getQuantity() != null)
+                        .map(InventoryItem::getQuantity)
+                        .reduce(0.0f, Float::sum);
+
+                if (inventoryItems.isEmpty() || totalQuantity < requiredQuantity.floatValue()) {
+                    String ingredientName = requiredIngredient.getIngredient().getName() != null ? 
+                                           requiredIngredient.getIngredient().getName() : "Unknown";
+                    throw new BadRequestException("Không đủ nguyên liệu: " + ingredientName +
+                            ". Cần: " + requiredQuantity +
+                            ". Có: " + totalQuantity);
+                }
+            } catch (BadRequestException e) {
+                // Re-throw BadRequestException
+                throw e;
+            } catch (NullPointerException e) {
+                // Catch NullPointerException và cung cấp message rõ ràng
+                throw new BadRequestException("Dữ liệu không hợp lệ khi xử lý nguyên liệu. Recipe ID: " + recipeId + 
+                                            ". Lỗi: " + (e.getMessage() != null ? e.getMessage() : "NullPointerException"));
+            } catch (Exception e) {
+                // Catch các exception khác
+                throw new BadRequestException("Lỗi khi xử lý nguyên liệu: " + 
+                                            (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
 
@@ -283,12 +309,21 @@ public class InventoryItemService {
 
             // Trừ từ các items theo thứ tự ưu tiên (item sắp hết hạn trước)
             for (InventoryItem item : inventoryItems) {
+                if (item == null) {
+                    continue; // Skip null items
+                }
+                
                 if (remainingToDeduct <= 0) {
-                    totalRemaining += item.getQuantity();
+                    if (item.getQuantity() != null) {
+                        totalRemaining += item.getQuantity();
+                    }
                     continue;
                 }
 
                 Float itemQuantity = item.getQuantity();
+                if (itemQuantity == null) {
+                    continue; // Skip items with null quantity
+                }
                 if (itemQuantity >= remainingToDeduct) {
                     // Item này đủ để trừ hết số lượng còn lại
                     Float newQuantity = itemQuantity - remainingToDeduct;

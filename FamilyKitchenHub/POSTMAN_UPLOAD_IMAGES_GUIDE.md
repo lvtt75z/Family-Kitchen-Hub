@@ -243,3 +243,4 @@ Click **Send** và xem kết quả
 - Kiểm tra cấu hình `app.media.base-url` trong `application.properties`
 - Kiểm tra WebConfig có map đúng đường dẫn `/media/**` không
 
+
