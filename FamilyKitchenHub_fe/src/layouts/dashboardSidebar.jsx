@@ -12,6 +12,7 @@ import {
   UtensilsCrossed
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { isValidJWT } from "../utils/security";
 
 const TABS = [
   { label: "Home", path: "/home", icon: <HomeIcon size={18} /> },
@@ -60,8 +61,20 @@ export default function Sidebar() {
 
   // Check login status
   useEffect(() => {
+    const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
-    if (userData) {
+
+    // Validate token immediately
+    if (token && !isValidJWT(token)) {
+      console.warn("Sidebar: Token invalid, logging out.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setIsLoggedIn(false);
+      setUser(null);
+      return;
+    }
+
+    if (userData && token) {
       try {
         setIsLoggedIn(true);
         setUser(JSON.parse(userData)); // chuyển chuỗi JSON thành object
@@ -71,6 +84,12 @@ export default function Sidebar() {
         setUser(null);
       }
     } else {
+      // If token invalid/missing but we consider them logged in (or have stale data)
+      // Perform cleanup
+      if (localStorage.getItem("token") || localStorage.getItem("user")) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
       setIsLoggedIn(false);
       setUser(null);
     }
@@ -90,6 +109,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setIsLoggedIn(false);
     setOpenDropdownIndex(null);
     navigate("/home");
@@ -126,7 +146,7 @@ export default function Sidebar() {
                 >
                   {isLoggedIn ? (
                     <>
-                      <div className="pf-dropdown-item"> {user.fullName || user.username || "User"}</div>
+                      <div className="pf-dropdown-item"> {user?.fullName || user?.username || "User"}</div>
                       <Link
                         className="pf-dropdown-item pf-dropdown-editprofile"
                         to="/manage/editprofile"
