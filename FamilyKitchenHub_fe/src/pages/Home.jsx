@@ -17,6 +17,7 @@ import cookingAnimation from "../assets/kitchen_cooking.mp4";
 import axios from "../hooks/axios";
 import { getTopBookmarkedRecipes, addRecipeBookmark, removeRecipeBookmark, getRecipeById } from "../service/recipesApi";
 import { Heart } from "lucide-react";
+import { convertMediaUrl } from "../utils/mediaUtils";
 
 function Home() {
   const [recipes, setRecipes] = useState([]);
@@ -311,7 +312,7 @@ function Home() {
                         >
                           <div className="bookmarked-image">
                             <img
-                              src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+                              src={convertMediaUrl(recipe.imageUrl) || "/placeholder-recipe.jpg"}
                               alt={recipe.title}
                             />
                             <div className="bookmark-badge">
@@ -404,15 +405,24 @@ function Home() {
                 >
                   <div className="suggestion-image">
                     <img
-                      src={recipe.imageUrl || "/placeholder-recipe.jpg"}
+                      src={convertMediaUrl(recipe.imageUrl) || "/placeholder-recipe.jpg"}
                       alt={recipe.title}
                     />
+
                     <button
-                      className={`heart-btn ${bookmarkedRecipes.has(recipeId) ? 'bookmarked' : ''}`}
+                      className={`heart-btn ${bookmarkedRecipes.has(recipeId) ? "bookmarked" : ""}`}
                       onClick={(e) => handleBookmark(e, recipeId)}
                       disabled={bookmarking[recipeId]}
-                      aria-label={bookmarkedRecipes.has(recipeId) ? "Remove bookmark" : "Add bookmark"}
-                      title={bookmarkedRecipes.has(recipeId) ? "Remove from favorites" : "Add to favorites"}
+                      aria-label={
+                        bookmarkedRecipes.has(recipeId)
+                          ? "Remove bookmark"
+                          : "Add bookmark"
+                      }
+                      title={
+                        bookmarkedRecipes.has(recipeId)
+                          ? "Remove from favorites"
+                          : "Add to favorites"
+                      }
                     >
                       <Heart
                         size={22}
@@ -422,6 +432,7 @@ function Home() {
                       />
                     </button>
                   </div>
+
                   <div className="suggestion-content">
                     <h3>{recipe.title}</h3>
                     <div className="suggestion-meta">

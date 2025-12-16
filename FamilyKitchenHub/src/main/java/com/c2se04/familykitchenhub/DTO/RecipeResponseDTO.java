@@ -2,6 +2,7 @@ package com.c2se04.familykitchenhub.DTO;
 
 import com.c2se04.familykitchenhub.enums.DifficultyLevel;
 import com.c2se04.familykitchenhub.enums.MealType;
+import java.util.List;
 import java.util.Set;
 
 public class RecipeResponseDTO {
@@ -13,6 +14,7 @@ public class RecipeResponseDTO {
     private Integer servings;
     private Integer totalCalories;
     private String imageUrl;
+    private List<String> imageUrls; // Multiple images
     private DifficultyLevel difficultyLevel;
     private MealType mealType;
     private Set<RecipeIngredientResponseDTO> ingredients;
@@ -106,5 +108,13 @@ public class RecipeResponseDTO {
 
     public void setIngredients(Set<RecipeIngredientResponseDTO> ingredients) {
         this.ingredients = ingredients;
+    }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
 }

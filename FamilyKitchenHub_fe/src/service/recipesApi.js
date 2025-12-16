@@ -88,16 +88,39 @@ export const createRecipeComment = async (recipeId, payload) => {
 
 // POST /api/media – upload ảnh/video, backend trả về { url, type, id? }
 export const uploadCommentMedia = async (file) => {
+  if (!file) {
+    throw new Error("File không hợp lệ");
+  }
+
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await axios.post("/media", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  try {
+    const res = await axios.post("/media", formData, {
+      headers: {
+        // Không set Content-Type để browser tự động set với boundary
+        // Nếu set thủ công sẽ thiếu boundary và gây lỗi
+      },
+      // Thêm timeout để tránh chờ quá lâu
+      timeout: 30000, // 30 giây
+    });
 
-  return res.data;
+    return res.data;
+  } catch (error) {
+    // Log chi tiết lỗi để debug
+    console.error("Upload media error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+    
+    // Re-throw để component có thể xử lý
+    throw error;
+  }
 };
 
 // ============================
@@ -115,6 +138,26 @@ export const getPostsByEngagement = async ({ page = 1 } = {}) => {
   return res.data;
 };
 
+// ============================
+// Cook Recipe - Trừ nguyên liệu từ tủ lạnh
+// ============================
+
+// POST /api/recipes/{id}/cook?userId={userId} (optional)
+// Nấu/đặt recipe và trừ nguyên liệu từ tủ lạnh ảo
+// userId là optional - nếu có authentication token thì userId sẽ tự động lấy từ token
+export const cookRecipe = async (recipeId, userId = null) => {
+  const config = {};
+  
+  // Chỉ thêm userId vào params nếu được cung cấp
+  // Nếu không có userId, backend sẽ tự động lấy từ authentication token
+  if (userId) {
+    config.params = { userId };
+  }
+  
+  const res = await axios.post(`/recipes/${recipeId}/cook`, null, config);
+  return res.data;
+};
+
 export default {
   getRecipeById,
   getSimilarRecipes,
@@ -127,6 +170,7 @@ export default {
   createRecipeComment,
   uploadCommentMedia,
   getPostsByEngagement,
+  cookRecipe,
 };
 
 

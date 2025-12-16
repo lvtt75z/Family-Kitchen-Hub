@@ -24,9 +24,17 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
 
     /**
      * Tìm kiếm một mục tồn kho cụ thể của một người dùng dựa trên Ingredient ID.
+     * Lưu ý: Có thể có nhiều InventoryItem cùng một ingredient (mua nhiều lần).
      */
     @EntityGraph(attributePaths = { "ingredient" })
     Optional<InventoryItem> findByUserIdAndIngredientId(Long userId, Long ingredientId);
+
+    /**
+     * Tìm tất cả InventoryItem của một người dùng với một Ingredient ID cụ thể.
+     * Sắp xếp theo expiration date (sắp hết hạn trước) để ưu tiên sử dụng.
+     */
+    @EntityGraph(attributePaths = { "ingredient" })
+    List<InventoryItem> findAllByUserIdAndIngredientIdOrderByExpirationDateAsc(Long userId, Long ingredientId);
 
     @Override
     @EntityGraph(attributePaths = { "ingredient" })

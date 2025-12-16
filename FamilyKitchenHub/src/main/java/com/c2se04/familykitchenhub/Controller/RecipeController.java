@@ -9,14 +9,26 @@ import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
 import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Recipe;
 import com.c2se04.familykitchenhub.Service.CategoryService;
+import com.c2se04.familykitchenhub.Service.MediaStorageService;
 import com.c2se04.familykitchenhub.Service.RecipeRecommendationService;
 import com.c2se04.familykitchenhub.Service.RecipeService;
+import com.c2se04.familykitchenhub.Service.InventoryItemService;
+import com.c2se04.familykitchenhub.DTO.Response.MediaUploadResponseDTO;
+import com.c2se04.familykitchenhub.DTO.Response.CookRecipeResponseDTO;
+import com.c2se04.familykitchenhub.model.RecipeImage;
+import com.c2se04.familykitchenhub.enums.MediaType;
+import com.c2se04.familykitchenhub.Exception.BadRequestException;
+import com.c2se04.familykitchenhub.Entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -30,6 +42,12 @@ public class RecipeController {
 
     @Autowired
     private RecipeRecommendationService recommendationService;
+
+    @Autowired
+    private MediaStorageService mediaStorageService;
+
+    @Autowired
+    private InventoryItemService inventoryItemService;
 
     @Autowired
     public RecipeController(RecipeService recipeService, RecipeMapper recipeMapper) {
@@ -105,6 +123,74 @@ public class RecipeController {
         return ResponseEntity.ok(responseDTO); // 200 OK (Exception được xử lý tự động)
     }
 
+    // PATCH /api/recipes/{id} - PARTIAL UPDATE (chỉ update các field được gửi)
+    @PatchMapping("/{id}")
+    public ResponseEntity<RecipeResponseDTO> partialUpdateRecipe(@PathVariable Long id,
+            @RequestBody RecipeRequestDTO recipeDTO) {
+        Recipe updateDetails = recipeMapper.toEntity(recipeDTO);
+        Recipe updatedRecipe = recipeService.updateRecipe(id, updateDetails);
+        RecipeResponseDTO responseDTO = recipeMapper.toResponseDTO(updatedRecipe);
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    // POST /api/recipes/{id}/cook - NẤU/ĐẶT RECIPE (trừ nguyên liệu từ tủ lạnh ảo)
+    @PostMapping("/{id}/cook")
+    public ResponseEntity<CookRecipeResponseDTO> cookRecipe(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long userId) {
+        try {
+            // Lấy userId từ authentication context nếu có, nếu không thì từ query parameter
+            Long finalUserId = userId;
+            if (finalUserId == null) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.getPrincipal() instanceof User) {
+                    User user = (User) authentication.getPrincipal();
+                    finalUserId = user.getId();
+                } else {
+                    throw new BadRequestException("userId là bắt buộc. Vui lòng cung cấp userId trong query parameter hoặc đăng nhập để sử dụng userId từ authentication.");
+                }
+            }
+
+            // Thực hiện trừ nguyên liệu và lấy thông tin chi tiết
+            InventoryItemService.DeductResult result = inventoryItemService.deductIngredientsForRecipeWithDetails(finalUserId, id);
+
+            // Chuyển đổi sang DTO
+            List<CookRecipeResponseDTO.DeductedIngredientDTO> deductedDTOs = result.getDeductedIngredients().stream()
+                    .map(info -> new CookRecipeResponseDTO.DeductedIngredientDTO(
+                            info.getIngredientId(),
+                            info.getIngredientName(),
+                            info.getDeductedQuantity(),
+                            info.getRemainingQuantity(),
+                            info.getUnit(),
+                            info.isRemovedFromInventory()
+                    ))
+                    .collect(Collectors.toList());
+
+            CookRecipeResponseDTO response = new CookRecipeResponseDTO(
+                    "Đã nấu món ăn thành công! Nguyên liệu đã được trừ khỏi tủ lạnh ảo.",
+                    result.getRecipeId(),
+                    result.getRecipeTitle(),
+                    deductedDTOs
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (com.c2se04.familykitchenhub.Exception.ResourceNotFoundException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage == null || errorMessage.trim().isEmpty()) {
+                errorMessage = "Đã xảy ra lỗi khi thực hiện nấu món ăn: " + e.getClass().getSimpleName();
+            }
+            throw new BadRequestException(errorMessage);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage == null || errorMessage.trim().isEmpty()) {
+                errorMessage = "Đã xảy ra lỗi không xác định khi thực hiện nấu món ăn";
+            }
+            throw new BadRequestException(errorMessage);
+        }
+    }
+
     // DELETE /api/recipes/{id} - DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
@@ -175,7 +261,7 @@ public class RecipeController {
      * - Shared Ingredients: +2 points each
      * - Similar Cooking Time (≤15 min): +1 point
      *
-     * MATCHES YOUR DOCUMENT ✅
+     * MATCHES YOUR DOCUMENT 
      */
     @GetMapping("/{id}/similar")
     public ResponseEntity<List<SimilarRecipeDTO>> getSimilarRecipes(
@@ -183,5 +269,135 @@ public class RecipeController {
             @RequestParam(required = false, defaultValue = "10") Integer limit) {
         List<SimilarRecipeDTO> similar = recommendationService.findSimilarRecipes(id, limit);
         return ResponseEntity.ok(similar);
+    }
+
+    // ========== RECIPE IMAGES ENDPOINTS ==========
+
+    /**
+     * POST /api/recipes/{id}/images
+     * Upload multiple images for a recipe from device files
+     */
+    @PostMapping(value = "/{id}/images", consumes = "multipart/form-data")
+    public ResponseEntity<List<MediaUploadResponseDTO>> uploadRecipeImages(
+            @PathVariable Long id,
+            @RequestParam("files") List<MultipartFile> files) {
+        
+        // Validate recipe exists
+        recipeService.getRecipeById(id)
+                .orElseThrow(() -> new com.c2se04.familykitchenhub.Exception.ResourceNotFoundException("Recipe", "id", id));
+
+        // Validate files
+        if (files == null || files.isEmpty()) {
+            throw new com.c2se04.familykitchenhub.Exception.BadRequestException("Không có file nào được upload");
+        }
+
+        // Filter out empty files
+        List<MultipartFile> validFiles = files.stream()
+                .filter(file -> file != null && !file.isEmpty())
+                .collect(Collectors.toList());
+
+        if (validFiles.isEmpty()) {
+            throw new com.c2se04.familykitchenhub.Exception.BadRequestException("Tất cả các file đều rỗng");
+        }
+
+        // Upload files
+        List<MediaUploadResponseDTO> uploadResults = mediaStorageService.storeMultiple(validFiles, MediaType.IMAGE);
+
+        // Save image URLs to database
+        List<String> imageUrls = uploadResults.stream()
+                .map(MediaUploadResponseDTO::getUrl)
+                .collect(Collectors.toList());
+        
+        List<String> fileNames = uploadResults.stream()
+                .map(MediaUploadResponseDTO::getFileName)
+                .collect(Collectors.toList());
+
+        recipeService.addImagesToRecipe(id, imageUrls, fileNames);
+
+        return new ResponseEntity<>(uploadResults, HttpStatus.CREATED);
+    }
+
+    /**
+     * GET /api/recipes/{id}/images
+     * Get all images for a recipe
+     */
+    @GetMapping("/{id}/images")
+    public ResponseEntity<List<RecipeImageResponseDTO>> getRecipeImages(@PathVariable Long id) {
+        List<RecipeImage> images = recipeService.getRecipeImages(id);
+        List<RecipeImageResponseDTO> responseDTOs = images.stream()
+                .map(img -> {
+                    RecipeImageResponseDTO dto = new RecipeImageResponseDTO();
+                    dto.setId(img.getId());
+                    dto.setImageUrl(img.getImageUrl());
+                    dto.setFileName(img.getFileName());
+                    dto.setDisplayOrder(img.getDisplayOrder());
+                    dto.setCreatedAt(img.getCreatedAt());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    /**
+     * DELETE /api/recipes/{id}/images/{imageId}
+     * Delete a specific image from a recipe
+     */
+    @DeleteMapping("/{id}/images/{imageId}")
+    public ResponseEntity<Void> deleteRecipeImage(
+            @PathVariable Long id,
+            @PathVariable Long imageId) {
+        recipeService.deleteRecipeImage(imageId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * DTO for RecipeImage response
+     */
+    public static class RecipeImageResponseDTO {
+        private Long id;
+        private String imageUrl;
+        private String fileName;
+        private Integer displayOrder;
+        private java.time.LocalDateTime createdAt;
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getImageUrl() {
+            return imageUrl;
+        }
+
+        public void setImageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
+        }
+
+        public Integer getDisplayOrder() {
+            return displayOrder;
+        }
+
+        public void setDisplayOrder(Integer displayOrder) {
+            this.displayOrder = displayOrder;
+        }
+
+        public java.time.LocalDateTime getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(java.time.LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+        }
     }
 }

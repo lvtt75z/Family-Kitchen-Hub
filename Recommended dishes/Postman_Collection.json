@@ -1,0 +1,169 @@
+{
+	"info": {
+		"_postman_id": "recipe-recommendation-api",
+		"name": "Recipe Recommendation API",
+		"description": "API để đề xuất món ăn dựa trên tồn kho, dị ứng và sở thích gia đình",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Recommend Recipes",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"current_date\": \"2024-12-20\",\n    \"inventory_items\": [\n        {\n            \"ingredient_id\": 1,\n            \"quantity\": 500,\n            \"unit\": \"g\",\n            \"expiration_date\": \"2024-12-22\"\n        },\n        {\n            \"ingredient_id\": 2,\n            \"quantity\": 1000,\n            \"unit\": \"g\",\n            \"expiration_date\": \"2025-01-20\"\n        },\n        {\n            \"ingredient_id\": 3,\n            \"quantity\": 300,\n            \"unit\": \"g\",\n            \"expiration_date\": \"2024-12-21\"\n        },\n        {\n            \"ingredient_id\": 4,\n            \"quantity\": 200,\n            \"unit\": \"g\",\n            \"expiration_date\": \"2024-12-25\"\n        }\n    ],\n    \"family_profiles\": [\n        {\n            \"allergies\": [5],\n            \"health_goals\": [\"Low-Carb\", \"High-Protein\"]\n        },\n        {\n            \"allergies\": [],\n            \"health_goals\": [\"Low-Carb\"]\n        }\n    ],\n    \"all_recipes\": [\n        {\n            \"id\": 101,\n            \"name\": \"Chicken Fried Rice\",\n            \"ingredients\": [\n                {\"ingredient_id\": 1, \"is_main_ingredient\": true},\n                {\"ingredient_id\": 2, \"is_main_ingredient\": false},\n                {\"ingredient_id\": 3, \"is_main_ingredient\": false},\n                {\"ingredient_id\": 4, \"is_main_ingredient\": false}\n            ],\n            \"categories\": [\"Low-Carb\", \"High-Protein\"]\n        },\n        {\n            \"id\": 102,\n            \"name\": \"Peanut Butter Sandwich\",\n            \"ingredients\": [\n                {\"ingredient_id\": 5, \"is_main_ingredient\": true},\n                {\"ingredient_id\": 6, \"is_main_ingredient\": false}\n            ],\n            \"categories\": [\"High-Protein\"]\n        },\n        {\n            \"id\": 103,\n            \"name\": \"Tomato Salad\",\n            \"ingredients\": [\n                {\"ingredient_id\": 3, \"is_main_ingredient\": true},\n                {\"ingredient_id\": 4, \"is_main_ingredient\": false}\n            ],\n            \"categories\": [\"Low-Carb\"]\n        },\n        {\n            \"id\": 104,\n            \"name\": \"Beef Steak\",\n            \"ingredients\": [\n                {\"ingredient_id\": 7, \"is_main_ingredient\": true}\n            ],\n            \"categories\": [\"High-Protein\"]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5001/recommend",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5001",
+					"path": [
+						"recommend"
+					]
+				},
+				"description": "Gửi yêu cầu đề xuất món ăn dựa trên:\n- Tồn kho hiện có\n- Dị ứng của gia đình\n- Sở thích và mục tiêu sức khỏe\n- Ngày hiện tại để tính hạn sử dụng"
+			},
+			"response": [],
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has success status\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql(\"success\");",
+							"});",
+							"",
+							"pm.test(\"Response contains recommendations\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property(\"recommendations\");",
+							"    pm.expect(jsonData.recommendations).to.be.an(\"array\");",
+							"});",
+							"",
+							"pm.test(\"Recommendations are sorted by score (descending)\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    var recommendations = jsonData.recommendations;",
+							"    ",
+							"    if (recommendations.length > 1) {",
+							"        for (var i = 0; i < recommendations.length - 1; i++) {",
+							"            pm.expect(recommendations[i].score).to.be.at.least(recommendations[i+1].score);",
+							"        }",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"No recipes with allergies are recommended\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    var recommendations = jsonData.recommendations;",
+							"    ",
+							"    // Recipe ID 102 contains peanuts (allergy) - should be filtered out",
+							"    var filteredRecipe = recommendations.find(r => r.recipe_id === 102);",
+							"    pm.expect(filteredRecipe).to.be.undefined;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			]
+		},
+		{
+			"name": "Recommend Recipes - Empty Inventory",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"current_date\": \"2024-12-20\",\n    \"inventory_items\": [],\n    \"family_profiles\": [\n        {\n            \"allergies\": [],\n            \"health_goals\": [\"Low-Carb\"]\n        }\n    ],\n    \"all_recipes\": [\n        {\n            \"id\": 101,\n            \"name\": \"Chicken Fried Rice\",\n            \"ingredients\": [\n                {\"ingredient_id\": 1, \"is_main_ingredient\": true}\n            ],\n            \"categories\": [\"Low-Carb\"]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5001/recommend",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5001",
+					"path": [
+						"recommend"
+					]
+				},
+				"description": "Test với tồn kho rỗng - các món thiếu nguyên liệu chính sẽ bị loại"
+			},
+			"response": []
+		},
+		{
+			"name": "Recommend Recipes - Expiring Items Priority",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"current_date\": \"2024-12-20\",\n    \"inventory_items\": [\n        {\n            \"ingredient_id\": 1,\n            \"quantity\": 500,\n            \"unit\": \"g\",\n            \"expiration_date\": \"2024-12-21\"\n        },\n        {\n            \"ingredient_id\": 2,\n            \"quantity\": 1000,\n            \"unit\": \"g\",\n            \"expiration_date\": \"2025-01-20\"\n        }\n    ],\n    \"family_profiles\": [\n        {\n            \"allergies\": [],\n            \"health_goals\": [\"Low-Carb\"]\n        }\n    ],\n    \"all_recipes\": [\n        {\n            \"id\": 101,\n            \"name\": \"Chicken Recipe\",\n            \"ingredients\": [\n                {\"ingredient_id\": 1, \"is_main_ingredient\": true}\n            ],\n            \"categories\": [\"Low-Carb\"]\n        },\n        {\n            \"id\": 102,\n            \"name\": \"Rice Recipe\",\n            \"ingredients\": [\n                {\"ingredient_id\": 2, \"is_main_ingredient\": true}\n            ],\n            \"categories\": [\"Low-Carb\"]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5001/recommend",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5001",
+					"path": [
+						"recommend"
+					]
+				},
+				"description": "Test ưu tiên món ăn sử dụng nguyên liệu sắp hết hạn (< 3 ngày)"
+			},
+			"response": []
+		}
+	]
+}
+

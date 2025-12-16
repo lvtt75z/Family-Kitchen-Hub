@@ -54,5 +54,17 @@ public class MediaStorageService {
         String url = publicBaseUrl + safeName;
         return new MediaUploadResponseDTO(safeName, url, file.getSize(), resolvedType);
     }
+
+    /**
+     * Upload multiple files
+     */
+    public java.util.List<MediaUploadResponseDTO> storeMultiple(java.util.List<MultipartFile> files, MediaType type) {
+        if (files == null || files.isEmpty()) {
+            throw new BadRequestException("Danh sách file upload không hợp lệ");
+        }
+        return files.stream()
+                .map(file -> store(file, type))
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
 

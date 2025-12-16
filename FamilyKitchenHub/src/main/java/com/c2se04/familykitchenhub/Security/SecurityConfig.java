@@ -66,8 +66,14 @@ public class SecurityConfig {
                                                                                            // recipe
                                                                 "/api/recipes/comments/**" // update status, etc.
                                                 ).permitAll()
+                                                // Make recipe cook endpoint public (or authenticated if needed)
+                                                .requestMatchers("/api/recipes/*/cook").permitAll()
                                                 // Make ingredient APIs public
                                                 .requestMatchers("/api/ingredients/**").permitAll()
+                                                // Make media files public (images, videos, etc.)
+                                                .requestMatchers("/media/**").permitAll()
+                                                // Make media upload endpoint public
+                                                .requestMatchers("/api/media/**").permitAll()
                                                 // Other endpoints require authentication
                                                 .requestMatchers("/error").permitAll()
                                                 .anyRequest().authenticated());
