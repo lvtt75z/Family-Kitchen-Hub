@@ -15,6 +15,7 @@ import {
   Pen,
   ChevronDown,
   ChefHat,
+  CookingPot
 } from "lucide-react";
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
@@ -987,7 +988,7 @@ export default function RecipeDashboard() {
                 </div>
                 <p className="card-desc">{r.instructions}</p>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                <div style={{ gap: "8px", marginTop: "12px" }}>
                   <button
                     className="btn-add"
                     onClick={(e) => {
@@ -996,7 +997,7 @@ export default function RecipeDashboard() {
                     }}
                     style={{ flex: 1 }}
                   >
-                    🍳 Nấu
+                    <CookingPot size={19} className="cooking-icon" /> Nấu
                   </button>
                   {/* <button
                     className="btn-add"

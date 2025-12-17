@@ -16,7 +16,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Recipes from "./components/dashboard/Recipes";
 import Fridge from "./components/dashboard/Fridge";
 import DetailRecipes from "./components/dashboard/DetailRecipes";
-import IngredientListScreen from "./components/IngredientListScreen";
+import IngredientListScreen from "./components/HomePageRecommend";
 import EditProfile from "./components/EditProfile";
 import FamilyProfiles from "./components/dashboard/FamilyProfile";
 import MealPlanner from "./components/dashboard/MealPlaner";

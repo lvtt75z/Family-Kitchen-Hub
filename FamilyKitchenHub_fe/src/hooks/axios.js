@@ -1,6 +1,8 @@
 // src/axios.js
 import axios from "axios";
 
+import { isValidJWT } from "../utils/security";
+
 const instance = axios.create({
   baseURL: "http://localhost:8080/api",
   headers: {
@@ -13,6 +15,12 @@ instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
+      if (!isValidJWT(token)) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        return Promise.reject(new Error("Invalid token format"));
+      }
       config.headers.Authorization = `Bearer ${token}`;
     }
     

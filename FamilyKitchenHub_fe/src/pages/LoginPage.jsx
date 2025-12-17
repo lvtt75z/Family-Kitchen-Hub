@@ -31,7 +31,13 @@ export default function LoginPage() {
         localStorage.setItem("token", res.data.token);
       }
       if (res.data.user) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        const userMinimal = {
+          id: res.data.user.id,
+          username: res.data.user.username,
+          role: res.data.user.role,
+          fullName: res.data.user.fullName
+        };
+        localStorage.setItem("user", JSON.stringify(userMinimal));
       }
 
       // Giữ animation 3s rồi hiển toast và reload trang

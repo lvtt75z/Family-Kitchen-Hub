@@ -402,6 +402,7 @@ function Home() {
                   key={recipeId || `recipe-${index}`}
                   className="suggestion-card"
                   onClick={() => recipeId && navigate(`/manage/recipesdetails/${recipeId}`)}
+                  style={{ animationDelay: `${index * 0.3}s` }}
                 >
                   <div className="suggestion-image">
                     <img
