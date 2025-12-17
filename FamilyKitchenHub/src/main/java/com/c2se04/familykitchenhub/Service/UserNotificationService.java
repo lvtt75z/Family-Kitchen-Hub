@@ -40,8 +40,18 @@ public class UserNotificationService {
 
     @Transactional
     public UserNotificationResponseDTO enqueueNotification(Long userId, NotificationRequestDTO request) {
-        if (request == null || request.getInventoryItemId() == null) {
-            throw new BadRequestException("Thiếu inventoryItemId cho thông báo hết hạn");
+        // Debug logging
+        if (request == null) {
+            throw new BadRequestException("Request body không được để trống");
+        }
+        
+        // Log để debug
+        System.out.println("DEBUG: Received notification request - inventoryItemId: " + request.getInventoryItemId() + 
+                          ", type: " + request.getType() + ", message: " + request.getMessage());
+        
+        if (request.getInventoryItemId() == null) {
+            throw new BadRequestException("Thiếu inventoryItemId cho thông báo hết hạn. " +
+                                        "Vui lòng gửi 'inventoryItemId' hoặc 'inventory_item_id' trong request body.");
         }
 
         User user = userRepository.findById(userId)

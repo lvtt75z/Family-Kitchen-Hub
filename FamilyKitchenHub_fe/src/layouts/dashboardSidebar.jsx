@@ -90,7 +90,7 @@ export default function Sidebar() {
       try {
         setIsLoggedIn(true);
         setUser(JSON.parse(userData)); // chuyển chuỗi JSON thành object
-      } catch (error) {
+      } catch {
         console.error("Invalid user data in localStorage");
         setIsLoggedIn(false);
         setUser(null);
@@ -135,6 +135,17 @@ export default function Sidebar() {
         const res = await axios.get(`/users/${user.id}/notifications`);
         const data = res.data || [];
 
+        console.log("📬 Fetched notifications from backend:", {
+          total: data.length,
+          notifications: data.map(n => ({
+            id: n.id,
+            message: n.message,
+            type: n.type,
+            inventoryItemId: n.inventoryItemId,
+            createdAt: n.createdAt
+          }))
+        });
+
         // Filter out locally dismissed notifications (optional, if we want to hide them per session)
         // If the backend doesn't support "mark as read/delete", we might just show all.
         // But to keep the "Delete Ingredient" flow smooth, we hide the ones we just "acted" on.
@@ -143,9 +154,15 @@ export default function Sidebar() {
         // Sort by createdAt desc (newest first)
         visible.sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)));
 
+        console.log("📋 Visible notifications after filtering:", visible.length);
         setNotifications(visible);
       } catch (error) {
-        console.error("Error fetching notifications:", error);
+        console.error("❌ Error fetching notifications:", error);
+        console.error("Error details:", {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
       }
     };
 
@@ -153,7 +170,21 @@ export default function Sidebar() {
 
     // Refresh every 5 minutes
     const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+
+    // Listen for custom event to refresh notifications immediately
+    const handleRefreshNotifications = () => {
+      console.log("🔄 Refreshing notifications due to custom event - sẽ hiển thị trong notification-wrapper");
+      // Đợi một chút để đảm bảo backend đã commit notification vào database
+      setTimeout(() => {
+        fetchNotifications();
+      }, 200);
+    };
+    window.addEventListener('refreshNotifications', handleRefreshNotifications);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refreshNotifications', handleRefreshNotifications);
+    };
   }, [isLoggedIn, user, dismissedIds]);
 
   const handleDeleteIngredient = async (e, notification) => {

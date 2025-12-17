@@ -25,6 +25,13 @@ public class UserNotificationController {
     public ResponseEntity<UserNotificationResponseDTO> enqueueNotification(
             @PathVariable Long userId,
             @RequestBody NotificationRequestDTO request) {
+        // Debug logging
+        System.out.println("DEBUG Controller: userId=" + userId + 
+                          ", request=" + (request != null ? 
+                              ("inventoryItemId=" + request.getInventoryItemId() + 
+                               ", type=" + request.getType() + 
+                               ", message=" + request.getMessage()) : "null"));
+        
         return new ResponseEntity<>(notificationService.enqueueNotification(userId, request), HttpStatus.CREATED);
     }
 
