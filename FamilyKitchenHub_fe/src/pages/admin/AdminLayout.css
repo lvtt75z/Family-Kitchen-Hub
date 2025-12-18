@@ -103,6 +103,7 @@
   margin-top: auto;
 }
 
+
 .logout-btn {
   width: 100%;
   padding: 0.75rem;
@@ -140,6 +141,126 @@
   margin: 0;
   font-size: 1.8rem;
   color: #2c3e50;
+}
+
+/* Header User Menu - Top Right */
+.header-user-menu {
+  position: relative;
+}
+
+.header-user-trigger {
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2c3e50;
+}
+
+.header-user-trigger:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.header-user-trigger .user-icon {
+  font-size: 1.2rem;
+}
+
+.user-info-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-label-text {
+  font-weight: 600;
+  color: #495057;
+}
+
+.user-name-text {
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.header-user-trigger .dropdown-arrow {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-left: 0.25rem;
+}
+
+.header-user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: slideDown 0.2s ease;
+  z-index: 1000;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-info-item {
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dropdown-username {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.dropdown-role-badge {
+  padding: 0.25rem 0.5rem;
+  background: #3498db;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+.dropdown-logout-btn {
+  width: 100%;
+  padding: 0.5rem;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.dropdown-logout-btn:hover {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: rgba(231, 76, 60, 0.5);
 }
 
 .user-info {

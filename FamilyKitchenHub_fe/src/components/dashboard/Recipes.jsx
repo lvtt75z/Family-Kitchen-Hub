@@ -10,13 +10,15 @@ import {
   Search,
   ChevronDown,
   ChefHat,
-  CookingPot
+  CookingPot,
+  Bell
 } from "lucide-react";
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { convertMediaUrl } from "../../utils/mediaUtils";
 import { cookRecipe, getCookableRecipes, getBookmarkedRecipes, addRecipeBookmark, removeRecipeBookmark } from "../../service/recipesApi";
+import { createReminder, getUserReminders, deleteReminder } from "../../service/reminderApi";
 
 export default function RecipeDashboard() {
   const navigate = useNavigate();
@@ -60,11 +62,24 @@ export default function RecipeDashboard() {
   // Recipe filtering states
   const [filterCookable, setFilterCookable] = useState(false);
   const [filterBookmarked, setFilterBookmarked] = useState(false);
+  const [filterReminders, setFilterReminders] = useState(false);
   const [loadingFilters, setLoadingFilters] = useState(false);
 
   // Bookmark states
   const [bookmarkedRecipes, setBookmarkedRecipes] = useState(new Set());
   const [bookmarking, setBookmarking] = useState({});
+
+  // Reminder states
+  const [recipesWithReminders, setRecipesWithReminders] = useState(new Map()); // Map of recipeId -> [reminders]
+  const [reminderModal, setReminderModal] = useState({
+    isOpen: false,
+    recipeId: null,
+    recipeTitle: "",
+  });
+  const [reminderForm, setReminderForm] = useState({
+    reminderAt: "",
+    note: "",
+  });
 
   // Ingredient search states for each ingredient row
   const [ingredientSearches, setIngredientSearches] = useState({}); // { index: keyword }
@@ -233,62 +248,69 @@ export default function RecipeDashboard() {
 
       setLoadingFilters(true);
 
+      // Helper function to apply filter intersection
+      const applyFilters = async (currentFilters) => {
+        let result = recipes;
+
+        if (currentFilters.cookable) {
+          const cookableRecipes = await getCookableRecipes(userId);
+          result = cookableRecipes;
+        }
+
+        if (currentFilters.bookmarked) {
+          const bookmarkedRecipes = await getBookmarkedRecipes(userId);
+          const bookmarkedIds = new Set(bookmarkedRecipes.map(r => r.id));
+
+          if (currentFilters.cookable) {
+            result = result.filter(r => bookmarkedIds.has(r.id));
+          } else {
+            result = bookmarkedRecipes;
+          }
+        }
+
+        if (currentFilters.reminders) {
+          const reminderRecipeIds = Array.from(recipesWithReminders.keys());
+
+          if (currentFilters.cookable || currentFilters.bookmarked) {
+            result = result.filter(r => reminderRecipeIds.includes(r.id));
+          } else {
+            result = recipes.filter(r => reminderRecipeIds.includes(r.id));
+          }
+        }
+
+        return result;
+      };
+
       if (filterType === "cookable") {
         const newValue = !filterCookable;
         setFilterCookable(newValue);
 
-        // If turning on cookable filter
-        if (newValue) {
-          console.log("Fetching cookable recipes for userId:", userId);
-          const cookableRecipes = await getCookableRecipes(userId);
-          console.log("Cookable recipes received:", cookableRecipes);
-          console.log("Number of cookable recipes:", cookableRecipes.length);
-
-          // If bookmarked filter is also active, get intersection
-          if (filterBookmarked) {
-            const bookmarkedRecipes = await getBookmarkedRecipes(userId);
-            const bookmarkedIds = new Set(bookmarkedRecipes.map(r => r.id));
-            const filtered = cookableRecipes.filter(r => bookmarkedIds.has(r.id));
-            console.log("Filtered cookable + bookmarked recipes:", filtered.length);
-            setSearchResults(filtered);
-          } else {
-            setSearchResults(cookableRecipes);
-          }
-        } else {
-          // Turning off cookable filter
-          if (filterBookmarked) {
-            const bookmarkedRecipes = await getBookmarkedRecipes(userId);
-            setSearchResults(bookmarkedRecipes);
-          } else {
-            setSearchResults(recipes); // Show all recipes
-          }
-        }
+        const filtered = await applyFilters({
+          cookable: newValue,
+          bookmarked: filterBookmarked,
+          reminders: filterReminders,
+        });
+        setSearchResults(filtered);
       } else if (filterType === "bookmarked") {
         const newValue = !filterBookmarked;
         setFilterBookmarked(newValue);
 
-        // If turning on bookmarked filter
-        if (newValue) {
-          const bookmarkedRecipes = await getBookmarkedRecipes(userId);
+        const filtered = await applyFilters({
+          cookable: filterCookable,
+          bookmarked: newValue,
+          reminders: filterReminders,
+        });
+        setSearchResults(filtered);
+      } else if (filterType === "reminders") {
+        const newValue = !filterReminders;
+        setFilterReminders(newValue);
 
-          // If cookable filter is also active, get intersection
-          if (filterCookable) {
-            const cookableRecipes = await getCookableRecipes(userId);
-            const cookableIds = new Set(cookableRecipes.map(r => r.id));
-            const filtered = bookmarkedRecipes.filter(r => cookableIds.has(r.id));
-            setSearchResults(filtered);
-          } else {
-            setSearchResults(bookmarkedRecipes);
-          }
-        } else {
-          // Turning off bookmarked filter
-          if (filterCookable) {
-            const cookableRecipes = await getCookableRecipes(userId);
-            setSearchResults(cookableRecipes);
-          } else {
-            setSearchResults(recipes); // Show all recipes
-          }
-        }
+        const filtered = await applyFilters({
+          cookable: filterCookable,
+          bookmarked: filterBookmarked,
+          reminders: newValue,
+        });
+        setSearchResults(filtered);
       }
 
       // Clear search and category when using filters
@@ -305,6 +327,7 @@ export default function RecipeDashboard() {
   const clearAllFilters = () => {
     setFilterCookable(false);
     setFilterBookmarked(false);
+    setFilterReminders(false);
     setSearchResults(recipes);
     setSearch("");
     setSelectedCategory(null);
@@ -348,7 +371,7 @@ export default function RecipeDashboard() {
     }
   };
 
-  // Fetch bookmarked recipes on load
+  // Fetch bookmarked recipes and reminders on load
   useEffect(() => {
     const fetchBookmarkedStatus = async () => {
       try {
@@ -366,8 +389,180 @@ export default function RecipeDashboard() {
       }
     };
 
+    const fetchReminders = async () => {
+      try {
+        const userDataString = localStorage.getItem("user");
+        const userData = userDataString ? JSON.parse(userDataString) : null;
+        const userId = userData?.user?.id || userData?.id;
+
+        if (userId) {
+          const reminders = await getUserReminders(userId, "upcoming");
+          // Group reminders by recipeId
+          const reminderMap = new Map();
+          reminders.forEach(reminder => {
+            if (!reminderMap.has(reminder.recipeId)) {
+              reminderMap.set(reminder.recipeId, []);
+            }
+            reminderMap.get(reminder.recipeId).push(reminder);
+          });
+          setRecipesWithReminders(reminderMap);
+        }
+      } catch (error) {
+        console.error("Error fetching reminders:", error);
+      }
+    };
+
     fetchBookmarkedStatus();
+    fetchReminders();
   }, []);
+
+  // =========================
+  //   REMINDER HANDLING
+  // =========================
+  const handleReminderClick = async (e, recipeId, recipeTitle) => {
+    e.stopPropagation();
+
+    const userDataString = localStorage.getItem("user");
+    const userData = userDataString ? JSON.parse(userDataString) : null;
+    const userId = userData?.user?.id || userData?.id;
+
+    if (!userId) {
+      toast.error("Vui lòng đăng nhập để đặt nhắc nhở", { autoClose: 2000 });
+      return;
+    }
+
+    // Check if reminder exists for this recipe
+    const hasReminder = recipesWithReminders.has(recipeId);
+
+    if (hasReminder) {
+      // Cancel reminder with confirmation
+      const confirmed = window.confirm(`Bạn có muốn hủy nhắc nhở cho món "${recipeTitle}"?`);
+      if (confirmed) {
+        await handleCancelReminder(recipeId, userId);
+      }
+    } else {
+      // Check if recipe is cookable (has enough ingredients) before allowing reminder
+      try {
+        const cookableRecipes = await getCookableRecipes(userId);
+        const isCookable = cookableRecipes.some(r => r.id === recipeId);
+
+        if (!isCookable) {
+          toast.error(
+            "Bạn không thể đặt nhắc nhở cho món này vì không đủ nguyên liệu trong tủ lạnh. Vui lòng thêm nguyên liệu trước khi đặt nhắc nhở.",
+            { autoClose: 4000 }
+          );
+          return;
+        }
+
+        // Open modal to set reminder
+        setReminderModal({
+          isOpen: true,
+          recipeId,
+          recipeTitle,
+        });
+        // Set default reminder time to tomorrow at 9 AM
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(9, 0, 0, 0);
+        const defaultTime = tomorrow.toISOString().slice(0, 16);
+        setReminderForm({
+          reminderAt: defaultTime,
+          note: "",
+        });
+      } catch (error) {
+        console.error("Error checking if recipe is cookable:", error);
+        toast.error("Không thể kiểm tra nguyên liệu. Vui lòng thử lại.", { autoClose: 2000 });
+      }
+    }
+  };
+
+  const handleCancelReminder = async (recipeId, userId) => {
+    try {
+      const remindersForRecipe = recipesWithReminders.get(recipeId) || [];
+
+      if (remindersForRecipe.length === 0) {
+        toast.error("Không tìm thấy nhắc nhở để hủy", { autoClose: 2000 });
+        return;
+      }
+
+      // Cancel all reminders for this recipe
+      for (const reminder of remindersForRecipe) {
+        await deleteReminder(userId, reminder.id);
+      }
+
+      // Update state
+      setRecipesWithReminders(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(recipeId);
+        return newMap;
+      });
+
+      toast.success("Đã hủy nhắc nhở thành công!", { autoClose: 2000 });
+    } catch (error) {
+      console.error("Error canceling reminder:", error);
+      toast.error("Không thể hủy nhắc nhở. Vui lòng thử lại.", { autoClose: 2000 });
+    }
+  };
+
+  const handleReminderSubmit = async (e) => {
+    e.preventDefault();
+
+    const userDataString = localStorage.getItem("user");
+    const userData = userDataString ? JSON.parse(userDataString) : null;
+    const userId = userData?.user?.id || userData?.id;
+
+    if (!userId) {
+      toast.error("Vui lòng đăng nhập để đặt nhắc nhở", { autoClose: 2000 });
+      return;
+    }
+
+    try {
+      const reminderData = {
+        recipeId: reminderModal.recipeId,
+        reminderAt: reminderForm.reminderAt,
+        note: reminderForm.note || null,
+      };
+
+      const createdReminder = await createReminder(userId, reminderData);
+
+      // Update state
+      setRecipesWithReminders(prev => {
+        const newMap = new Map(prev);
+        const existing = newMap.get(reminderModal.recipeId) || [];
+        newMap.set(reminderModal.recipeId, [...existing, createdReminder]);
+        return newMap;
+      });
+
+      toast.success("Đã đặt nhắc nhở thành công!", { autoClose: 2000 });
+
+      // Close modal
+      setReminderModal({
+        isOpen: false,
+        recipeId: null,
+        recipeTitle: "",
+      });
+      setReminderForm({
+        reminderAt: "",
+        note: "",
+      });
+    } catch (error) {
+      console.error("Error creating reminder:", error);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || "Không thể đặt nhắc nhở. Vui lòng thử lại.";
+      toast.error(errorMsg, { autoClose: 3000 });
+    }
+  };
+
+  const closeReminderModal = () => {
+    setReminderModal({
+      isOpen: false,
+      recipeId: null,
+      recipeTitle: "",
+    });
+    setReminderForm({
+      reminderAt: "",
+      note: "",
+    });
+  };
 
   // =========================
   //   MODAL OPEN/CLOSE
@@ -1115,7 +1310,19 @@ export default function RecipeDashboard() {
         >
           <Heart size={16} /> Bookmarked
         </button>
-        {(filterCookable || filterBookmarked) && (
+        <button
+          className={`category-chip ${filterReminders ? 'active' : ''}`}
+          onClick={() => handleFilterToggle("reminders")}
+          disabled={loadingFilters}
+          style={{
+            backgroundColor: filterReminders ? '#f59e0b' : 'transparent',
+            color: filterReminders ? 'white' : '#666',
+            border: filterReminders ? 'none' : '1px solid #ddd',
+          }}
+        >
+          <Bell size={16} /> Reminders
+        </button>
+        {(filterCookable || filterBookmarked || filterReminders) && (
           <button
             className="category-chip"
             onClick={clearAllFilters}
@@ -1179,14 +1386,68 @@ export default function RecipeDashboard() {
                         <Heart size={18} color="gray" />
                       )}
                     </button>
+                    <button
+                      onClick={(e) => handleReminderClick(e, r.id, r.title)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={recipesWithReminders.has(r.id) ? "Hủy nhắc nhở" : "Đặt nhắc nhở"}
+                    >
+                      {recipesWithReminders.has(r.id) ? (
+                        <Bell size={18} fill="#f59e0b" color="#f59e0b" />
+                      ) : (
+                        <Bell size={18} color="gray" />
+                      )}
+                    </button>
                   </div>
                 </div>
                 <div className="card-meta">
                   <span>⏱ {r.cookingTimeMinutes} min</span>
                   {r.servings && <span>{r.servings} servings</span>}
-                  {r.mealType && <span>{r.mealType}</span>}
                 </div>
                 <p className="card-desc">{r.instructions}</p>
+
+                {/* Reminder Information */}
+                {recipesWithReminders.has(r.id) && (
+                  <div style={{
+                    backgroundColor: '#fef3c7',
+                    border: '1px solid #f59e0b',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    marginTop: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '13px',
+                  }}>
+                    <Bell size={16} color="#f59e0b" />
+                    <div style={{ flex: 1 }}>
+                      {recipesWithReminders.get(r.id).map((reminder, idx) => (
+                        <div key={idx} style={{ marginBottom: idx < recipesWithReminders.get(r.id).length - 1 ? '4px' : '0' }}>
+                          <strong style={{ color: '#92400e' }}>
+                            Nhắc nhở: {new Date(reminder.reminderAt).toLocaleString('vi-VN', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </strong>
+                          {reminder.note && (
+                            <div style={{ color: '#78350f', fontSize: '12px', marginTop: '2px' }}>
+                              {reminder.note}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ gap: "8px", marginTop: "12px" }}>
                   <button
@@ -1553,6 +1814,73 @@ export default function RecipeDashboard() {
         </div>
       )
       }
+
+      {/* =============================
+            REMINDER MODAL
+      ============================== */}
+      {reminderModal.isOpen && (
+        <div className={`fh-modal-overlay ${reminderModal.isOpen ? "fh-active" : ""}`}>
+          <div
+            className="fh-modal"
+            style={{
+              maxWidth: "500px",
+              padding: "30px",
+            }}
+          >
+            <div className="fh-modal-header" style={{ marginBottom: "20px" }}>
+              <Bell size={32} color="#f59e0b" style={{ marginBottom: "10px" }} />
+              <h3 className="fh-modal-title">
+                Đặt Nhắc Nhở
+              </h3>
+              <p style={{ fontSize: "14px", color: "#666", marginTop: "8px" }}>
+                {reminderModal.recipeTitle}
+              </p>
+            </div>
+            <form className="fh-modal-form" onSubmit={handleReminderSubmit}>
+              <label className="fh-recipe-label">
+                Thời gian nhắc nhở
+                <input
+                  type="datetime-local"
+                  value={reminderForm.reminderAt}
+                  onChange={(e) => setReminderForm(prev => ({ ...prev, reminderAt: e.target.value }))}
+                  required
+                  className="fh-recipe-input"
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+              </label>
+
+              <label className="fh-recipe-label">
+                Ghi chú (tùy chọn)
+                <textarea
+                  placeholder="Thêm ghi chú cho nhắc nhở..."
+                  value={reminderForm.note}
+                  onChange={(e) => setReminderForm(prev => ({ ...prev, note: e.target.value }))}
+                  className="fh-recipe-textarea"
+                  rows={3}
+                />
+              </label>
+
+              <div className="fh-modal-actions">
+                <button
+                  type="button"
+                  className="fh-recipe-btn fh-ghost"
+                  onClick={closeReminderModal}
+                >
+                  Hủy
+                </button>
+
+                <button
+                  type="submit"
+                  className="fh-recipe-btn fh-primary"
+                  style={{ backgroundColor: "#f59e0b" }}
+                >
+                  Đặt Nhắc Nhở
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div >
   );
 }

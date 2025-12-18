@@ -8,7 +8,7 @@ import {
   BookOpen,
   HeartPulse,
   Apple,
-  ShoppingCart,
+  MessageCircle,
   Sparkles,
   ChevronLeft,
   ChevronRight,
@@ -489,7 +489,7 @@ function Home() {
               <HeartPulse size={24} color="#ef4444" />
             </div>
             <h3>Family Health Profiles</h3>
-            <p>Customized nutrition tracking per family member.</p>
+            <p>Protect family health by avoiding allergy food.</p>
           </div>
 
           <div className="feature-card scroll-reveal" style={{ transitionDelay: '0.5s' }}>
@@ -497,15 +497,15 @@ function Home() {
               <Apple size={24} color="#84cc16" />
             </div>
             <h3>Nutrition Tracking</h3>
-            <p>Stay on top of calories and nutrients.</p>
+            <p>Enough calories with AI recommendations.</p>
           </div>
 
           <div className="feature-card scroll-reveal" style={{ transitionDelay: '0.6s' }}>
             <div className="feature-icon">
-              <ShoppingCart size={24} color="#a855f7" />
+              <MessageCircle size={24} color="#a855f7" />
             </div>
-            <h3>Smart Shopping Lists</h3>
-            <p>Auto-generate shopping lists from meal plans.</p>
+            <h3>Recipe Community</h3>
+            <p>Discuss and try new dishes through comments.</p>
           </div>
         </div>
       </section>

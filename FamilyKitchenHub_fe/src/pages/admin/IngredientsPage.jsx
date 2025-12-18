@@ -190,6 +190,22 @@ export default function IngredientsPage() {
         }
     };
 
+    // Helper function to parse and format nutritional info
+    const parseNutritionalInfo = (nutritionalInfo) => {
+        if (!nutritionalInfo) return '-';
+        try {
+            const info = JSON.parse(nutritionalInfo);
+            const parts = [];
+            if (info.fat !== undefined) parts.push(`Fat: ${info.fat}g`);
+            if (info.carbs !== undefined) parts.push(`Carbs: ${info.carbs}g`);
+            if (info.protein !== undefined) parts.push(`Protein: ${info.protein}g`);
+            return parts.length > 0 ? parts.join(', ') : '-';
+        } catch (e) {
+            // If not valid JSON, return as-is
+            return nutritionalInfo;
+        }
+    };
+
     if (loading) {
         return (
             <div className="ingredients-page">
@@ -258,7 +274,7 @@ export default function IngredientsPage() {
                                         className="inline-input"
                                         value={newIngredient.nutritionalInfo}
                                         onChange={(e) => setNewIngredient({ ...newIngredient, nutritionalInfo: e.target.value })}
-                                        placeholder="Nutritional Info"
+                                        placeholder='{"fat": 0, "carbs": 0, "protein": 0}'
                                     />
                                 </td>
                                 <td>
@@ -314,6 +330,7 @@ export default function IngredientsPage() {
                                                 className="inline-input"
                                                 value={editForm.nutritionalInfo}
                                                 onChange={(e) => setEditForm({ ...editForm, nutritionalInfo: e.target.value })}
+                                                placeholder='{"fat": 0, "carbs": 0, "protein": 0}'
                                             />
                                         </td>
                                         <td>
@@ -334,7 +351,7 @@ export default function IngredientsPage() {
                                             <td>{ingredient.unit || '-'}</td>
                                             <td>{ingredient.caloriesPer100g || '-'}</td>
                                             <td className="nutritional-info-cell">
-                                                {ingredient.nutritionalInfo || '-'}
+                                                {parseNutritionalInfo(ingredient.nutritionalInfo)}
                                             </td>
                                             <td>
                                                 <button className="btn-edit" onClick={() => handleEdit(ingredient)}>

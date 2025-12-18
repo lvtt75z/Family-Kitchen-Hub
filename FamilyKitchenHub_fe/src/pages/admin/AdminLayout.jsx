@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import './AdminLayout.css';
 
 export default function AdminLayout() {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -55,9 +56,32 @@ export default function AdminLayout() {
                 {/* Top Header */}
                 <header className="admin-header">
                     <h1>Family Kitchen Hub</h1>
-                    <div className="user-info">
-                        <span>👤 {user.username || 'Admin'}</span>
-                        <span className="user-role">{user.role}</span>
+
+                    {/* User Menu - Top Right */}
+                    <div className="header-user-menu">
+                        <button
+                            className="header-user-trigger"
+                            onClick={() => setShowUserDropdown(!showUserDropdown)}
+                        >
+                            <span className="user-icon">👤</span>
+                            <span className="user-info-inline">
+                                <span className="user-label-text">Admin</span>
+                                <span className="user-name-text">{user.username || 'admin_user'}</span>
+                            </span>
+                            <span className="dropdown-arrow">{showUserDropdown ? '▲' : '▼'}</span>
+                        </button>
+
+                        {showUserDropdown && (
+                            <div className="header-user-dropdown">
+                                <div className="dropdown-info-item">
+                                    <span className="dropdown-username">{user.username || 'admin_user'}</span>
+                                    {user.role && <span className="dropdown-role-badge">{user.role}</span>}
+                                </div>
+                                <button onClick={handleLogout} className="dropdown-logout-btn">
+                                    🚪 Logout
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </header>
 
