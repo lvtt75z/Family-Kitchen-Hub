@@ -543,11 +543,11 @@ h1 {
 }
 
 .slider-btn-prev {
-  left: -24px;
+  left: 8px;
 }
 
 .slider-btn-next {
-  right: -24px;
+  right: 8px;
 }
 
 .slider-dots {

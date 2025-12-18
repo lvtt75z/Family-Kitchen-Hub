@@ -30,6 +30,7 @@ public class RecipeService {
     private final UserRecipeReminderRepository userRecipeReminderRepository;
     private final MealPlanEntryRepository mealPlanEntryRepository;
     private final RecipeImageRepository recipeImageRepository;
+    private final InventoryItemRepository inventoryItemRepository;
 
     @Autowired
     public RecipeService(RecipeRepository recipeRepository,
@@ -42,7 +43,8 @@ public class RecipeService {
             RecipeScheduleRepository recipeScheduleRepository,
             UserRecipeReminderRepository userRecipeReminderRepository,
             MealPlanEntryRepository mealPlanEntryRepository,
-            RecipeImageRepository recipeImageRepository) {
+            RecipeImageRepository recipeImageRepository,
+            InventoryItemRepository inventoryItemRepository) {
         this.recipeRepository = recipeRepository;
         this.ingredientRepository = ingredientRepository;
         this.recipeMapper = recipeMapper;
@@ -54,6 +56,7 @@ public class RecipeService {
         this.userRecipeReminderRepository = userRecipeReminderRepository;
         this.mealPlanEntryRepository = mealPlanEntryRepository;
         this.recipeImageRepository = recipeImageRepository;
+        this.inventoryItemRepository = inventoryItemRepository;
     }
 
     @Transactional
@@ -217,5 +220,104 @@ public class RecipeService {
             throw new ResourceNotFoundException("RecipeImage", "id", imageId);
         }
         recipeImageRepository.deleteById(imageId);
+    }
+
+    /**
+     * Get recipes that can be cooked with available ingredients in user's fridge
+     * Returns recipes where ALL required ingredients are available in sufficient
+     * quantities
+     */
+    public List<Recipe> getCookableRecipes(Long userId) {
+        System.out.println("=== Getting cookable recipes for userId: " + userId + " ===");
+        List<Recipe> allRecipes = recipeRepository.findAll();
+        List<com.c2se04.familykitchenhub.model.InventoryItem> inventoryItems = inventoryItemRepository
+                .findByUserId(userId);
+
+        System.out.println("Total recipes: " + allRecipes.size());
+        System.out.println("User inventory items: " + inventoryItems.size());
+
+        List<Recipe> cookableRecipes = new ArrayList<>();
+
+        for (Recipe recipe : allRecipes) {
+            boolean canCook = true;
+            List<RecipeIngredient> requiredIngredients = new ArrayList<>(recipe.getRecipeIngredients());
+
+            System.out.println("\nChecking recipe: " + recipe.getTitle() + " (ID: " + recipe.getId() + ")");
+            System.out.println("  Required ingredients: " + requiredIngredients.size());
+
+            if (requiredIngredients == null || requiredIngredients.isEmpty()) {
+                System.out.println("  -> Recipe has no ingredients, SKIPPING");
+                continue; // Skip recipes with no ingredients
+            }
+            for (RecipeIngredient required : requiredIngredients) {
+                if (required.getIngredient() == null) {
+                    System.out.println("  -> Ingredient is NULL, NOT COOKABLE");
+                    canCook = false;
+                    break;
+                }
+
+                Long requiredIngredientId = required.getIngredient().getId();
+                String ingredientName = required.getIngredient().getName();
+                Double requiredQuantity = required.getQuantity();
+
+                System.out.println("  Checking: " + ingredientName + " (ID: " + requiredIngredientId + ")");
+                System.out.println("    Required: " + requiredQuantity);
+
+                if (requiredQuantity == null || requiredQuantity <= 0) {
+                    boolean hasIngredient = inventoryItems.stream()
+                            .anyMatch(item -> item.getIngredient() != null &&
+                                    item.getIngredient().getId().equals(requiredIngredientId));
+                    System.out.println("    Has ingredient in inventory: " + hasIngredient);
+                    if (!hasIngredient) {
+                        canCook = false;
+                        break;
+                    }
+                    continue;
+                }
+
+                double availableQuantity = inventoryItems.stream()
+                        .filter(item -> item.getIngredient() != null &&
+                                item.getIngredient().getId().equals(requiredIngredientId))
+                        .mapToDouble(item -> item.getQuantity() != null ? item.getQuantity() : 0.0)
+                        .sum();
+
+                System.out.println("    Available: " + availableQuantity);
+
+                if (availableQuantity < requiredQuantity) {
+                    System.out.println("    -> INSUFFICIENT, NOT COOKABLE");
+                    canCook = false;
+                    break;
+                } else {
+                    System.out.println("    -> SUFFICIENT");
+                }
+            }
+
+            if (canCook) {
+                System.out.println("  => Recipe is COOKABLE");
+                cookableRecipes.add(recipe);
+            } else {
+                System.out.println("  => Recipe is NOT COOKABLE");
+            }
+        }
+
+        System.out.println("\n=== Total cookable recipes: " + cookableRecipes.size() + " ===");
+        return cookableRecipes;
+    }
+
+    /**
+     * Get recipes bookmarked by a specific user
+     */
+    public List<Recipe> getBookmarkedRecipesByUser(Long userId) {
+        List<com.c2se04.familykitchenhub.model.RecipeBookmark> bookmarks = recipeBookmarkRepository
+                .findByUserId(userId);
+
+        List<Recipe> bookmarkedRecipes = new ArrayList<>();
+        for (com.c2se04.familykitchenhub.model.RecipeBookmark bookmark : bookmarks) {
+            if (bookmark.getRecipe() != null) {
+                bookmarkedRecipes.add(bookmark.getRecipe());
+            }
+        }
+
+        return bookmarkedRecipes;
     }
 }

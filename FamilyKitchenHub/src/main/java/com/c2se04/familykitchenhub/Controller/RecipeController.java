@@ -147,12 +147,14 @@ public class RecipeController {
                     User user = (User) authentication.getPrincipal();
                     finalUserId = user.getId();
                 } else {
-                    throw new BadRequestException("userId là bắt buộc. Vui lòng cung cấp userId trong query parameter hoặc đăng nhập để sử dụng userId từ authentication.");
+                    throw new BadRequestException(
+                            "userId là bắt buộc. Vui lòng cung cấp userId trong query parameter hoặc đăng nhập để sử dụng userId từ authentication.");
                 }
             }
 
             // Thực hiện trừ nguyên liệu và lấy thông tin chi tiết
-            InventoryItemService.DeductResult result = inventoryItemService.deductIngredientsForRecipeWithDetails(finalUserId, id);
+            InventoryItemService.DeductResult result = inventoryItemService
+                    .deductIngredientsForRecipeWithDetails(finalUserId, id);
 
             // Chuyển đổi sang DTO
             List<CookRecipeResponseDTO.DeductedIngredientDTO> deductedDTOs = result.getDeductedIngredients().stream()
@@ -162,16 +164,14 @@ public class RecipeController {
                             info.getDeductedQuantity(),
                             info.getRemainingQuantity(),
                             info.getUnit(),
-                            info.isRemovedFromInventory()
-                    ))
+                            info.isRemovedFromInventory()))
                     .collect(Collectors.toList());
 
             CookRecipeResponseDTO response = new CookRecipeResponseDTO(
                     "Đã nấu món ăn thành công! Nguyên liệu đã được trừ khỏi tủ lạnh ảo.",
                     result.getRecipeId(),
                     result.getRecipeTitle(),
-                    deductedDTOs
-            );
+                    deductedDTOs);
 
             return ResponseEntity.ok(response);
         } catch (com.c2se04.familykitchenhub.Exception.ResourceNotFoundException e) {
@@ -221,7 +221,7 @@ public class RecipeController {
     /**
      * POST /api/recipes/{id}/categories
      * Update recipe categories
-     * MATCHES YOUR DOCUMENT 
+     * MATCHES YOUR DOCUMENT
      * Body: { "categoryIds": [1, 5, 8] }
      */
     @PostMapping("/{id}/categories")
@@ -256,6 +256,36 @@ public class RecipeController {
         return ResponseEntity.noContent().build();
     }
 
+    // ========== RECIPE FILTERING ENDPOINTS ==========
+
+    /**
+     * GET /api/recipes/cookable?userId={userId}
+     * Get recipes that can be cooked with available ingredients in user's fridge
+     */
+    @GetMapping("/cookable")
+    public ResponseEntity<List<RecipeResponseDTO>> getCookableRecipes(
+            @RequestParam Long userId) {
+        List<Recipe> cookableRecipes = recipeService.getCookableRecipes(userId);
+        List<RecipeResponseDTO> responseDTOs = cookableRecipes.stream()
+                .map(recipeMapper::toResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    /**
+     * GET /api/recipes/bookmarked?userId={userId}
+     * Get recipes bookmarked by the current user
+     */
+    @GetMapping("/bookmarked")
+    public ResponseEntity<List<RecipeResponseDTO>> getBookmarkedRecipes(
+            @RequestParam Long userId) {
+        List<Recipe> bookmarkedRecipes = recipeService.getBookmarkedRecipesByUser(userId);
+        List<RecipeResponseDTO> responseDTOs = bookmarkedRecipes.stream()
+                .map(recipeMapper::toResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDTOs);
+    }
+
     // ========== SIMILAR RECIPES ENDPOINT (7.2) ==========
 
     /**
@@ -267,7 +297,7 @@ public class RecipeController {
      * - Shared Ingredients: +2 points each
      * - Similar Cooking Time (≤15 min): +1 point
      *
-     * MATCHES YOUR DOCUMENT 
+     * MATCHES YOUR DOCUMENT
      */
     @GetMapping("/{id}/similar")
     public ResponseEntity<List<SimilarRecipeDTO>> getSimilarRecipes(
@@ -287,10 +317,11 @@ public class RecipeController {
     public ResponseEntity<List<MediaUploadResponseDTO>> uploadRecipeImages(
             @PathVariable Long id,
             @RequestParam("files") List<MultipartFile> files) {
-        
+
         // Validate recipe exists
         recipeService.getRecipeById(id)
-                .orElseThrow(() -> new com.c2se04.familykitchenhub.Exception.ResourceNotFoundException("Recipe", "id", id));
+                .orElseThrow(
+                        () -> new com.c2se04.familykitchenhub.Exception.ResourceNotFoundException("Recipe", "id", id));
 
         // Validate files
         if (files == null || files.isEmpty()) {
@@ -313,7 +344,7 @@ public class RecipeController {
         List<String> imageUrls = uploadResults.stream()
                 .map(MediaUploadResponseDTO::getUrl)
                 .collect(Collectors.toList());
-        
+
         List<String> fileNames = uploadResults.stream()
                 .map(MediaUploadResponseDTO::getFileName)
                 .collect(Collectors.toList());

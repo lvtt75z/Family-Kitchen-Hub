@@ -3,7 +3,8 @@ from flask_cors import CORS
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Enable CORS for all routes with explicit configuration
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"]}})
 
 # --- CẤU HÌNH TRỌNG SỐ (WEIGHTS) ---
 SCORE_ALLERGY_VIOLATION = -9999  # Loại ngay lập tức nếu dị ứng

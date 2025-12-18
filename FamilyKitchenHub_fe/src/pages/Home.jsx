@@ -383,8 +383,8 @@ function Home() {
       {/* ===== RECIPE SUGGESTIONS (From backend) ===== */}
       <section className="suggestions-section">
         <div className="suggestions-header">
-          <h2>Recipe Suggestions</h2>
-          <p>Danh sách công thức từ hệ thống của bạn.</p>
+          <h2>Top 10 Recipes</h2>
+          <p>(Calculated based on total of views, bookmarks and searches)</p>
         </div>
 
         {loading ? (
