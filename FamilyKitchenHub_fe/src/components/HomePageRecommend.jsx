@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useEffect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import foodChoiceAnimation from '../assets/Food Choice.json';
 import { Sparkles } from 'lucide-react';
@@ -7,26 +7,9 @@ import '../styles/HomePageRecommend.css';
 
 const HomePageRecommend = () => {
     const navigate = useNavigate();
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target);
-                }
-            },
-            { threshold: 0.2 }
-        );
-
-        const el = document.querySelector('.recommend-container.scroll-reveal');
-        if (el) observer.observe(el);
-
-        return () => observer.disconnect();
-    }, []);
-
 
     return (
-        <div className="recommend-container scroll-reveal">
+        <div className="recommend-container ">
             {/* Left Column: Animation */}
             <div className="left-col">
                 <div className="animation-wrapper">

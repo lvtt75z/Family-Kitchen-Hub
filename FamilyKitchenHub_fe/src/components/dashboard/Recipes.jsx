@@ -1285,7 +1285,7 @@ export default function RecipeDashboard() {
       </div>
 
       {/* Recipe Filter Buttons - Below "All Recipes" heading */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '22px', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
         <button
           className={`category-chip ${filterCookable ? 'active' : ''}`}
           onClick={() => handleFilterToggle("cookable")}

@@ -24,7 +24,7 @@ const TABS = [
   { label: "Home", path: "/home", icon: <HomeIcon size={18} /> },
   {
     label: "Recommend",
-    path: "/manage/Dashboard",
+    path: "/manage/dashboard",
     icon: <UtensilsCrossed size={18} />,
   },
   { label: "Recipes", path: "/manage/recipes", icon: <BookOpen size={18} /> },
