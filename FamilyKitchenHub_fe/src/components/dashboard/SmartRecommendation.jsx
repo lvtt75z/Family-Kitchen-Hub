@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMealRecommendations } from "../../service/recommendationApi";
-import { Sparkles, ArrowLeft, Clock, Users, Zap } from "lucide-react";
+import { cookRecipe } from "../../service/recipesApi";
+import { Sparkles, ArrowLeft, Clock, Users, Zap, ChefHat } from "lucide-react";
 import { convertMediaUrl } from "../../utils/mediaUtils";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../../styles/SmartRecommendation.css";
 
 export default function SmartRecommendation() {
@@ -11,6 +14,7 @@ export default function SmartRecommendation() {
   const [loadingMessage, setLoadingMessage] = useState("Đang kiểm tra tủ lạnh...");
   const [recommendations, setRecommendations] = useState(null);
   const [error, setError] = useState(null);
+  const [cookingRecipe, setCookingRecipe] = useState(null); // Track which recipe is being cooked
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -49,6 +53,68 @@ export default function SmartRecommendation() {
 
     fetchRecommendations();
   }, []);
+
+  // Handle cook recipe
+  const handleCookRecipe = async (recipeId, recipeTitle) => {
+    try {
+      setCookingRecipe(recipeId);
+
+      // Get userId from localStorage
+      const userDataString = localStorage.getItem("user");
+      let userId = null;
+      if (userDataString) {
+        try {
+          const userData = JSON.parse(userDataString);
+          userId = userData.user?.id || userData.id;
+        } catch (e) {
+          console.warn("Cannot parse user data:", e);
+        }
+      }
+
+      // Call cook recipe API
+      const response = await cookRecipe(recipeId, userId);
+
+      // Show success message with deducted ingredients
+      const ingredientsList = response.deductedIngredients
+        ?.map((ing) => {
+          const status = ing.removedFromInventory
+            ? " (đã hết)"
+            : ` (còn lại: ${ing.remainingQuantity} ${ing.unit})`;
+          return `• ${ing.ingredientName}: -${ing.deductedQuantity} ${ing.unit}${status}`;
+        })
+        .join("\n") || "";
+
+      toast.success(
+        <div>
+          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
+            {response.message || `Đã nấu món "${recipeTitle}" thành công!`}
+          </div>
+          {ingredientsList && (
+            <div style={{ fontSize: "12px", whiteSpace: "pre-line", textAlign: "left" }}>
+              {ingredientsList}
+            </div>
+          )}
+        </div>,
+        { autoClose: 3000 }
+      );
+
+      // Navigate to recipe details after a short delay
+      setTimeout(() => {
+        navigate(`/manage/recipesdetails/${recipeId}`);
+      }, 1500);
+    } catch (error) {
+      console.error("Error cooking recipe:", error);
+
+      // Show error message
+      const errorMessage = error.response?.data?.message ||
+        error.message ||
+        "Không thể nấu món ăn. Vui lòng kiểm tra nguyên liệu trong tủ lạnh.";
+
+      toast.error(errorMessage, { autoClose: 4000 });
+    } finally {
+      setCookingRecipe(null);
+    }
+  };
 
   const getMatchScoreColor = (score) => {
     if (score >= 80) return "#10b981"; // Green
@@ -117,6 +183,7 @@ export default function SmartRecommendation() {
 
   return (
     <div className="recommendation-container">
+      <ToastContainer />
       <div className="recommendation-header">
         <button onClick={() => navigate(-1)} className="btn-back">
           <ArrowLeft size={16} /> Quay lại
@@ -150,7 +217,7 @@ export default function SmartRecommendation() {
                 />
                 <div className="match-score-circle" style={{ borderColor: scoreColor }}>
                   <span style={{ color: scoreColor }}>Phù hợp</span>
-                  
+
                 </div>
               </div>
 
@@ -237,13 +304,39 @@ export default function SmartRecommendation() {
                   )}
                 </div>
 
-                {/* Action Button */}
-                <button
-                  className="btn-view-recipe"
-                  onClick={() => navigate(`/manage/recipesdetails/${recipe.id}`)}
-                >
-                  Xem chi tiết
-                </button>
+                {/* Action Buttons */}
+                <div className="recipe-actions">
+                  <button
+                    className="btn-cook-recipe"
+                    onClick={() => handleCookRecipe(recipe.id, recipe.title)}
+                    disabled={cookingRecipe === recipe.id}
+                    style={{
+                      backgroundColor: "#f97316",
+                      color: "white",
+                      border: "none",
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      cursor: cookingRecipe === recipe.id ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontWeight: "500",
+                      marginBottom: "8px",
+                      opacity: cookingRecipe === recipe.id ? 0.6 : 1,
+                      width: "100%",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <ChefHat size={16} />
+                    {cookingRecipe === recipe.id ? "Đang nấu..." : "Nấu"}
+                  </button>
+                  <button
+                    className="btn-view-recipe"
+                    onClick={() => navigate(`/manage/recipesdetails/${recipe.id}`)}
+                  >
+                    Xem chi tiết
+                  </button>
+                </div>
               </div>
             </div>
           );

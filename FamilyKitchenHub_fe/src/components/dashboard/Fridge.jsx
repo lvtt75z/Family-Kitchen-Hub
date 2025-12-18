@@ -66,11 +66,11 @@ export default function FridgeManager() {
       console.log("  ⚠️ Không có expirationDate");
       return false;
     }
-    
+
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       // Xử lý nhiều format date có thể có
       let expiry;
       if (typeof expDate === 'string') {
@@ -81,14 +81,15 @@ export default function FridgeManager() {
       } else {
         expiry = new Date(expDate);
       }
-      
+
       expiry.setHours(0, 0, 0, 0);
-      
-      const isExpired = expiry < today;
+
+      // Expires the day AFTER the expiration date
+      const isExpired = today > expiry; // Changed from expiry < today
       const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
-      
+
       console.log(`  📅 Expiration check: ${expDate} -> ${expiry.toISOString().split('T')[0]}, Today: ${today.toISOString().split('T')[0]}, Diff: ${diffDays} days, Expired: ${isExpired}`);
-      
+
       return isExpired;
     } catch (error) {
       console.error("  ❌ Lỗi khi parse expirationDate:", expDate, error);
@@ -133,7 +134,7 @@ export default function FridgeManager() {
 
         if (expiredIngredients.length > 0) {
           console.log(`📊 Bắt đầu tạo notification cho ${expiredIngredients.length} nguyên liệu hết hạn`);
-          
+
           // Tạo notification cho từng nguyên liệu hết hạn
           const notificationPromises = expiredIngredients.map(async (item) => {
             const formatDate = (d) => {
@@ -141,9 +142,9 @@ export default function FridgeManager() {
               const dt = new Date(d);
               return dt.toLocaleDateString('vi-VN');
             };
-            
+
             const notificationMessage = `${item.ingredientName} đã hết hạn (${formatDate(item.expirationDate)})`;
-            
+
             // Tạo notification qua API backend
             // Backend expects NotificationRequestDTO - thử nhiều format
             const notificationPayloads = [
@@ -187,7 +188,7 @@ export default function FridgeManager() {
                 const response = await axios.post(`/users/${userId}/notifications`, notificationPayload, {
                   headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
-                
+
                 console.log(`✅ Đã tạo notification thành công cho ${item.ingredientName} (Format ${i + 1}):`, response.data);
                 return { success: true, item: item.ingredientName, data: response.data, format: i + 1 };
               } catch (notifError) {
@@ -202,14 +203,14 @@ export default function FridgeManager() {
                   format: i + 1
                 };
                 console.warn(`⚠️ Format ${i + 1} failed cho ${item.ingredientName}:`, errorDetails);
-                
+
                 // Nếu không phải lỗi 400, không thử format khác
                 if (notifError.response?.status !== 400) {
                   break;
                 }
               }
             }
-            
+
             // Nếu tất cả format đều fail
             const errorDetails = {
               status: lastError?.response?.status,
@@ -228,7 +229,7 @@ export default function FridgeManager() {
           const results = await Promise.all(notificationPromises);
           const successCount = results.filter(r => r.success).length;
           const failCount = results.filter(r => !r.success).length;
-          
+
           console.log(`📊 Kết quả tạo notification: ${successCount} thành công, ${failCount} thất bại`);
           if (successCount > 0) {
             console.log(`✅ Đã tạo thành công ${successCount} notification(s):`, results.filter(r => r.success).map(r => r.item));
@@ -403,10 +404,18 @@ export default function FridgeManager() {
   const getStatus = (expDate) => {
     if (!expDate) return "Fresh";
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today to start of day
     const expiry = new Date(expDate);
-    const diff = (expiry - today) / (1000 * 60 * 60 * 24);
+    expiry.setHours(0, 0, 0, 0); // Normalize expiry to start of day
 
-    if (diff < 0) return "Expired";
+    // Expires the day AFTER expiration date
+    // If today is 2023-10-27 and expiry is 2023-10-26, then today > expiry is true, meaning it's expired.
+    // If today is 2023-10-26 and expiry is 2023-10-26, then today > expiry is false, meaning it's not yet expired.
+    if (today > expiry) return "Expired";
+
+    // Calculate difference in days for "Expiring Soon"
+    const diff = (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+
     if (diff <= 3) return "Expiring Soon";
     return "Fresh";
   };
@@ -469,20 +478,20 @@ export default function FridgeManager() {
       setTimeout(() => {
         setIsLoading(false);
         console.error("Error deleting ingredient:", error);
-        
+
         // Xử lý lỗi chi tiết hơn
         let errorMessage = "Không thể xóa nguyên liệu!";
-        
+
         if (error.response) {
           const status = error.response.status;
           const data = error.response.data;
           const errorMsg = data?.message || data?.error || "";
-          
+
           // Kiểm tra lỗi foreign key constraint
-          if (errorMsg.includes("foreign key constraint") || 
-              errorMsg.includes("Cannot delete or update a parent row") ||
-              errorMsg.includes("user_notifications") ||
-              errorMsg.includes("inventory_item_id")) {
+          if (errorMsg.includes("foreign key constraint") ||
+            errorMsg.includes("Cannot delete or update a parent row") ||
+            errorMsg.includes("user_notifications") ||
+            errorMsg.includes("inventory_item_id")) {
             errorMessage = "Không thể xóa nguyên liệu này vì nó đang được sử dụng trong thông báo. Vui lòng xóa các thông báo liên quan trước.";
           } else if (status === 404) {
             errorMessage = "Không tìm thấy nguyên liệu cần xóa.";
@@ -496,7 +505,7 @@ export default function FridgeManager() {
         } else if (error.message) {
           errorMessage = error.message;
         }
-        
+
         toast.error(errorMessage, {
           position: "top-right",
           autoClose: 5000,
@@ -750,8 +759,8 @@ export default function FridgeManager() {
                   />
 
                   <DatePicker
-                    disablePast
                     label="Purchased Date (Ngày mua)"
+                    maxDate={dayjs()}
                     value={newIngredient.purchasedAt ? dayjs(newIngredient.purchasedAt) : null}
                     onChange={(newValue) =>
                       setNewIngredient({

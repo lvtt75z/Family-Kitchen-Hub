@@ -74,7 +74,7 @@ export const getRecipeComments = async (recipeId, { status, page, size } = {}) =
   if (status) params.status = status;
   if (page !== undefined) params.page = page;
   if (size !== undefined) params.size = size;
-  
+
   const res = await axios.get(`/recipes/${recipeId}/comments`, { params });
   return res.data;
 };
@@ -117,7 +117,7 @@ export const uploadCommentMedia = async (file) => {
       fileSize: file.size,
       fileType: file.type
     });
-    
+
     // Re-throw để component có thể xử lý
     throw error;
   }
@@ -147,14 +147,36 @@ export const getPostsByEngagement = async ({ page = 1 } = {}) => {
 // userId là optional - nếu có authentication token thì userId sẽ tự động lấy từ token
 export const cookRecipe = async (recipeId, userId = null) => {
   const config = {};
-  
+
   // Chỉ thêm userId vào params nếu được cung cấp
   // Nếu không có userId, backend sẽ tự động lấy từ authentication token
   if (userId) {
     config.params = { userId };
   }
-  
+
   const res = await axios.post(`/recipes/${recipeId}/cook`, null, config);
+  return res.data;
+};
+
+// ============================
+// Recipe Filtering
+// ============================
+
+// GET /api/recipes/cookable?userId={userId}
+// Get recipes that can be cooked with available ingredients
+export const getCookableRecipes = async (userId) => {
+  const res = await axios.get("/recipes/cookable", {
+    params: { userId },
+  });
+  return res.data;
+};
+
+// GET /api/recipes/bookmarked?userId={userId}
+// Get recipes bookmarked by the user
+export const getBookmarkedRecipes = async (userId) => {
+  const res = await axios.get("/recipes/bookmarked", {
+    params: { userId },
+  });
   return res.data;
 };
 
@@ -171,6 +193,8 @@ export default {
   uploadCommentMedia,
   getPostsByEngagement,
   cookRecipe,
+  getCookableRecipes,
+  getBookmarkedRecipes,
 };
 
 

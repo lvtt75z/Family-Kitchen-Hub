@@ -6,13 +6,8 @@ import RecipesBook from "../../assets/recipe-book.png";
 import bgFooter from "../../assets/bgfooter.png";
 import {
   Heart,
-  HeartOff,
-  Trash2,
-  PlusCircle,
   X,
   Search,
-  Filter,
-  Pen,
   ChevronDown,
   ChefHat,
   CookingPot
@@ -21,7 +16,7 @@ import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { convertMediaUrl } from "../../utils/mediaUtils";
-import { cookRecipe } from "../../service/recipesApi";
+import { cookRecipe, getCookableRecipes, getBookmarkedRecipes, addRecipeBookmark, removeRecipeBookmark } from "../../service/recipesApi";
 
 export default function RecipeDashboard() {
   const navigate = useNavigate();
@@ -61,6 +56,15 @@ export default function RecipeDashboard() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  // Recipe filtering states
+  const [filterCookable, setFilterCookable] = useState(false);
+  const [filterBookmarked, setFilterBookmarked] = useState(false);
+  const [loadingFilters, setLoadingFilters] = useState(false);
+
+  // Bookmark states
+  const [bookmarkedRecipes, setBookmarkedRecipes] = useState(new Set());
+  const [bookmarking, setBookmarking] = useState({});
 
   // Ingredient search states for each ingredient row
   const [ingredientSearches, setIngredientSearches] = useState({}); // { index: keyword }
@@ -204,6 +208,166 @@ export default function RecipeDashboard() {
       setSearchResults([]);
     }
   };
+
+  // =========================
+  //   RECIPE FILTERS
+  // =========================
+  const handleFilterToggle = async (filterType) => {
+    try {
+      // Get userId from localStorage
+      const userDataString = localStorage.getItem("user");
+      let userId = null;
+      if (userDataString) {
+        try {
+          const userData = JSON.parse(userDataString);
+          userId = userData.user?.id || userData.id;
+        } catch (e) {
+          console.warn("Cannot parse user data:", e);
+        }
+      }
+
+      if (!userId) {
+        toast.error("Vui lòng đăng nhập để sử dụng bộ lọc", { autoClose: 2000 });
+        return;
+      }
+
+      setLoadingFilters(true);
+
+      if (filterType === "cookable") {
+        const newValue = !filterCookable;
+        setFilterCookable(newValue);
+
+        // If turning on cookable filter
+        if (newValue) {
+          console.log("Fetching cookable recipes for userId:", userId);
+          const cookableRecipes = await getCookableRecipes(userId);
+          console.log("Cookable recipes received:", cookableRecipes);
+          console.log("Number of cookable recipes:", cookableRecipes.length);
+
+          // If bookmarked filter is also active, get intersection
+          if (filterBookmarked) {
+            const bookmarkedRecipes = await getBookmarkedRecipes(userId);
+            const bookmarkedIds = new Set(bookmarkedRecipes.map(r => r.id));
+            const filtered = cookableRecipes.filter(r => bookmarkedIds.has(r.id));
+            console.log("Filtered cookable + bookmarked recipes:", filtered.length);
+            setSearchResults(filtered);
+          } else {
+            setSearchResults(cookableRecipes);
+          }
+        } else {
+          // Turning off cookable filter
+          if (filterBookmarked) {
+            const bookmarkedRecipes = await getBookmarkedRecipes(userId);
+            setSearchResults(bookmarkedRecipes);
+          } else {
+            setSearchResults(recipes); // Show all recipes
+          }
+        }
+      } else if (filterType === "bookmarked") {
+        const newValue = !filterBookmarked;
+        setFilterBookmarked(newValue);
+
+        // If turning on bookmarked filter
+        if (newValue) {
+          const bookmarkedRecipes = await getBookmarkedRecipes(userId);
+
+          // If cookable filter is also active, get intersection
+          if (filterCookable) {
+            const cookableRecipes = await getCookableRecipes(userId);
+            const cookableIds = new Set(cookableRecipes.map(r => r.id));
+            const filtered = bookmarkedRecipes.filter(r => cookableIds.has(r.id));
+            setSearchResults(filtered);
+          } else {
+            setSearchResults(bookmarkedRecipes);
+          }
+        } else {
+          // Turning off bookmarked filter
+          if (filterCookable) {
+            const cookableRecipes = await getCookableRecipes(userId);
+            setSearchResults(cookableRecipes);
+          } else {
+            setSearchResults(recipes); // Show all recipes
+          }
+        }
+      }
+
+      // Clear search and category when using filters
+      setSearch("");
+      setSelectedCategory(null);
+    } catch (error) {
+      console.error("Error applying filter:", error);
+      toast.error("Không thể áp dụng bộ lọc. Vui lòng thử lại.", { autoClose: 2000 });
+    } finally {
+      setLoadingFilters(false);
+    }
+  };
+
+  const clearAllFilters = () => {
+    setFilterCookable(false);
+    setFilterBookmarked(false);
+    setSearchResults(recipes);
+    setSearch("");
+    setSelectedCategory(null);
+  };
+
+  // =========================
+  //   BOOKMARK HANDLING
+  // =========================
+  const handleBookmark = async (e, recipeId) => {
+    e.stopPropagation();
+
+    const userDataString = localStorage.getItem("user");
+    const userData = userDataString ? JSON.parse(userDataString) : null;
+    const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
+
+    if (!userId) {
+      toast.error("Please login to bookmark recipes", { autoClose: 2000 });
+      return;
+    }
+
+    const isBookmarked = bookmarkedRecipes.has(recipeId);
+    setBookmarking(prev => ({ ...prev, [recipeId]: true }));
+
+    try {
+      if (isBookmarked) {
+        await removeRecipeBookmark(recipeId, Number(userId));
+        setBookmarkedRecipes(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(recipeId);
+          return newSet;
+        });
+      } else {
+        await addRecipeBookmark(recipeId, { userId: Number(userId) });
+        setBookmarkedRecipes(prev => new Set(prev).add(recipeId));
+      }
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      toast.error("Error bookmarking recipe", { autoClose: 2000 });
+    } finally {
+      setBookmarking(prev => ({ ...prev, [recipeId]: false }));
+    }
+  };
+
+  // Fetch bookmarked recipes on load
+  useEffect(() => {
+    const fetchBookmarkedStatus = async () => {
+      try {
+        const userDataString = localStorage.getItem("user");
+        const userData = userDataString ? JSON.parse(userDataString) : null;
+        const userId = userData?.user?.id || userData?.id;
+
+        if (userId) {
+          const bookmarked = await getBookmarkedRecipes(userId);
+          const bookmarkedIds = new Set(bookmarked.map(r => r.id));
+          setBookmarkedRecipes(bookmarkedIds);
+        }
+      } catch (error) {
+        console.error("Error fetching bookmarked recipes:", error);
+      }
+    };
+
+    fetchBookmarkedStatus();
+  }, []);
 
   // =========================
   //   MODAL OPEN/CLOSE
@@ -581,7 +745,9 @@ export default function RecipeDashboard() {
     today.setHours(0, 0, 0, 0); // Reset time to start of day
     const expiry = new Date(expDate);
     expiry.setHours(0, 0, 0, 0);
-    return expiry < today; // Quá hạn nếu expiry < today
+    // Ingredient expires the day AFTER the expiration date
+    // So it's expired if today > expiry (not >=)
+    return today > expiry;
   };
 
   // =========================
@@ -589,7 +755,7 @@ export default function RecipeDashboard() {
   // =========================
   const handleCookRecipe = async (recipeId, recipeTitle) => {
     let loadingToast = null;
-    
+
     try {
       // Lấy userId từ localStorage
       const userDataString = localStorage.getItem("user");
@@ -612,7 +778,7 @@ export default function RecipeDashboard() {
 
       // Kiểm tra nguyên liệu quá hạn TRƯỚC KHI nấu
       loadingToast = toast.loading("Đang kiểm tra nguyên liệu...", { autoClose: false });
-      
+
       try {
         // Lấy recipe details để có danh sách ingredients
         const recipeRes = await axios.get(`/recipes/${recipeId}`, {
@@ -727,17 +893,17 @@ export default function RecipeDashboard() {
         } catch (firstError) {
           // Nếu lỗi liên quan đến userId và có userId fallback, thử lại với userId
           const errorMsg = firstError.response?.data?.message || firstError.response?.data?.error || "";
-          const isUserIdError = errorMsg.toLowerCase().includes("userid") || 
-                                errorMsg.toLowerCase().includes("user id") ||
-                                errorMsg.toLowerCase().includes("đăng nhập") ||
-                                errorMsg.toLowerCase().includes("authentication") ||
-                                (errorMsg.toLowerCase().includes("bắt buộc") && errorMsg.toLowerCase().includes("user"));
-          
+          const isUserIdError = errorMsg.toLowerCase().includes("userid") ||
+            errorMsg.toLowerCase().includes("user id") ||
+            errorMsg.toLowerCase().includes("đăng nhập") ||
+            errorMsg.toLowerCase().includes("authentication") ||
+            (errorMsg.toLowerCase().includes("bắt buộc") && errorMsg.toLowerCase().includes("user"));
+
           if (isUserIdError && userIdFallback) {
             console.log("Token không hợp lệ, thử lại với userId:", userIdFallback);
             try {
               const response = await cookRecipe(recipeId, userIdFallback);
-              
+
               // Đóng loading toast
               toast.dismiss(loadingToast);
               loadingToast = null;
@@ -760,7 +926,7 @@ export default function RecipeDashboard() {
       if (loadingToast) {
         toast.dismiss(loadingToast);
       }
-      
+
       console.error("Lỗi khi nấu recipe:", err);
       console.error("Error details:", {
         message: err.message,
@@ -779,22 +945,22 @@ export default function RecipeDashboard() {
 
         // Ưu tiên hiển thị message từ backend nếu có
         const backendMessage = data?.message || data?.error || "";
-        
+
         if (status === 400) {
           // Kiểm tra các loại lỗi 400 khác nhau
           const errorMsg = backendMessage.toLowerCase();
 
           // Kiểm tra message về userId trước (quan trọng nhất)
-          if (errorMsg.includes("userid") || 
-              errorMsg.includes("user id") ||
-              errorMsg.includes("đăng nhập") ||
-              errorMsg.includes("authentication") ||
-              (errorMsg.includes("bắt buộc") && errorMsg.includes("user"))) {
+          if (errorMsg.includes("userid") ||
+            errorMsg.includes("user id") ||
+            errorMsg.includes("đăng nhập") ||
+            errorMsg.includes("authentication") ||
+            (errorMsg.includes("bắt buộc") && errorMsg.includes("user"))) {
             // Hiển thị message từ backend hoặc message mặc định
             errorMessage = backendMessage || "Vui lòng đăng nhập hoặc cung cấp userId để nấu món ăn.";
-          } else if (errorMsg.includes("nullpointerexception") || 
-              errorMsg.includes("null pointer") ||
-              errorMsg.includes("null reference")) {
+          } else if (errorMsg.includes("nullpointerexception") ||
+            errorMsg.includes("null pointer") ||
+            errorMsg.includes("null reference")) {
             errorMessage = backendMessage || "Dữ liệu không hợp lệ. Có thể công thức, nguyên liệu hoặc thông tin người dùng không tồn tại. Vui lòng thử lại hoặc liên hệ hỗ trợ.";
           } else if (errorMsg.includes("query did not return a unique result") ||
             errorMsg.includes("2 results were returned") ||
@@ -815,9 +981,9 @@ export default function RecipeDashboard() {
           errorMessage = backendMessage || "Bạn cần đăng nhập để nấu món ăn.";
         } else if (status === 500) {
           const errorMsg = backendMessage.toLowerCase();
-          if (errorMsg.includes("nullpointerexception") || 
-              errorMsg.includes("null pointer") ||
-              errorMsg.includes("null reference")) {
+          if (errorMsg.includes("nullpointerexception") ||
+            errorMsg.includes("null pointer") ||
+            errorMsg.includes("null reference")) {
             errorMessage = backendMessage || "Lỗi server: Dữ liệu không hợp lệ. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.";
           } else if (errorMsg.includes("query did not return a unique result")) {
             errorMessage = "Có nhiều nguyên liệu cùng loại trong tủ lạnh. Vui lòng kiểm tra và xóa các nguyên liệu trùng lặp trước khi nấu.";
@@ -895,41 +1061,75 @@ export default function RecipeDashboard() {
           className="search-recipe-input"
           placeholder="Search recipe..."
           value={search}
-          onChange={handleSearch} //  CALL SEARCH API
+          onChange={handleSearch}
         />
-        <button className="add-btn-recipe" onClick={openModal}>
-          <PlusCircle size={16} /> Add Recipe
-        </button>
-      </div>
-
-      <div className="recipe-filter-step">
-        <button className="filter-step-btn">
-          <Filter size={16} /> Bộ lọc
-        </button>
       </div>
 
       {/* Category Chips */}
       <div className="category-filters">
         <button
-          className={`category-chip ${selectedCategory === null ? "active" : ""}`}
+          className={`category-chip ${!selectedCategory ? "active" : ""}`}
           onClick={() => handleCategoryClick(null)}
         >
-          All
+          All Recipes
         </button>
         {categories.map((cat) => (
           <button
             key={cat.id}
-            className={`category-chip ${selectedCategory === cat.id ? "active" : ""
-              }`}
+            className={`category-chip ${selectedCategory === cat.id ? "active" : ""}`}
             onClick={() => handleCategoryClick(cat.id)}
           >
             {cat.name}
           </button>
         ))}
       </div>
-      <div className="recipes-heading">
+
+      {/* RECIPES GRID */}
+      <div className="recipes-heading" style={{ textAlign: 'center', marginBottom: '10px' }}>
         <h2 className="all-recipes">All Recipes</h2>
       </div>
+
+      {/* Recipe Filter Buttons - Below "All Recipes" heading */}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+        <button
+          className={`category-chip ${filterCookable ? 'active' : ''}`}
+          onClick={() => handleFilterToggle("cookable")}
+          disabled={loadingFilters}
+          style={{
+            backgroundColor: filterCookable ? '#10b981' : 'transparent',
+            color: filterCookable ? 'white' : '#666',
+            border: filterCookable ? 'none' : '1px solid #ddd',
+          }}
+        >
+          <CookingPot size={16} /> I Can Cook
+        </button>
+        <button
+          className={`category-chip ${filterBookmarked ? 'active' : ''}`}
+          onClick={() => handleFilterToggle("bookmarked")}
+          disabled={loadingFilters}
+          style={{
+            backgroundColor: filterBookmarked ? '#f97316' : 'transparent',
+            color: filterBookmarked ? 'white' : '#666',
+            border: filterBookmarked ? 'none' : '1px solid #ddd',
+          }}
+        >
+          <Heart size={16} /> Bookmarked
+        </button>
+        {(filterCookable || filterBookmarked) && (
+          <button
+            className="category-chip"
+            onClick={clearAllFilters}
+            style={{
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+            }}
+          >
+            <X size={16} /> Clear Filters
+          </button>
+        )}
+      </div>
+
       <div className="recipe-grid">
         {searchResults.length === 0 ? (
           <div className="empty">
@@ -961,24 +1161,24 @@ export default function RecipeDashboard() {
                   </div>
 
                   <div className="card-actions">
-                    <HeartOff size={18} />
-                    <Pen
-                      color="gray"
-                      size={18}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditClick(r);
+                    <button
+                      onClick={(e) => handleBookmark(e, r.id)}
+                      disabled={bookmarking[r.id]}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: bookmarking[r.id] ? 'wait' : 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
                       }}
-                    />
-
-                    {/* <Trash2
-                      color="gray"
-                      size={18}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(r);
-                      }}
-                    /> */}
+                    >
+                      {bookmarkedRecipes.has(r.id) ? (
+                        <Heart size={18} fill="#ff6b6b" color="#ff6b6b" />
+                      ) : (
+                        <Heart size={18} color="gray" />
+                      )}
+                    </button>
                   </div>
                 </div>
                 <div className="card-meta">
