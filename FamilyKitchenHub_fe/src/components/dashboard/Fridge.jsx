@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+
+// Track notifications đã được tạo trong session để tránh trùng lặp
+const notificationCreationTracker = new Set();
 import axios from "../../hooks/axios";
 import "./../../styles/FridgeManager.css";
 import bgIngredients from "../../assets/bgIg3.jpg";
@@ -28,6 +31,8 @@ export default function FridgeManager() {
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const searchTimeoutRef = useRef(null);
+  // Ref để ngăn chặn việc tạo notification trùng lặp khi StrictMode chạy effect hai lần
+  const isProcessingNotificationsRef = useRef(false);
 
   const [newIngredient, setNewIngredient] = useState({
     ingredientId: "",
@@ -96,32 +101,87 @@ export default function FridgeManager() {
     }
   };
 
+  // Helper function to check if ingredient is expiring soon (within 3 days and not expired)
+  const checkExpiringSoon = (expDate) => {
+    if (!expDate) {
+      return false;
+    }
+    
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Xử lý nhiều format date có thể có
+      let expiry;
+      if (typeof expDate === 'string') {
+        expiry = new Date(expDate);
+      } else if (expDate instanceof Date) {
+        expiry = new Date(expDate);
+      } else {
+        expiry = new Date(expDate);
+      }
+      
+      expiry.setHours(0, 0, 0, 0);
+      
+      const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
+      
+      // Gần hết hạn: trong vòng 3 ngày và chưa hết hạn
+      const isExpiringSoon = diffDays >= 0 && diffDays <= 3;
+      
+      console.log(`  ⏰ Expiring soon check: ${expDate} -> ${expiry.toISOString().split('T')[0]}, Today: ${today.toISOString().split('T')[0]}, Diff: ${diffDays} days, Expiring Soon: ${isExpiringSoon}`);
+      
+      return isExpiringSoon;
+    } catch (error) {
+      console.error("  ❌ Lỗi khi parse expirationDate:", expDate, error);
+      return false;
+    }
+  };
+
+
   // GET inventory list
   useEffect(() => {
     const fetchIngredients = async () => {
+      // Ngăn chặn việc chạy song song khi StrictMode chạy effect hai lần
+      if (isProcessingNotificationsRef.current) {
+        console.log("⏸️ Đang xử lý notification, bỏ qua lần chạy này");
+        return;
+      }
+
+      // Đánh dấu đang xử lý ngay từ đầu để tránh race condition
+      isProcessingNotificationsRef.current = true;
+
       try {
         const userDataString = localStorage.getItem("user");
-        if (!userDataString) return;
+        if (!userDataString) {
+          isProcessingNotificationsRef.current = false;
+          return;
+        }
 
         const userData = JSON.parse(userDataString);
         const userId = userData.id;
         const token = localStorage.getItem("token");
 
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:110',message:'useEffect triggered - fetching ingredients',data:{userId:userId,timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'J'})}).catch(()=>{});
+        // #endregion
+
         const res = await axios.get(`/inventory/user/${userId}`);
         const ingredientsData = res.data || [];
         setIngredients(ingredientsData);
 
-        // Kiểm tra và tạo notification cho các nguyên liệu hết hạn
-        console.log("🔍 Kiểm tra nguyên liệu hết hạn:", {
+        // Kiểm tra và tạo notification cho các nguyên liệu hết hạn và gần hết hạn
+        console.log("🔍 Kiểm tra nguyên liệu hết hạn và gần hết hạn:", {
           totalIngredients: ingredientsData.length,
           ingredients: ingredientsData.map(item => ({
             id: item.id,
             name: item.ingredientName,
             expirationDate: item.expirationDate,
-            isExpired: item.expirationDate ? checkExpired(item.expirationDate) : false
+            isExpired: item.expirationDate ? checkExpired(item.expirationDate) : false,
+            isExpiringSoon: item.expirationDate ? checkExpiringSoon(item.expirationDate) : false
           }))
         });
 
+        // Lọc các nguyên liệu hết hạn
         const expiredIngredients = ingredientsData.filter(item => {
           if (!item.expirationDate) return false;
           const isExpired = checkExpired(item.expirationDate);
@@ -129,99 +189,171 @@ export default function FridgeManager() {
           return isExpired;
         });
 
-        console.log(`📊 Tìm thấy ${expiredIngredients.length} nguyên liệu hết hạn:`, expiredIngredients.map(i => i.ingredientName));
+        // Lọc các nguyên liệu gần hết hạn (chưa hết hạn nhưng trong vòng 3 ngày)
+        const expiringSoonIngredients = ingredientsData.filter(item => {
+          if (!item.expirationDate) return false;
+          const isExpired = checkExpired(item.expirationDate);
+          const isExpiringSoon = checkExpiringSoon(item.expirationDate);
+          // Chỉ lấy những nguyên liệu gần hết hạn và chưa hết hạn
+          if (isExpiringSoon && !isExpired) {
+            console.log(`  ⏰ ${item.ingredientName} (${item.expirationDate}): GẦN HẾT HẠN`);
+            return true;
+          }
+          return false;
+        });
 
-        if (expiredIngredients.length > 0) {
-          console.log(`📊 Bắt đầu tạo notification cho ${expiredIngredients.length} nguyên liệu hết hạn`);
+        console.log(`📊 Tìm thấy ${expiredIngredients.length} nguyên liệu hết hạn:`, expiredIngredients.map(i => i.ingredientName));
+        console.log(`⏰ Tìm thấy ${expiringSoonIngredients.length} nguyên liệu gần hết hạn:`, expiringSoonIngredients.map(i => i.ingredientName));
+
+        // Tạo notification cho cả nguyên liệu hết hạn và gần hết hạn
+        // Thêm flag để phân biệt loại notification
+        const expiredItemsWithType = expiredIngredients.map(item => ({ ...item, notificationType: 'expired' }));
+        const expiringSoonItemsWithType = expiringSoonIngredients.map(item => ({ ...item, notificationType: 'expiringSoon' }));
+        const allNotificationItems = [...expiredItemsWithType, ...expiringSoonItemsWithType];
+
+        if (allNotificationItems.length > 0) {
+          // Fetch danh sách notifications hiện có để tránh trùng lặp
+          let existingNotifications = [];
+          try {
+            const notificationsRes = await axios.get(`/users/${userId}/notifications`);
+            existingNotifications = notificationsRes.data || [];
+            console.log(`📋 Đã fetch ${existingNotifications.length} notifications hiện có`);
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:156',message:'Fetched existing notifications',data:{existingCount:existingNotifications.length,existingInventoryIds:existingNotifications.map(n=>n.inventoryItemId)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+          } catch (error) {
+            console.warn("⚠️ Không thể fetch notifications hiện có:", error);
+          }
           
-          // Tạo notification cho từng nguyên liệu hết hạn
-          const notificationPromises = expiredIngredients.map(async (item) => {
+          // Tạo Set các inventoryItemId đã có notification
+          const existingInventoryIds = new Set(
+            existingNotifications
+              .filter(n => n.type === 'INVENTORY_EXPIRING' && n.inventoryItemId)
+              .map(n => Number(n.inventoryItemId))
+          );
+          
+          console.log(`📋 Có ${existingInventoryIds.size} nguyên liệu đã có notification:`, Array.from(existingInventoryIds));
+          
+          // Lọc bỏ các nguyên liệu đã có notification (cả trong DB và trong session)
+          const itemsNeedingNotification = allNotificationItems.filter(item => {
+            const inventoryId = Number(item.id);
+            const alreadyHasNotificationInDB = existingInventoryIds.has(inventoryId);
+            const alreadyCreatedInSession = notificationCreationTracker.has(inventoryId);
+            const shouldSkip = alreadyHasNotificationInDB || alreadyCreatedInSession;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:185',message:'Checking if notification needed',data:{inventoryId:inventoryId,ingredientName:item.ingredientName,alreadyHasNotificationInDB:alreadyHasNotificationInDB,alreadyCreatedInSession:alreadyCreatedInSession,shouldSkip:shouldSkip},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'K'})}).catch(()=>{});
+            // #endregion
+            
+            if (shouldSkip) {
+              console.log(`⏭️ Bỏ qua ${item.ingredientName} (ID: ${inventoryId}) - ${alreadyHasNotificationInDB ? 'đã có notification trong DB' : 'đã tạo trong session này'}`);
+            }
+            return !shouldSkip;
+          });
+          
+          console.log(`📊 Cần tạo notification cho ${itemsNeedingNotification.length}/${allNotificationItems.length} nguyên liệu`);
+
+          if (itemsNeedingNotification.length === 0) {
+            console.log("ℹ️ Tất cả nguyên liệu đã có notification, không cần tạo mới");
+            return;
+          }
+          
+          console.log(`📊 Bắt đầu tạo notification cho ${itemsNeedingNotification.length} nguyên liệu`);
+          
+          // Tạo notification cho từng nguyên liệu
+          const notificationPromises = itemsNeedingNotification.map(async (item) => {
             const formatDate = (d) => {
               if (!d) return "N/A";
               const dt = new Date(d);
               return dt.toLocaleDateString('vi-VN');
             };
             
-            const notificationMessage = `${item.ingredientName} đã hết hạn (${formatDate(item.expirationDate)})`;
+            // Tính số ngày còn lại
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const expiry = new Date(item.expirationDate);
+            expiry.setHours(0, 0, 0, 0);
+            const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
             
-            // Tạo notification qua API backend
-            // Backend expects NotificationRequestDTO - thử nhiều format
-            const notificationPayloads = [
-              // Format 1: camelCase với inventoryItemId là number
-              {
-                message: notificationMessage,
-                type: "EXPIRED_INGREDIENT",
-                inventoryItemId: Number(item.id)
-              },
-              // Format 2: camelCase với inventoryItemId là string
-              {
-                message: notificationMessage,
-                type: "EXPIRED_INGREDIENT",
-                inventoryItemId: String(item.id)
-              },
-              // Format 3: snake_case
-              {
-                message: notificationMessage,
-                type: "EXPIRED_INGREDIENT",
-                inventory_item_id: Number(item.id)
-              },
-              // Format 4: chỉ có message và type (không có inventoryItemId)
-              {
-                message: notificationMessage,
-                type: "EXPIRED_INGREDIENT"
-              }
-            ];
-
-            let lastError = null;
-            for (let i = 0; i < notificationPayloads.length; i++) {
-              const notificationPayload = notificationPayloads[i];
-              try {
-                console.log(`📝 [Format ${i + 1}] Đang tạo notification cho: ${item.ingredientName}`, {
-                  message: notificationMessage,
-                  inventoryItemId: item.id,
-                  userId: userId,
-                  endpoint: `/users/${userId}/notifications`,
-                  payload: notificationPayload
-                });
-
-                const response = await axios.post(`/users/${userId}/notifications`, notificationPayload, {
-                  headers: token ? { Authorization: `Bearer ${token}` } : {},
-                });
-                
-                console.log(`✅ Đã tạo notification thành công cho ${item.ingredientName} (Format ${i + 1}):`, response.data);
-                return { success: true, item: item.ingredientName, data: response.data, format: i + 1 };
-              } catch (notifError) {
-                lastError = notifError;
-                const errorDetails = {
-                  status: notifError.response?.status,
-                  statusText: notifError.response?.statusText,
-                  data: notifError.response?.data,
-                  message: notifError.response?.data?.message || notifError.message,
-                  endpoint: `/users/${userId}/notifications`,
-                  payload: notificationPayload,
-                  format: i + 1
-                };
-                console.warn(`⚠️ Format ${i + 1} failed cho ${item.ingredientName}:`, errorDetails);
-                
-                // Nếu không phải lỗi 400, không thử format khác
-                if (notifError.response?.status !== 400) {
-                  break;
-                }
-              }
+            // Tạo message khác nhau tùy theo loại notification
+            let notificationMessage;
+            if (item.notificationType === 'expired') {
+              notificationMessage = `${item.ingredientName} đã hết hạn (${formatDate(item.expirationDate)})`;
+            } else {
+              // expiringSoon
+              const daysText = diffDays === 0 ? 'hôm nay' : diffDays === 1 ? '1 ngày nữa' : `${diffDays} ngày nữa`;
+              notificationMessage = `${item.ingredientName} sắp hết hạn (còn ${daysText} - ${formatDate(item.expirationDate)})`;
             }
             
-            // Nếu tất cả format đều fail
-            const errorDetails = {
-              status: lastError?.response?.status,
-              statusText: lastError?.response?.statusText,
-              data: lastError?.response?.data,
-              message: lastError?.response?.data?.message || lastError?.message,
-              endpoint: `/users/${userId}/notifications`,
-              allPayloads: notificationPayloads
+            // Tạo notification qua API backend
+            // Backend enum: NotificationType { INVENTORY_EXPIRING, GENERAL }
+            // Sử dụng INVENTORY_EXPIRING cho cả nguyên liệu hết hạn và sắp hết hạn
+            const inventoryId = Number(item.id);
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:152',message:'Creating notification payload',data:{itemId:item.id,inventoryId:inventoryId,ingredientName:item.ingredientName,expirationDate:item.expirationDate,notificationMessage:notificationMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            
+            // Sử dụng format đúng: camelCase với inventoryItemId là number
+            // Chỉ tạo 1 notification duy nhất, không thử nhiều format
+            const notificationPayload = {
+              message: notificationMessage,
+              type: "INVENTORY_EXPIRING",
+              inventoryItemId: inventoryId
             };
-            console.error(`❌ Tất cả format đều fail cho ${item.ingredientName}:`, errorDetails);
-            console.error("Full error response:", JSON.stringify(errorDetails, null, 2));
-            return { success: false, item: item.ingredientName, error: lastError, details: errorDetails };
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:228',message:'Attempting single notification creation',data:{payload:notificationPayload,itemId:item.id,inventoryId:inventoryId,ingredientName:item.ingredientName},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'G'})}).catch(()=>{});
+            // #endregion
+            
+            try {
+              console.log(`📝 Đang tạo notification cho: ${item.ingredientName}`, {
+                message: notificationMessage,
+                itemId: item.id,
+                inventoryId: inventoryId,
+                userId: userId,
+                endpoint: `/users/${userId}/notifications`,
+                payload: notificationPayload
+              });
+
+              // Đảm bảo Content-Type là application/json
+              const response = await axios.post(
+                `/users/${userId}/notifications`, 
+                notificationPayload,
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                  }
+                }
+              );
+              
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:250',message:'Notification created successfully',data:{responseData:response.data,itemName:item.ingredientName,inventoryId:inventoryId},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'L'})}).catch(()=>{});
+              // #endregion
+              
+              // Đánh dấu đã tạo notification cho inventoryId này trong session
+              notificationCreationTracker.add(inventoryId);
+              
+              console.log(`✅ Đã tạo notification thành công cho ${item.ingredientName}:`, response.data);
+              return { success: true, item: item.ingredientName, data: response.data };
+            } catch (notifError) {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:258',message:'Notification creation failed',data:{status:notifError.response?.status,errorMessage:notifError.response?.data?.message||notifError.message,payload:notificationPayload,inventoryId:inventoryId},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'I'})}).catch(()=>{});
+              // #endregion
+              
+              const errorDetails = {
+                status: notifError.response?.status,
+                statusText: notifError.response?.statusText,
+                data: notifError.response?.data,
+                message: notifError.response?.data?.message || notifError.message,
+                endpoint: `/users/${userId}/notifications`,
+                payload: notificationPayload
+              };
+              console.error(`❌ Không thể tạo notification cho ${item.ingredientName}:`, errorDetails);
+              return { success: false, item: item.ingredientName, error: notifError, details: errorDetails };
+            }
           });
 
           // Đợi tất cả notifications được tạo
@@ -248,11 +380,18 @@ export default function FridgeManager() {
           } else {
             console.warn("⚠️ Không có notification nào được tạo thành công, không refresh sidebar");
           }
+          
+          // Reset flag sau khi xử lý xong
+          isProcessingNotificationsRef.current = false;
         } else {
           console.log("ℹ️ Không có nguyên liệu hết hạn");
+          // Reset flag ngay cả khi không có nguyên liệu hết hạn
+          isProcessingNotificationsRef.current = false;
         }
       } catch (error) {
         console.error("Error fetching ingredients:", error);
+        // Reset flag khi có lỗi
+        isProcessingNotificationsRef.current = false;
       }
     };
 

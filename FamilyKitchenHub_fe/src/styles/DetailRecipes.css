@@ -306,6 +306,35 @@
   white-space: pre-wrap;
   position: relative;
   z-index: 1;
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar cho phần instructions */
+.instructions-section>span::-webkit-scrollbar {
+  width: 8px;
+}
+
+.instructions-section>span::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.instructions-section>span::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.instructions-section>span::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+}
+
+/* Firefox scrollbar */
+.instructions-section>span {
+  scrollbar-width: thin;
+  scrollbar-color: #f97316 #f3f4f6;
 }
 
 /* Right Content */
