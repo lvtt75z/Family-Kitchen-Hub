@@ -1,0 +1,211 @@
+/* ===========================
+   EDIT PROFILE - ORANGE THEME
+=========================== */
+
+.edit-profile-container {
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+}
+
+.profile-wrapper {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* Profile Header with Orange Gradient */
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border-radius: 16px;
+    color: white;
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+}
+
+.user-info-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Save Button - White on Orange */
+.save-button {
+    background-color: white !important;
+    color: #f97316 !important;
+    font-weight: 700 !important;
+    padding: 10px 24px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+.save-button:hover {
+    background-color: #fff5f0 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Form Card with Orange Border */
+.form-card {
+    margin-bottom: 24px;
+    min-height: 600px;
+    border-radius: 16px !important;
+    border: 2px solid #ffe8dc !important;
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.08) !important;
+    background: linear-gradient(135deg, #fff5f0 0%, #ffffff 100%) !important;
+}
+
+.form-card-content {
+    padding: 32px !important;
+}
+
+.form-grid {
+    align-items: stretch;
+    justify-content: center;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    max-width: 550px;
+    height: 100%;
+}
+
+/* Section Title with Orange Accent */
+.section-title {
+    margin-bottom: 24px !important;
+    font-weight: 700 !important;
+    text-align: center;
+    color: #111827 !important;
+    font-size: 20px !important;
+    position: relative;
+    padding-bottom: 12px;
+}
+
+.section-title::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #f97316, #ea580c);
+    border-radius: 2px;
+}
+
+.form-field {
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+/* TextField Customization with Orange Theme */
+.MuiTextField-root .MuiOutlinedInput-root {
+    border-radius: 12px !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #fed7aa !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #f97316 !important;
+    border-width: 2px !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+    color: #f97316 !important;
+}
+
+/* Select Customization */
+.MuiSelect-root {
+    border-radius: 12px !important;
+}
+
+.MuiFormControl-root .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #fed7aa !important;
+}
+
+.MuiFormControl-root .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #f97316 !important;
+    border-width: 2px !important;
+}
+
+/* Checkbox Group with Orange Accent */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fafafa;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+}
+
+.checkbox-item {
+    width: fit-content;
+}
+
+/* Checkbox Color */
+.MuiCheckbox-root.Mui-checked {
+    color: #f97316 !important;
+}
+
+.MuiCheckbox-root:hover {
+    background-color: rgba(249, 115, 22, 0.04) !important;
+}
+
+/* FormControlLabel */
+.MuiFormControlLabel-label {
+    font-size: 14px !important;
+    color: #374151 !important;
+}
+
+/* Avatar Border */
+.MuiAvatar-root {
+    border: 3px solid white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Email Icon Color */
+.MuiInputAdornment-root svg {
+    color: #f97316 !important;
+}
+
+/* Snackbar Alert */
+.MuiAlert-standardSuccess {
+    background-color: #ecfdf5 !important;
+    color: #065f46 !important;
+}
+
+.MuiAlert-standardError {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+
+    .user-info-section {
+        flex-direction: column;
+    }
+
+    .form-card-content {
+        padding: 20px !important;
+    }
+
+    .checkbox-group {
+        padding: 12px;
+    }
+}

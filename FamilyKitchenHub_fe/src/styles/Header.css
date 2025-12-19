@@ -1,0 +1,81 @@
+.abs-fridge {
+  width: 260px;
+  height: 480px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #e9f0f7, #f9fcff);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 
+      12px 12px 28px rgba(0,0,0,0.1),
+      -6px -6px 16px rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
+}
+
+.abs-door {
+  height: 40%;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #dce8f6, #eef6ff);
+  position: relative;
+  box-shadow: inset 4px 4px 10px rgba(0,0,0,0.05),
+              inset -4px -4px 12px rgba(255,255,255,0.8);
+}
+
+.abs-line {
+  position: absolute;
+  left: 20px;
+  top: 30%;
+  width: 50%;
+  height: 6px;
+  background: rgba(120,140,160,0.3);
+  border-radius: 8px;
+}
+
+.abs-line.short {
+  top: 50%;
+  width: 30%;
+}
+
+.abs-body {
+  flex: 1;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #dfe9f4, #f5fbff);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: inset 4px 4px 10px rgba(0,0,0,0.04),
+              inset -4px -4px 12px rgba(255,255,255,0.8);
+}
+
+.abs-shelf {
+  height: 12px;
+  background: rgba(150, 170, 190, 0.25);
+  border-radius: 6px;
+}
+
+.abs-bubbles {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.bubble {
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  backdrop-filter: blur(8px);
+}
+
+.bubble.mid {
+  width: 30px;
+  height: 30px;
+}
+
+.bubble.small {
+  width: 18px;
+  height: 18px;
+}

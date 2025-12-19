@@ -1,0 +1,61 @@
+/* RegisterForm.css */
+
+.form-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fbbf24;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fbbf24;
+  background-color: #fff;
+}
+
+.step-circle.active {
+  background-color: #fbbf24;
+  color: #fff;
+}
+
+.step-line {
+  width: 48px;
+  height: 2px;
+  background-color: #fcd34d;
+  margin: 0 8px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #fbbf24;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}

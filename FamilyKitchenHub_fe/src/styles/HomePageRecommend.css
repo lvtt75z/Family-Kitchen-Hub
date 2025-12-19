@@ -1,0 +1,116 @@
+/* HomePageRecommend.css */
+.recommend-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #fff;
+  overflow: hidden;
+  font-family: 'Quicksand', sans-serif;
+  gap: 20px;
+}
+
+.left-col {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 40px;
+  padding-right: 60px;
+  background-color: #fdfdfd;
+  height: 100%;
+}
+
+.animation-wrapper {
+  max-width: 500px;
+  width: 100%;
+}
+
+.right-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px;
+  padding-left: 0;
+  height: 100%;
+}
+
+.recommend-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+
+.recommend-subtitle {
+  font-size: 1.25rem;
+  color: #6b7280;
+  margin-bottom: 40px;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.recommend-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  color: white;
+  padding: 16px 40px;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+  transition: all 0.3s ease;
+}
+
+.recommend-btn:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(255, 107, 107, 0.5);
+}
+
+.recommend-btn:active {
+  transform: translateY(-1px);
+}
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .recommend-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .recommend-container {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 40px 0;
+  }
+
+  .left-col {
+    height: 50vh;
+    padding: 20px;
+    justify-content: center;
+    padding-right: 20px;
+  }
+
+  .right-col {
+    align-items: center;
+    text-align: center;
+    padding: 40px 20px;
+    padding-left: 20px;
+  }
+}

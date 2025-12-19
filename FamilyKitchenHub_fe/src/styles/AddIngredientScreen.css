@@ -1,0 +1,251 @@
+.ai-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+}
+.ai-search {
+  width: 60%;
+  padding: 10px 12px 10px 36px; /* chừa chỗ cho icon */
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+  font-size: 15px;
+  color: black;
+  background-color: whitesmoke;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='gray' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M10 2a8 8 0 015.29 13.71l4 4a1 1 0 01-1.42 1.42l-4-4A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px;
+}
+/* Modal card */
+.ai-modal {
+  margin: 40%;
+  width: 540px;
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 12px;
+  padding: 34px;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(2,6,23,0.25);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+   transform: translateX(-120%); /* dịch sang trái 50px */
+}
+
+/* header (title + small image + close) */
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-title-wrap {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.ai-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ai-sub {
+  color: #6b7280;
+  font-size: 13px;
+  margin: 2px 0 0 0;
+}
+
+.ai-chibi {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* close btn */
+.ai-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 18px;
+  padding: 6px;
+  border-radius: 8px;
+}
+.ai-close-btn:hover { background: #f3f4f6; color: #111827; }
+
+/* tabs */
+.ai-tabs {
+  display: flex;
+  gap: 10px;
+  background: transparent;
+  margin-top: 4px;
+}
+
+.ai-tabs button {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: #374151;
+}
+.ai-tabs button.active {
+  background: #0ea5a0; /* teal-like active */
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(14,165,160,0.14);
+  border-color: rgba(14,165,160,0.12);
+}
+
+/* form layout */
+.ai-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
+  align-items: start;
+}
+
+/* single-column full width rows (use class .full) */
+.ai-form .full {
+  grid-column: 1 / -1;
+}
+
+/* labels + inputs */
+.ai-form label {
+  display: block;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ai-form input,
+.ai-form select,
+.ai-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e6e9ee;
+  background: #fbfbfb;
+  font-size: 14px;
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.ai-form input:focus,
+.ai-form select:focus,
+.ai-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.08);
+  background: #fff;
+}
+
+/* select arrow spacing */
+.ai-form .select {
+  position: relative;
+}
+
+/* expiry/date control small calendar icon */
+.ai-form .date-row {
+  position: relative;
+}
+.ai-form .date-row input[type="date"] {
+  padding-right: 38px;
+}
+.ai-form .date-row::after {
+  content: "📅";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 16px;
+}
+
+/* quantity + unit row style */
+.ai-quantity {
+  display: flex;
+  gap: 8px;
+}
+.ai-quantity input:first-child { flex: 1; }
+.ai-quantity select { width: 110px; }
+
+/* location + category small selects */
+.ai-small-select {
+  width: 100%;
+}
+
+/* nutrition inputs row (Protein / Fat / Calories) */
+.ai-nutrition {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.ai-nutrition input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* quick add area (suggestions) */
+.ai-suggestions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.ai-card {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #eef2f7;
+  color: black;
+
+    transition: transform 0.2s 
+ease, box-shadow 0.2s 
+ease;
+}
+.ai-card:hover {
+  transform: translateY(-6px); /* đẩy card lên 6px */
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12); /* bóng đổ mạnh hơn khi hover */
+}
+/* submit button */
+.ai-submit {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: none;
+  background: #60a5fa; /* blue */
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(96,165,250,0.18);
+}
+.ai-submit:hover { background: #3b82f6; transform: translateY(-2px); }
+
+/* responsive */
+@media (max-width: 640px) {
+  .ai-modal { width: 100%; height: 100%; border-radius: 0; padding: 18px; }
+  .ai-form { grid-template-columns: 1fr; }
+  .ai-nutrition { grid-template-columns: 1fr 1fr 1fr; }
+  .ai-suggestions { grid-template-columns: repeat(2, 1fr); }
+}

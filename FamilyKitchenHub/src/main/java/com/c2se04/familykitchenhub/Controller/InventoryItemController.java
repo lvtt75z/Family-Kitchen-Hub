@@ -1,0 +1,153 @@
+package com.c2se04.familykitchenhub.Controller;
+
+import com.c2se04.familykitchenhub.DTO.InventoryItemDTO;
+import com.c2se04.familykitchenhub.DTO.InventoryItemResponseDTO;
+import com.c2se04.familykitchenhub.model.InventoryItem;
+import com.c2se04.familykitchenhub.Service.InventoryItemService;
+import com.c2se04.familykitchenhub.Exception.ResourceNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/inventory")
+public class InventoryItemController {
+
+    private final InventoryItemService inventoryItemService;
+
+    @Autowired
+    public InventoryItemController(InventoryItemService inventoryItemService) {
+        this.inventoryItemService = inventoryItemService;
+    }
+
+    // POST /api/inventory - CREATE
+    @PostMapping
+    public ResponseEntity<InventoryItemResponseDTO> createItem(@RequestBody InventoryItemDTO itemDTO) {
+        InventoryItem item = new InventoryItem();
+        // Thiết lập các trường đơn giản trước khi lưu
+        item.setQuantity(itemDTO.getQuantity());
+        item.setExpirationDate(itemDTO.getExpirationDate());
+        item.setPurchasedAt(itemDTO.getPurchasedAt());
+
+        // Item entity cần có User và Ingredient được thiết lập trong Service
+        InventoryItem newItem = inventoryItemService.createInventoryItem(
+                item,
+                itemDTO.getUserId(),
+                itemDTO.getIngredientId()
+        );
+
+        return new ResponseEntity<>(convertToResponseDTO(newItem), HttpStatus.CREATED); // 201 Created
+    }
+
+    // GET /api/inventory/user/{userId} - READ ALL by User ID
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<InventoryItemResponseDTO>> getInventoryForUser(@PathVariable Long userId) {
+        List<InventoryItemResponseDTO> items = inventoryItemService.getInventoryByUserId(userId)
+                .stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(items);
+    }
+
+    // GET /api/inventory/{id} - READ BY ID
+    @GetMapping("/{id}")
+    public ResponseEntity<InventoryItemResponseDTO> getItemById(@PathVariable Long id) {
+        InventoryItem item = inventoryItemService.getInventoryItemById(id);
+        return ResponseEntity.ok(convertToResponseDTO(item));
+    }
+
+    // PUT /api/inventory/{id} - UPDATE
+    @PutMapping("/{id}")
+    public ResponseEntity<InventoryItemResponseDTO> updateItem(@PathVariable Long id, @RequestBody InventoryItemDTO itemDTO) {
+        InventoryItem updateDetails = new InventoryItem();
+
+        // Chỉ copy các trường cần cập nhật (quantity và expirationDate)
+        updateDetails.setQuantity(itemDTO.getQuantity());
+        updateDetails.setExpirationDate(itemDTO.getExpirationDate());
+        updateDetails.setPurchasedAt(itemDTO.getPurchasedAt());
+
+        InventoryItem updatedItem = inventoryItemService.updateInventoryItem(id, updateDetails);
+        return ResponseEntity.ok(convertToResponseDTO(updatedItem)); // 200 OK
+    }
+
+    // DELETE /api/inventory/{id} - DELETE
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
+        inventoryItemService.deleteInventoryItem(id);
+        return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
+    @PatchMapping("/{id}/ack-expiration")
+    public ResponseEntity<InventoryItemResponseDTO> acknowledgeExpiration(@PathVariable Long id) {
+        InventoryItem item = inventoryItemService.acknowledgeExpiration(id);
+        return ResponseEntity.ok(convertToResponseDTO(item));
+    }
+
+    /**
+     * Endpoint để thực hiện trừ nguyên liệu khỏi tủ lạnh ảo theo công thức.
+     * Ví dụ: POST /api/inventory/deduct?userId=1&recipeId=10
+     */
+    @PostMapping("/deduct")
+    public ResponseEntity<?> performRecipeExecution(
+            @RequestParam Long userId,
+            @RequestParam Long recipeId) {
+        try {
+            inventoryItemService.deductIngredientsForRecipe(userId, recipeId);
+            return ResponseEntity.ok("Thực hiện món ăn thành công! Nguyên liệu đã được trừ khỏi tủ lạnh ảo.");
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private InventoryItemResponseDTO convertToResponseDTO(InventoryItem item) {
+        InventoryItemResponseDTO dto = new InventoryItemResponseDTO();
+        dto.setId(item.getId());
+        dto.setQuantity(item.getQuantity());
+        dto.setExpirationDate(item.getExpirationDate());
+        dto.setPurchasedAt(item.getPurchasedAt());
+        dto.setExpirationNotified(Boolean.TRUE.equals(item.getExpirationNotified()));
+        dto.setExpirationNotifiedAt(item.getExpirationNotifiedAt());
+        dto.setExpirationAcknowledgedAt(item.getExpirationAcknowledgedAt());
+        
+        // Tính toán ngày cảnh báo và trạng thái cảnh báo
+        LocalDate today = LocalDate.now();
+        if (item.getExpirationDate() != null) {
+            LocalDate warningDate = item.getExpirationDate().minusDays(2);
+            dto.setExpirationWarningDate(warningDate);
+            
+            // Kiểm tra item có đang cần cảnh báo không
+            // Cần cảnh báo nếu: hôm nay >= ngày cảnh báo VÀ chưa hết hạn
+            boolean needsWarning = !today.isBefore(warningDate) && !today.isAfter(item.getExpirationDate());
+            dto.setNeedsWarning(needsWarning);
+            
+            // Kiểm tra item đã hết hạn chưa
+            boolean isExpired = today.isAfter(item.getExpirationDate());
+            dto.setExpired(isExpired);
+        } else {
+            dto.setNeedsWarning(false);
+            dto.setExpired(false);
+        }
+        
+        if (item.getIngredient() != null) {
+            dto.setIngredientId(item.getIngredient().getId());
+            dto.setIngredientName(item.getIngredient().getName());
+            // Ưu tiên lấy unit từ InventoryItem, nếu null thì lấy từ Ingredient
+            if (item.getUnit() != null && !item.getUnit().trim().isEmpty()) {
+                dto.setUnit(item.getUnit());
+            } else if (item.getIngredient().getUnit() != null && !item.getIngredient().getUnit().trim().isEmpty()) {
+                dto.setUnit(item.getIngredient().getUnit());
+            } else {
+                dto.setUnit("g"); // Fallback: sử dụng "g" (gram) thay vì "unit"
+            }
+        }
+        return dto;
+    }
+}

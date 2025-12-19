@@ -1,0 +1,113 @@
+/* Enhanced Instructions Section CSS - Alternative Step-by-Step Layout */
+
+/* Option 1: If you want to manually split instructions in the JSX */
+.instructions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.instruction-step {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    border-left: 4px solid #f97316;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+.instruction-step:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.12);
+}
+
+.instruction-step-number {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.instruction-step-text {
+    flex: 1;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #374151;
+}
+
+/* Option 2: Auto-numbered list with CSS */
+.instructions-auto-list {
+    counter-reset: step-counter;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.instructions-auto-list>li {
+    list-style: none;
+    counter-increment: step-counter;
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    border-left: 4px solid #f97316;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+.instructions-auto-list>li:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.12);
+}
+
+.instructions-auto-list>li::before {
+    content: counter(step-counter);
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .instructions-section {
+        max-width: 100%;
+        padding: 20px;
+    }
+
+    .instruction-step,
+    .instructions-auto-list>li {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .instruction-step-number,
+    .instructions-auto-list>li::before {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .instruction-step-text {
+        font-size: 14px;
+    }
+}

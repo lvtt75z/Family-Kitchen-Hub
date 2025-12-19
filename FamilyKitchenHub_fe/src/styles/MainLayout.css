@@ -1,0 +1,19 @@
+.main-layout {
+  width: 100%; /* đảm bảo full màn hình */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow-x: hidden;
+}
+
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  margin: 0 auto;
+
+  box-sizing: border-box;
+  /* Thêm nếu muốn background khác cho content */
+  /* background: #f9fafb; */
+}

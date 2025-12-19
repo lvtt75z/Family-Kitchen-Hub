@@ -1,0 +1,327 @@
+.ingredients-page {
+    width: 100%;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h2 {
+    margin: 0;
+    font-size: 2rem;
+    color: #2c3e50;
+}
+
+/* Buttons */
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-edit {
+    padding: 0.5rem 1rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.btn-edit:hover {
+    background: #2980b9;
+}
+
+.btn-delete {
+    padding: 0.5rem 1rem;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-delete:hover {
+    background: #c0392b;
+}
+
+/* Table */
+.ingredients-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: #f8f9fa;
+}
+
+.data-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.data-table th:last-child {
+    text-align: right;
+}
+
+.data-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    color: #2c3e50;
+}
+
+.data-table td:last-child {
+    text-align: right;
+}
+
+.data-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.no-data {
+    text-align: center;
+    color: #95a5a6;
+    padding: 3rem !important;
+}
+
+/* Nutritional Info Cell */
+.nutritional-info-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+/* Inline Editing Styles */
+.editing-row {
+    background: #fff8e1 !important;
+}
+
+.inline-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px solid #667eea;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    background: white;
+}
+
+.inline-input:focus {
+    outline: none;
+    border-color: #764ba2;
+}
+
+.btn-save {
+    padding: 0.5rem 1rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.btn-save:hover {
+    background: #229954;
+}
+
+.btn-cancel {
+    padding: 0.5rem 1rem;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.btn-cancel:hover {
+    background: #7f8c8d;
+}
+
+.btn-expand {
+    padding: 0.5rem 1rem;
+    background: #9b59b6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.btn-expand:hover {
+    background: #8e44ad;
+}
+
+/* Expandable Row Styles */
+.sub-row {
+    background: #fff !important;
+    border-left: 5px solid #667eea;
+    box-shadow: inset 0 0 10px rgba(102, 126, 234, 0.1);
+}
+
+.sub-row td {
+    padding: 2rem !important;
+}
+
+.sub-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sub-content strong {
+    font-size: 1.1rem;
+    color: #667eea;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0;
+    text-align: left;
+}
+
+/* Tags Manager */
+.tags-manager {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.current-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+    min-height: 60px;
+    align-items: center;
+}
+
+.tag-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.no-tags {
+    color: #95a5a6;
+    font-style: italic;
+    font-size: 0.95rem;
+}
+
+.tags-selection {
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+}
+
+.tags-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.tag-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    border: 1px solid #e0e0e0;
+}
+
+.tag-checkbox:hover {
+    background: #667eea;
+    border-color: #667eea;
+    transform: translateX(4px);
+}
+
+.tag-checkbox:hover span {
+    color: white;
+}
+
+.tag-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.tag-checkbox span {
+    font-size: 0.9rem;
+    color: #2c3e50;
+}
+
+.loading-text {
+    color: #95a5a6;
+    font-style: italic;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .data-table {
+        font-size: 0.9rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
