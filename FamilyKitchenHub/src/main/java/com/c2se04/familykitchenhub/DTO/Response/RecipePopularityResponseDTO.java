@@ -57,4 +57,3 @@ public class RecipePopularityResponseDTO {
         this.bookmarkCount = bookmarkCount;
     }
 }
-

@@ -9,7 +9,7 @@ const FLASK_API_URL = import.meta.env.DEV
 /**
  * Check if an inventory item is still valid (not expired)
  * @param {Object} inventoryItem - Inventory item with expirationDate
- * @returns {boolean} - True if item is still valid, false if expired
+ * @returns {boolean} - True if item is still valid, false if expired 
  */
 const isInventoryItemValid = (inventoryItem) => {
   if (!inventoryItem.expirationDate) {

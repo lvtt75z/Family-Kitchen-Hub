@@ -9,7 +9,7 @@ const HomePageRecommend = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="recommend-container">
+        <div className="recommend-container ">
             {/* Left Column: Animation */}
             <div className="left-col">
                 <div className="animation-wrapper">

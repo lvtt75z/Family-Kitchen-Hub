@@ -8,7 +8,8 @@ import {
   BookOpen,
   HeartPulse,
   Apple,
-  ShoppingCart,
+  ShoppingCart,   
+  MessageCircle,
   Sparkles,
   ChevronLeft,
   ChevronRight,
@@ -249,7 +250,7 @@ function Home() {
 
             <div className="hero-buttons">
               <button
-                className="btn-primary"
+                className="btn-primary-suggestions"
                 onClick={() => navigate("/manage/recommendations")}
                 style={{
                   display: "flex",
@@ -304,7 +305,8 @@ function Home() {
                     return (
                       <div
                         key={recipeId || `bookmarked-${index}`}
-                        className="bookmarked-slide"
+                        className="bookmarked-slide scroll-reveal"
+                        style={{ transitionDelay: `${index * 0.3}s` }}
                       >
                         <div
                           className="bookmarked-card"
@@ -383,8 +385,8 @@ function Home() {
       {/* ===== RECIPE SUGGESTIONS (From backend) ===== */}
       <section className="suggestions-section">
         <div className="suggestions-header">
-          <h2>Recipe Suggestions</h2>
-          <p>Danh sách công thức từ hệ thống của bạn.</p>
+          <h2>Top 10 Recipes</h2>
+          <p>(Calculated based on total of views, bookmarks and searches)</p>
         </div>
 
         {loading ? (
@@ -400,11 +402,11 @@ function Home() {
               return (
                 <div
                   key={recipeId || `recipe-${index}`}
-                  className="suggestion-card"
+                  className="suggestion-card scroll-reveal"
                   onClick={() => recipeId && navigate(`/manage/recipesdetails/${recipeId}`)}
-                  style={{ animationDelay: `${index * 0.3}s` }}
+                  style={{ transitionDelay: `${index * 0.3}s` }}
                 >
-                  <div className="suggestion-image">
+                  <div className="suggestion-image scroll-reveal" style={{ transitionDelay: `${index * 0.3}s` }}>
                     <img
                       src={convertMediaUrl(recipe.imageUrl) || "/placeholder-recipe.jpg"}
                       alt={recipe.title}
@@ -460,7 +462,7 @@ function Home() {
         </div>
 
         <div className="features-grid">
-          <div className="feature-card scroll-reveal" style={{ transitionDelay: '0.1s' }}>
+          <div className="feature-card scroll-reveal" style={{ transitionDelay: '0.3s' }}>
             <div className="feature-icon">
               <Calendar size={24} color="#f97316" />
             </div>
@@ -489,7 +491,7 @@ function Home() {
               <HeartPulse size={24} color="#ef4444" />
             </div>
             <h3>Family Health Profiles</h3>
-            <p>Customized nutrition tracking per family member.</p>
+            <p>Protect family health by avoiding allergy food.</p>
           </div>
 
           <div className="feature-card scroll-reveal" style={{ transitionDelay: '0.5s' }}>
@@ -497,15 +499,15 @@ function Home() {
               <Apple size={24} color="#84cc16" />
             </div>
             <h3>Nutrition Tracking</h3>
-            <p>Stay on top of calories and nutrients.</p>
+            <p>Enough calories with AI recommendations.</p>
           </div>
 
           <div className="feature-card scroll-reveal" style={{ transitionDelay: '0.6s' }}>
             <div className="feature-icon">
-              <ShoppingCart size={24} color="#a855f7" />
+              <MessageCircle size={24} color="#a855f7" />
             </div>
-            <h3>Smart Shopping Lists</h3>
-            <p>Auto-generate shopping lists from meal plans.</p>
+            <h3>Recipe Community</h3>
+            <p>Discuss and try new dishes through comments.</p>
           </div>
         </div>
       </section>

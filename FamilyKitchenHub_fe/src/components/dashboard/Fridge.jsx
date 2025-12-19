@@ -71,11 +71,11 @@ export default function FridgeManager() {
       console.log("  ⚠️ Không có expirationDate");
       return false;
     }
-    
+
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       // Xử lý nhiều format date có thể có
       let expiry;
       if (typeof expDate === 'string') {
@@ -86,14 +86,15 @@ export default function FridgeManager() {
       } else {
         expiry = new Date(expDate);
       }
-      
+
       expiry.setHours(0, 0, 0, 0);
-      
-      const isExpired = expiry < today;
+
+      // Expires the day AFTER the expiration date
+      const isExpired = today > expiry; // Changed from expiry < today
       const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
-      
+
       console.log(`  📅 Expiration check: ${expDate} -> ${expiry.toISOString().split('T')[0]}, Today: ${today.toISOString().split('T')[0]}, Diff: ${diffDays} days, Expired: ${isExpired}`);
-      
+
       return isExpired;
     } catch (error) {
       console.error("  ❌ Lỗi khi parse expirationDate:", expDate, error);
@@ -161,9 +162,6 @@ export default function FridgeManager() {
         const userId = userData.id;
         const token = localStorage.getItem("token");
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:110',message:'useEffect triggered - fetching ingredients',data:{userId:userId,timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'J'})}).catch(()=>{});
-        // #endregion
 
         const res = await axios.get(`/inventory/user/${userId}`);
         const ingredientsData = res.data || [];
@@ -219,9 +217,6 @@ export default function FridgeManager() {
             existingNotifications = notificationsRes.data || [];
             console.log(`📋 Đã fetch ${existingNotifications.length} notifications hiện có`);
             
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:156',message:'Fetched existing notifications',data:{existingCount:existingNotifications.length,existingInventoryIds:existingNotifications.map(n=>n.inventoryItemId)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
-            // #endregion
           } catch (error) {
             console.warn("⚠️ Không thể fetch notifications hiện có:", error);
           }
@@ -242,9 +237,6 @@ export default function FridgeManager() {
             const alreadyCreatedInSession = notificationCreationTracker.has(inventoryId);
             const shouldSkip = alreadyHasNotificationInDB || alreadyCreatedInSession;
             
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:185',message:'Checking if notification needed',data:{inventoryId:inventoryId,ingredientName:item.ingredientName,alreadyHasNotificationInDB:alreadyHasNotificationInDB,alreadyCreatedInSession:alreadyCreatedInSession,shouldSkip:shouldSkip},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'K'})}).catch(()=>{});
-            // #endregion
             
             if (shouldSkip) {
               console.log(`⏭️ Bỏ qua ${item.ingredientName} (ID: ${inventoryId}) - ${alreadyHasNotificationInDB ? 'đã có notification trong DB' : 'đã tạo trong session này'}`);
@@ -291,9 +283,6 @@ export default function FridgeManager() {
             // Sử dụng INVENTORY_EXPIRING cho cả nguyên liệu hết hạn và sắp hết hạn
             const inventoryId = Number(item.id);
             
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:152',message:'Creating notification payload',data:{itemId:item.id,inventoryId:inventoryId,ingredientName:item.ingredientName,expirationDate:item.expirationDate,notificationMessage:notificationMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
             
             // Sử dụng format đúng: camelCase với inventoryItemId là number
             // Chỉ tạo 1 notification duy nhất, không thử nhiều format
@@ -303,9 +292,6 @@ export default function FridgeManager() {
               inventoryItemId: inventoryId
             };
             
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:228',message:'Attempting single notification creation',data:{payload:notificationPayload,itemId:item.id,inventoryId:inventoryId,ingredientName:item.ingredientName},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'G'})}).catch(()=>{});
-            // #endregion
             
             try {
               console.log(`📝 Đang tạo notification cho: ${item.ingredientName}`, {
@@ -329,9 +315,6 @@ export default function FridgeManager() {
                 }
               );
               
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:250',message:'Notification created successfully',data:{responseData:response.data,itemName:item.ingredientName,inventoryId:inventoryId},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'L'})}).catch(()=>{});
-              // #endregion
               
               // Đánh dấu đã tạo notification cho inventoryId này trong session
               notificationCreationTracker.add(inventoryId);
@@ -339,9 +322,6 @@ export default function FridgeManager() {
               console.log(`✅ Đã tạo notification thành công cho ${item.ingredientName}:`, response.data);
               return { success: true, item: item.ingredientName, data: response.data };
             } catch (notifError) {
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/a9dd74c9-4bef-4c8b-acc3-44996fbc7452',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Fridge.jsx:258',message:'Notification creation failed',data:{status:notifError.response?.status,errorMessage:notifError.response?.data?.message||notifError.message,payload:notificationPayload,inventoryId:inventoryId},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'I'})}).catch(()=>{});
-              // #endregion
               
               const errorDetails = {
                 status: notifError.response?.status,
@@ -360,7 +340,7 @@ export default function FridgeManager() {
           const results = await Promise.all(notificationPromises);
           const successCount = results.filter(r => r.success).length;
           const failCount = results.filter(r => !r.success).length;
-          
+
           console.log(`📊 Kết quả tạo notification: ${successCount} thành công, ${failCount} thất bại`);
           if (successCount > 0) {
             console.log(`✅ Đã tạo thành công ${successCount} notification(s):`, results.filter(r => r.success).map(r => r.item));
@@ -542,10 +522,18 @@ export default function FridgeManager() {
   const getStatus = (expDate) => {
     if (!expDate) return "Fresh";
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today to start of day
     const expiry = new Date(expDate);
-    const diff = (expiry - today) / (1000 * 60 * 60 * 24);
+    expiry.setHours(0, 0, 0, 0); // Normalize expiry to start of day
 
-    if (diff < 0) return "Expired";
+    // Expires the day AFTER expiration date
+    // If today is 2023-10-27 and expiry is 2023-10-26, then today > expiry is true, meaning it's expired.
+    // If today is 2023-10-26 and expiry is 2023-10-26, then today > expiry is false, meaning it's not yet expired.
+    if (today > expiry) return "Expired";
+
+    // Calculate difference in days for "Expiring Soon"
+    const diff = (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+
     if (diff <= 3) return "Expiring Soon";
     return "Fresh";
   };
@@ -608,20 +596,20 @@ export default function FridgeManager() {
       setTimeout(() => {
         setIsLoading(false);
         console.error("Error deleting ingredient:", error);
-        
+
         // Xử lý lỗi chi tiết hơn
         let errorMessage = "Không thể xóa nguyên liệu!";
-        
+
         if (error.response) {
           const status = error.response.status;
           const data = error.response.data;
           const errorMsg = data?.message || data?.error || "";
-          
+
           // Kiểm tra lỗi foreign key constraint
-          if (errorMsg.includes("foreign key constraint") || 
-              errorMsg.includes("Cannot delete or update a parent row") ||
-              errorMsg.includes("user_notifications") ||
-              errorMsg.includes("inventory_item_id")) {
+          if (errorMsg.includes("foreign key constraint") ||
+            errorMsg.includes("Cannot delete or update a parent row") ||
+            errorMsg.includes("user_notifications") ||
+            errorMsg.includes("inventory_item_id")) {
             errorMessage = "Không thể xóa nguyên liệu này vì nó đang được sử dụng trong thông báo. Vui lòng xóa các thông báo liên quan trước.";
           } else if (status === 404) {
             errorMessage = "Không tìm thấy nguyên liệu cần xóa.";
@@ -635,7 +623,7 @@ export default function FridgeManager() {
         } else if (error.message) {
           errorMessage = error.message;
         }
-        
+
         toast.error(errorMessage, {
           position: "top-right",
           autoClose: 5000,
@@ -674,7 +662,7 @@ export default function FridgeManager() {
       {/* Stats Overview */}
       <div className="stats-overview">
         <Tooltip title={getItemsByStatus("Total")} arrow>
-          <div className="stat-card scroll-reveal" style={{ transitionDelay: '0.1s' }}>
+          <div className="stat-card scroll-reveal" style={{ transitionDelay: '1s' }}>
             <div className="stat-icon total">
               <Package size={28} />
             </div>
@@ -726,10 +714,10 @@ export default function FridgeManager() {
           return (
             <div
               key={item.id}
-              className={`ingredient-card ${status
+              className={`ingredient-card scroll-reveal ${status
                 .toLowerCase()
-                .replace(" ", "-")} scroll-reveal`}
-              style={{ transitionDelay: `${index * 0.05}s` }}
+                .replace(" ", "-")}`}
+              style={{ transitionDelay: `${index * 0.1}s` }}
             >
               <div className="card-header">
                 <h3>{item.ingredientName}</h3>
@@ -889,8 +877,8 @@ export default function FridgeManager() {
                   />
 
                   <DatePicker
-                    disablePast
                     label="Purchased Date (Ngày mua)"
+                    maxDate={dayjs()}
                     value={newIngredient.purchasedAt ? dayjs(newIngredient.purchasedAt) : null}
                     onChange={(newValue) =>
                       setNewIngredient({
