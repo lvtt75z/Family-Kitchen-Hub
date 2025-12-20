@@ -269,12 +269,6 @@ export default function FamilyProfiles() {
     setShowAllergies(false);
   }
 
-  // Calculate stats
-  const totalMembers = members.length;
-  const avgAge = members.length > 0
-    ? Math.round(members.reduce((sum, m) => sum + (m.age || 0), 0) / members.length)
-    : 0;
-  const withGoals = members.filter(m => m.healthGoals).length;
 
   return (
     <div className="family-profiles-wrap">
@@ -283,8 +277,8 @@ export default function FamilyProfiles() {
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={executeDelete}
-        title="Xóa thành viên"
-        message={`Bạn có chắc chắn muốn xóa thành viên "${confirmModal.memberName}" không? Hành động này không thể hoàn tác.`}
+        title="Delete Member"
+        message={`Are you sure you want to delete member "${confirmModal.memberName}"? This action cannot be undone.`}
         isLoading={isLoading}
       />
 
@@ -304,7 +298,7 @@ export default function FamilyProfiles() {
                 <Users size={24} className="header-icon" />
                 Family Members
               </h2>
-              <p className="muted">Quản lý thông tin gia đình</p>
+              <p className="muted">Manage family information</p>
             </div>
             <button className="btn primary" onClick={() => openModal()}>
               <PlusCircle size={16} /> Add Member
@@ -315,10 +309,10 @@ export default function FamilyProfiles() {
             {members.length === 0 ? (
               <div className="empty-state">
                 <Users size={48} />
-                <h3>Chưa có thành viên nào</h3>
-                <p>Thêm thành viên gia đình để bắt đầu</p>
+                <h3>No members yet</h3>
+                <p>Add family members to get started</p>
                 <button className="btn primary" onClick={() => openModal()}>
-                  <PlusCircle size={16} /> Thêm thành viên đầu tiên
+                  <PlusCircle size={16} /> Add first member
                 </button>
               </div>
             ) : (
@@ -335,14 +329,14 @@ export default function FamilyProfiles() {
                     <div className="meta">
                       <h4>{m.name}</h4>
                       <div className="sub-info">
-                        {m.age && <span className="age-badge">{m.age} tuổi</span>}
+                        {m.age && <span className="age-badge">{m.age} years old</span>}
                         {m.gender && (
                           <span className="age-badge">
                             {m.gender === "MALE"
-                              ? "Nam"
+                              ? "Male"
                               : m.gender === "FEMALE"
-                                ? "Nữ"
-                                : "Khác"}
+                                ? "Female"
+                                : "Other"}
                           </span>
                         )}
                       </div>
@@ -352,7 +346,7 @@ export default function FamilyProfiles() {
                       <button
                         type="button"
                         className="btn ghost"
-                        title="Chỉnh sửa"
+                        title="Edit"
                         onClick={() => openModal(m)}
                       >
                         <Pen size={14} />
@@ -360,7 +354,7 @@ export default function FamilyProfiles() {
                       <button
                         type="button"
                         className="btn danger"
-                        title="Xóa"
+                        title="Delete"
                         onClick={() => handleDeleteClick(m)}
                       >
                         <Trash2 size={14} />
@@ -375,9 +369,9 @@ export default function FamilyProfiles() {
                           <Activity size={14} />
                         </div>
                         <div className="info-text">
-                          {m.gender && <span>Giới tính: <strong>{m.gender === 'MALE' ? 'Nam' : m.gender === 'FEMALE' ? 'Nữ' : 'Khác'}</strong></span>}
-                          {m.heightCm && <span> • Cao: <strong>{m.heightCm}cm</strong></span>}
-                          {m.weightKg && <span> • Nặng: <strong>{m.weightKg}kg</strong></span>}
+                          {m.gender && <span>Gender: <strong>{m.gender === 'MALE' ? 'Male' : m.gender === 'FEMALE' ? 'Female' : 'Other'}</strong></span>}
+                          {m.heightCm && <span> • Height: <strong>{m.heightCm}cm</strong></span>}
+                          {m.weightKg && <span> • Weight: <strong>{m.weightKg}kg</strong></span>}
                         </div>
                       </div>
                     )}
@@ -388,7 +382,7 @@ export default function FamilyProfiles() {
                           <Heart size={14} />
                         </div>
                         <div className="info-text">
-                          <strong>Sức khỏe:</strong> {m.healthConditions}
+                          <strong>Health:</strong> {m.healthConditions}
                         </div>
                       </div>
                     )}
@@ -399,18 +393,18 @@ export default function FamilyProfiles() {
                           <Target size={14} />
                         </div>
                         <div className="info-text">
-                          <strong>Sở thích:</strong> {m.tastePreferences}
+                          <strong>Preferences:</strong> {m.tastePreferences}
                         </div>
                       </div>
                     )}
 
                     {!m.healthConditions && !m.tastePreferences && !m.gender && (!m.allergies || m.allergies.length === 0) && (
-                      <p className="no-info">Chưa có thông tin bổ sung</p>
+                      <p className="no-info">No additional information</p>
                     )}
 
                     {m.allergies && m.allergies.length > 0 && (
                       <div className="section">
-                        <div className="section-title">Nguyên liệu dị ứng:</div>
+                        <div className="section-title">Allergies:</div>
                         <div className="chips">
                           {m.allergies.map((algo) => (
                             <span key={algo.id} className="chip danger">
@@ -440,13 +434,13 @@ export default function FamilyProfiles() {
                     loop={true}
                     style={{ width: 150, height: 150 }}
                   />
-                  <p>Đang xử lý...</p>
+                  <p>Processing...</p>
                 </div>
               )}
 
               <div className="modal-header">
                 <h3>
-                  {editing ? "✏️ Chỉnh sửa thành viên" : "➕ Thêm thành viên mới"}
+                  {editing ? "✏️ Edit Member" : "➕ Add New Member"}
                 </h3>
                 <button className="icon-btn close-btn" onClick={closeModal}>
                   ✕
@@ -458,20 +452,20 @@ export default function FamilyProfiles() {
                 onSubmit={editing ? handleEditSubmit : handleAdd}
               >
                 <label>
-                  Tên thành viên
+                  Member Name
                   <input
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    placeholder="Ví dụ: Nguyễn Văn A"
+                    placeholder="e.g., John Doe"
                     required
                   />
                 </label>
 
                 <div className="form-grid">
                   <label>
-                    Tuổi
+                    Age
                     <input
                       type="number"
                       name="age"
@@ -481,24 +475,24 @@ export default function FamilyProfiles() {
                     />
                   </label>
                   <label>
-                    Giới tính
+                    Gender
                     <select
                       name="gender"
                       value={form.gender}
                       onChange={handleChange}
                       style={{ color: "black" }}
                     >
-                      <option value="">-- Chọn giới tính --</option>
-                      <option value="MALE">Nam</option>
-                      <option value="FEMALE">Nữ</option>
-                      <option value="OTHER">Khác</option>
+                      <option value="">-- Select Gender --</option>
+                      <option value="MALE">Male</option>
+                      <option value="FEMALE">Female</option>
+                      <option value="OTHER">Other</option>
                     </select>
                   </label>
                 </div>
 
                 <div className="form-grid">
                   <label>
-                    Chiều cao (cm)
+                    Height (cm)
                     <input
                       type="number"
                       step="0.1"
@@ -509,7 +503,7 @@ export default function FamilyProfiles() {
                     />
                   </label>
                   <label>
-                    Cân nặng (kg)
+                    Weight (kg)
                     <input
                       type="number"
                       step="0.1"
@@ -522,52 +516,52 @@ export default function FamilyProfiles() {
                 </div>
 
                 <label>
-                  Mức độ hoạt động
+                  Activity Level
                   <select
                     name="activityLevel"
                     value={form.activityLevel}
                     onChange={handleChange}
                     style={{ color: "black" }}
                   >
-                    <option value="">-- Chọn mức độ --</option>
-                    <option value="SEDENTARY">Ít vận động</option>
-                    <option value="LIGHT">Vận động nhẹ</option>
-                    <option value="MODERATE">Vận động vừa phải</option>
-                    <option value="ACTIVE">Năng động</option>
+                    <option value="">-- Select Activity Level --</option>
+                    <option value="SEDENTARY">Sedentary</option>
+                    <option value="LIGHT">Light</option>
+                    <option value="MODERATE">Moderate</option>
+                    <option value="ACTIVE">Active</option>
                   </select>
                 </label>
 
                 <label>
-                  Sở thích ẩm thực
+                  Taste Preferences
                   <input
                     type="text"
                     name="tastePreferences"
                     value={form.tastePreferences}
                     onChange={handleChange}
-                    placeholder="Thích ăn cay, ngọt..."
+                    placeholder="e.g., spicy, sweet..."
                   />
                 </label>
 
                 <label>
-                  Tình trạng sức khỏe
+                  Health Conditions
                   <textarea
                     name="healthConditions"
                     value={form.healthConditions}
                     onChange={handleChange}
-                    placeholder="Tiểu đường, cao huyết áp..."
+                    placeholder="e.g., diabetes, hypertension..."
                   />
                 </label>
 
                 <div className="form-group" style={{ marginBottom: 16 }}>
-                  <label>Nguyên liệu dị ứng</label>
+                  <label>Allergies</label>
                   <div className="custom-combobox">
                     <div
                       className="combobox-trigger"
                       onClick={() => setShowAllergies(!showAllergies)}
                     >
                       {form.allergyIds && form.allergyIds.length > 0
-                        ? `Đã chọn ${form.allergyIds.length} nguyên liệu dị ứng`
-                        : "-- Chọn nguyên liệu dị ứng --"}
+                        ? `${form.allergyIds.length} allergies selected`
+                        : "-- Select Allergies --"}
                       <ChevronDown size={16} />
                     </div>
                     {showAllergies && (
@@ -593,10 +587,10 @@ export default function FamilyProfiles() {
                     className="btn ghost"
                     onClick={closeModal}
                   >
-                    Hủy
+                    Cancel
                   </button>
                   <button type="submit" className="btn primary">
-                    {editing ? "Cập nhật" : "Thêm mới"}
+                    {editing ? "Update" : "Add New"}
                   </button>
                 </div>
               </form>
