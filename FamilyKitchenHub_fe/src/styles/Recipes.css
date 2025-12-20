@@ -53,17 +53,48 @@
 
 .welcome-section_recipe {
   display: flex;
-  justify-content: center;
-  /* Can giữa ngang */
+  justify-content: space-between;
   align-items: center;
-  /* Can giữa dọc */
   height: 200px;
-  /* Tùy chỉnh */
   text-align: center;
+  padding: 0 20px;
+}
+
+.welcome-recipe-text {
+  flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .welcome-recipe-text h1 {
   font-size: 2rem;
+}
+
+.btn-add-recipe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  transition: all 0.3s ease;
+  font-family: "Quicksand", sans-serif;
+}
+
+.btn-add-recipe:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+}
+
+.btn-add-recipe:active {
+  transform: translateY(0);
 }
 
 /* ===============================

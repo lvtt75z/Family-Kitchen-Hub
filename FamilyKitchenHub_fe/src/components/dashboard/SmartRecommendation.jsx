@@ -202,9 +202,6 @@ export default function SmartRecommendation() {
         {recipes.map((recipe, index) => {
           const matchScore = recipe.matchScore || 0;
           const scoreColor = getMatchScoreColor(matchScore);
-          const caloriesPercent = targetMealCalories
-            ? Math.min(100, Math.round((recipe.totalCalories / targetMealCalories) * 100))
-            : 0;
 
           return (
             <div key={recipe.id || index} className="recommendation-card">
@@ -251,24 +248,37 @@ export default function SmartRecommendation() {
                   </div>
                 )}
 
-                {/* Nutrition Info */}
-                {recipe.totalCalories && targetMealCalories && (
-                  <div className="nutrition-info">
-                    <div className="nutrition-label">
-                      <span>Năng lượng cung cấp</span>
-                      <span className="nutrition-value">
-                        {recipe.totalCalories} / {targetMealCalories} kcal ({caloriesPercent}%)
-                      </span>
+                {/* Instructions */}
+                {recipe.instructions && (
+                  <div className="instructions-info" style={{
+                    marginTop: '12px',
+                    marginBottom: '12px',
+                    padding: '12px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '6px'
+                    }}>
+                      Hướng dẫn:
                     </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${caloriesPercent}%`,
-                          backgroundColor: caloriesPercent >= 90 ? "#10b981" : caloriesPercent >= 70 ? "#f59e0b" : "#f97316",
-                        }}
-                      ></div>
-                    </div>
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#6b7280',
+                      lineHeight: '1.5',
+                      margin: 0,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {recipe.instructions}
+                    </p>
                   </div>
                 )}
 

@@ -9,7 +9,7 @@ const FLASK_API_URL = import.meta.env.DEV
 /**
  * Check if an inventory item is still valid (not expired)
  * @param {Object} inventoryItem - Inventory item with expirationDate
- * @returns {boolean} - True if item is still valid, false if expired 
+ * @returns {boolean} - True if item is still valid, false if expired
  */
 const isInventoryItemValid = (inventoryItem) => {
   if (!inventoryItem.expirationDate) {
@@ -28,7 +28,7 @@ const isInventoryItemValid = (inventoryItem) => {
 };
 
 /**
- * Get smart meal recommendations from Flask AI API
+ * Get smart meal recommendations from Flask AI API           
  * This function:
  * 1. Fetches inventory items from Spring Boot backend
  * 2. Fetches family member profiles (with allergies) from Spring Boot backend
@@ -55,6 +55,13 @@ export const getMealRecommendations = async () => {
     const familyResponse = await axios.get(`/family-members/user/${userId}`);
     const familyMembers = familyResponse.data || [];
 
+    // Step 2.5: Fetch all allergies and ingredients to map allergies correctly
+    const allergiesResponse = await axios.get("/allergies");
+    const allAllergies = allergiesResponse.data || [];
+    
+    const ingredientsResponse = await axios.get("/ingredients");
+    const allIngredients = ingredientsResponse.data || [];
+
     // Step 3: Fetch all recipes
     const recipesResponse = await axios.get("/recipes");
     const allRecipes = recipesResponse.data || [];
@@ -63,6 +70,8 @@ export const getMealRecommendations = async () => {
     console.log("📊 Fetched Data for Recommendations:");
     console.log("  Inventory Items:", inventoryItems.length, inventoryItems);
     console.log("  Family Members:", familyMembers.length, familyMembers);
+    console.log("  Allergies:", allAllergies.length, allAllergies);
+    console.log("  Ingredients:", allIngredients.length);
     console.log("  Recipes:", allRecipes.length);
     if (allRecipes.length > 0) {
       console.log("  Sample Recipe:", allRecipes[0]);
@@ -74,6 +83,55 @@ export const getMealRecommendations = async () => {
     const expiredCount = inventoryItems.length - validInventoryItems.length;
     if (expiredCount > 0) {
       console.log(`🗑️ Excluding ${expiredCount} expired ingredient(s) from recommendations`);
+    }
+    
+    // Collect all allergy information from all family members for filtering
+    // Map allergies to ingredients by both ID and name
+    const allergyIngredientIds = new Set(); // Set of ingredient IDs that are allergens
+    const allergyNames = new Set(); // Set of allergy names (normalized)
+    
+    familyMembers.forEach(member => {
+      if (member.allergies && Array.isArray(member.allergies)) {
+        member.allergies.forEach(allergy => {
+          // Add allergy ID (in case allergy.id = ingredient.id)
+          if (allergy.id) {
+            allergyIngredientIds.add(allergy.id);
+          }
+          
+          // Add allergy name (normalized for comparison)
+          if (allergy.name) {
+            allergyNames.add(allergy.name.toLowerCase().trim());
+          }
+        });
+      }
+    });
+    
+    // Map allergies to ingredients: find ingredients that match allergy names
+    allIngredients.forEach(ingredient => {
+      const ingredientNameNormalized = (ingredient.name || "").toLowerCase().trim();
+      if (allergyNames.has(ingredientNameNormalized)) {
+        // If ingredient name matches allergy name, add ingredient ID to filter set
+        if (ingredient.id) {
+          allergyIngredientIds.add(ingredient.id);
+        }
+      }
+    });
+    
+    if (allergyIngredientIds.size > 0 || allergyNames.size > 0) {
+      console.log(`🚫 Found allergies to filter:`);
+      console.log(`  - Allergy IDs:`, Array.from(allergyIngredientIds));
+      console.log(`  - Allergy Names:`, Array.from(allergyNames));
+      console.log(`  - Mapped Ingredient IDs:`, Array.from(allergyIngredientIds));
+      
+      // Debug: Check sample recipe ingredients structure
+      if (allRecipes.length > 0) {
+        const sampleRecipe = allRecipes[0];
+        console.log(`🔍 Sample Recipe Ingredients Structure:`, sampleRecipe.ingredients);
+        if (sampleRecipe.ingredients && sampleRecipe.ingredients.length > 0) {
+          console.log(`  Sample Ingredient:`, sampleRecipe.ingredients[0]);
+          console.log(`  Ingredient fields:`, Object.keys(sampleRecipe.ingredients[0]));
+        }
+      }
     }
     
     const flaskPayload = {
@@ -143,6 +201,20 @@ export const getMealRecommendations = async () => {
     if (recommendations.length === 0 || recommendations.length > allRecipes.length * 0.8) {
       console.log("⚠️ Flask returned too many/all recipes. Filtering locally based on ingredient availability...");
       
+      // Debug: Check which recipes contain the allergen ingredient ID
+      if (allergyIngredientIds.size > 0) {
+        const recipesWithAllergen = allRecipes.filter(recipe => {
+          const recipeIngredients = recipe.ingredients || [];
+          return recipeIngredients.some(ing => {
+            const ingId = ing.ingredientId || ing.id;
+            return ingId && allergyIngredientIds.has(ingId);
+          });
+        });
+        console.log(`🔍 Found ${recipesWithAllergen.length} recipes containing allergen ingredient IDs:`, 
+          recipesWithAllergen.map(r => ({ id: r.id, title: r.title, ingredients: r.ingredients?.map(i => ({ id: i.ingredientId || i.id, name: i.ingredientName || i.name })) }))
+        );
+      }
+      
       // Use the already filtered validInventoryItems (expired items already excluded)
       // Create a map of valid inventory ingredient IDs for quick lookup
       const validInventoryIngredientIds = new Set(
@@ -153,6 +225,33 @@ export const getMealRecommendations = async () => {
       recommendations = allRecipes
         .map(recipe => {
           const recipeIngredients = recipe.ingredients || [];
+          
+          // Filter out recipes that contain allergens (check by both ID and name)
+          if (allergyIngredientIds.size > 0 || allergyNames.size > 0) {
+            const hasAllergen = recipeIngredients.some(ing => {
+              // Check by ingredient ID
+              const ingId = ing.ingredientId || ing.id;
+              if (ingId && allergyIngredientIds.has(ingId)) {
+                console.log(`🚫 Recipe "${recipe.title}" contains allergen by ID:`, ingId, ing);
+                return true;
+              }
+              
+              // Check by ingredient name (normalized)
+              const ingName = (ing.ingredientName || ing.name || "").toLowerCase().trim();
+              if (ingName && allergyNames.has(ingName)) {
+                console.log(`🚫 Recipe "${recipe.title}" contains allergen by name:`, ingName, ing);
+                return true;
+              }
+              
+              return false;
+            });
+            
+            if (hasAllergen) {
+              console.log(`❌ Filtered out recipe "${recipe.title}" due to allergen`);
+              return null; // Skip recipes with allergens
+            }
+          }
+          
           const availableCount = recipeIngredients.filter(ing => 
             validInventoryIngredientIds.has(ing.ingredientId || ing.id)
           ).length;
@@ -200,6 +299,33 @@ export const getMealRecommendations = async () => {
       // Calculate ingredient availability (only count non-expired ingredients)
       // Use the already filtered validInventoryItems (expired items already excluded)
       const recipeIngredients = recipe.ingredients || [];
+      
+      // Double-check: Filter out recipes that contain allergens (safety check)
+      // Check by both ID and name
+      if (allergyIngredientIds.size > 0 || allergyNames.size > 0) {
+        const hasAllergen = recipeIngredients.some(ing => {
+          // Check by ingredient ID
+          const ingId = ing.ingredientId || ing.id;
+          if (ingId && allergyIngredientIds.has(ingId)) {
+            console.log(`🚫 [Enrich] Recipe "${recipe.title}" contains allergen by ID:`, ingId, ing);
+            return true;
+          }
+          
+          // Check by ingredient name (normalized)
+          const ingName = (ing.ingredientName || ing.name || "").toLowerCase().trim();
+          if (ingName && allergyNames.has(ingName)) {
+            console.log(`🚫 [Enrich] Recipe "${recipe.title}" contains allergen by name:`, ingName, ing);
+            return true;
+          }
+          
+          return false;
+        });
+        
+        if (hasAllergen) {
+          console.log(`❌ [Enrich] Filtered out recipe "${recipe.title}" due to allergen`);
+          return null; // Skip recipes with allergens
+        }
+      }
       const availableIngredients = recipeIngredients.filter((ing) =>
         validInventoryItems.some((inv) => inv.ingredientId === (ing.ingredientId || ing.id))
       );
