@@ -978,9 +978,9 @@ export default function RecipeDashboard() {
           <div className="welcome-recipe-text">
             <h1>Make a recipe just for you</h1>
           </div>
-          <button className="btn-add-recipe" onClick={openModal}>
+          {/* <button className="btn-add-recipe" onClick={openModal}>
             <Plus size={18} /> Add Recipe
-          </button>
+          </button> */}
         </div>
       </header>
 
@@ -1019,7 +1019,7 @@ export default function RecipeDashboard() {
       {/* RECIPES GRID */}
       <div className="recipes-heading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginBottom: '10px' }}>
         <h2 className="all-recipes">All Recipes</h2>
-        <button
+        {/* <button
           className="add-btn"
           onClick={openModal}
           style={{
@@ -1029,7 +1029,7 @@ export default function RecipeDashboard() {
           }}
         >
           + Add Recipe
-        </button>
+        </button> */}
       </div>
 
       {/* Recipe Filter Buttons - Below "All Recipes" heading */}
@@ -1200,7 +1200,7 @@ export default function RecipeDashboard() {
                 )}
                 
                 {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                {/* <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
                     className="btn-add"
                     onClick={(e) => {
@@ -1225,7 +1225,7 @@ export default function RecipeDashboard() {
                   >
                     ✏️ Cập nhật
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           ))
