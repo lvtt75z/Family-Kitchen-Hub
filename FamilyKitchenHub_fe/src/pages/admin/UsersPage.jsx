@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllUsers, updateUser, deleteUser } from '../../service/userService';
+import { getAllUsers, updateUser } from '../../service/userService';
 import { toast } from 'react-toastify';
 import './UsersPage.css';
 
@@ -68,18 +68,7 @@ export default function UsersPage() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-            try {
-                await deleteUser(id);
-                toast.success('User deleted successfully!');
-                fetchUsers();
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                toast.error('Failed to delete user');
-            }
-        }
-    };
+
 
     const formatDate = (dateString) => {
         if (!dateString) return '-';
@@ -198,20 +187,7 @@ export default function UsersPage() {
                                                         <path d="M15 5l4 4"></path>
                                                     </svg>
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    className="btn-icon btn-delete-icon"
-                                                    onClick={() => handleDelete(user.id)}
-                                                    title="Xóa"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M3 6h18"></path>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                        <path d="M10 11v6"></path>
-                                                        <path d="M14 11v6"></path>
-                                                    </svg>
-                                                </button>
+
                                             </div>
                                         </td>
                                     </tr>

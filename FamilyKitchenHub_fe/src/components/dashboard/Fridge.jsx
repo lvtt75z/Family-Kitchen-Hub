@@ -735,19 +735,19 @@ export default function FridgeManager() {
               </div>
 
               <p className="info">
-                <strong>Số lượng:</strong> {item.quantity ?? "-"}
+                <strong>Quantity:</strong> {item.quantity ?? "-"}
               </p>
 
               <p className="info">
-                <strong>Đơn vị:</strong> {item.unit || "-"}
+                <strong>Unit:</strong> {item.unit || "-"}
               </p>
 
               <p className="info">
-                <strong>Mã nguyên liệu:</strong> {item.ingredientId ?? "-"}
+                <strong>Ingredient ID:</strong> {item.ingredientId ?? "-"}
               </p>
 
               <div className="nutrition">
-                <p className="nutrition-title">Hạn sử dụng:</p>
+                <p className="nutrition-title">Expiration Date:</p>
                 <p className="nutrition-value">
                   {formatDate(item.expirationDate)}
                 </p>

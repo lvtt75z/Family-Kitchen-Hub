@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import cookingAnimation from "../assets/kitchen_cooking.mp4";
 import axios from "../hooks/axios";
-import { getTopBookmarkedRecipes, addRecipeBookmark, removeRecipeBookmark, getRecipeById } from "../service/recipesApi";
+import { getTopBookmarkedRecipes, addRecipeBookmark, removeRecipeBookmark } from "../service/recipesApi";
 import { Heart } from "lucide-react";
 import { convertMediaUrl } from "../utils/mediaUtils";
 
@@ -145,7 +145,7 @@ function Home() {
     const userId = userData?.user?.id || userData?.id || localStorage.getItem("userId");
 
     if (!userId) {
-      alert("Vui lòng đăng nhập để bookmark công thức");
+      alert("Please login to bookmark recipes");
       return;
     }
 
@@ -178,7 +178,7 @@ function Home() {
       );
     } catch (error) {
       console.error("Error toggling bookmark:", error);
-      alert("Có lỗi xảy ra khi bookmark công thức");
+      alert("An error occurred while bookmarking recipe");
     } finally {
       setBookmarking(prev => ({ ...prev, [recipeId]: false }));
     }
@@ -239,9 +239,9 @@ function Home() {
                   gap: "8px",
                 }}
               >
-                <Sparkles size={18} /> Gợi ý thực đơn ngay
+                <Sparkles size={18} /> Get Menu Suggestions
               </button>
-              <button className="btn-outline">Khám phá ngay</button>
+              <button className="btn-outline">Explore Now</button>
             </div>
           </div>
 
@@ -263,9 +263,9 @@ function Home() {
 
         <div className="recipe-content">
           {loadingBookmarked ? (
-            <p>Đang tải công thức được bookmark nhiều nhất...</p>
+            <p>Loading most bookmarked recipes...</p>
           ) : topBookmarked.length === 0 ? (
-            <p>Chưa có công thức nào được bookmark.</p>
+            <p>No recipes have been bookmarked yet.</p>
           ) : (
             <div className="bookmarked-slider">
               <div className="slider-container">
@@ -371,9 +371,9 @@ function Home() {
         </div>
 
         {loading ? (
-          <p>Đang tải danh sách công thức...</p>
+          <p>Loading recipe list...</p>
         ) : recipes.length === 0 ? (
-          <p>Chưa có công thức nào.</p>
+          <p>No recipes available.</p>
         ) : (
           <div className="suggestions-grid">
             {recipes.map((recipe, index) => {

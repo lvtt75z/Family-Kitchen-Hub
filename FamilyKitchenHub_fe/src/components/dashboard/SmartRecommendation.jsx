@@ -11,7 +11,7 @@ import "../../styles/SmartRecommendation.css";
 export default function SmartRecommendation() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState("Đang kiểm tra tủ lạnh...");
+  const [loadingMessage, setLoadingMessage] = useState("Checking fridge...");
   const [recommendations, setRecommendations] = useState(null);
   const [error, setError] = useState(null);
   const [cookingRecipe, setCookingRecipe] = useState(null); // Track which recipe is being cooked
@@ -23,10 +23,10 @@ export default function SmartRecommendation() {
 
         // Simulate loading steps
         const messages = [
-          "Đang kiểm tra tủ lạnh...",
-          "Đang tính toán calo cho cả nhà...",
-          "Đang phân tích sở thích...",
-          "Đang tìm món phù hợp nhất...",
+          "Checking fridge...",
+          "Calculating calories for family...",
+          "Analyzing preferences...",
+          "Finding best matches...",
         ];
 
         let messageIndex = 0;
@@ -45,7 +45,7 @@ export default function SmartRecommendation() {
         setRecommendations(data);
       } catch (err) {
         console.error("Error fetching recommendations:", err);
-        setError(err.response?.data?.message || "Không thể tải gợi ý. Vui lòng thử lại.");
+        setError(err.response?.data?.message || "Unable to load recommendations. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -78,8 +78,8 @@ export default function SmartRecommendation() {
       const ingredientsList = response.deductedIngredients
         ?.map((ing) => {
           const status = ing.removedFromInventory
-            ? " (đã hết)"
-            : ` (còn lại: ${ing.remainingQuantity} ${ing.unit})`;
+            ? " (out of stock)"
+            : ` (remaining: ${ing.remainingQuantity} ${ing.unit})`;
           return `• ${ing.ingredientName}: -${ing.deductedQuantity} ${ing.unit}${status}`;
         })
         .join("\n") || "";
@@ -87,7 +87,7 @@ export default function SmartRecommendation() {
       toast.success(
         <div>
           <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
-            {response.message || `Đã nấu món "${recipeTitle}" thành công!`}
+            {response.message || `Successfully cooked "${recipeTitle}"!`}
           </div>
           {ingredientsList && (
             <div style={{ fontSize: "12px", whiteSpace: "pre-line", textAlign: "left" }}>
@@ -108,7 +108,7 @@ export default function SmartRecommendation() {
       // Show error message
       const errorMessage = error.response?.data?.message ||
         error.message ||
-        "Không thể nấu món ăn. Vui lòng kiểm tra nguyên liệu trong tủ lạnh.";
+        "Unable to cook recipe. Please check ingredients in fridge.";
 
       toast.error(errorMessage, { autoClose: 4000 });
     } finally {
@@ -139,7 +139,7 @@ export default function SmartRecommendation() {
           <div className="loading-animation">
             <Sparkles size={48} color="#f97316" />
           </div>
-          <h2>Đang tạo gợi ý thực đơn...</h2>
+          <h2>Creating menu recommendations...</h2>
           <p className="loading-message">{loadingMessage}</p>
           <div className="loading-dots">
             <span></span>
@@ -155,10 +155,10 @@ export default function SmartRecommendation() {
     return (
       <div className="recommendation-container">
         <div className="error-state">
-          <h2>Oops! Có lỗi xảy ra</h2>
+          <h2>Oops! An error occurred</h2>
           <p>{error}</p>
           <button onClick={() => navigate(-1)} className="btn-back">
-            <ArrowLeft size={16} /> Quay lại
+            <ArrowLeft size={16} /> Go Back
           </button>
         </div>
       </div>
@@ -169,10 +169,10 @@ export default function SmartRecommendation() {
     return (
       <div className="recommendation-container">
         <div className="empty-state">
-          <h2>Chưa có gợi ý phù hợp</h2>
-          <p>Vui lòng thêm nguyên liệu vào tủ lạnh để nhận gợi ý.</p>
+          <h2>No recommendations available</h2>
+          <p>Please add ingredients to fridge to get recommendations.</p>
           <button onClick={() => navigate(-1)} className="btn-back">
-            <ArrowLeft size={16} /> Quay lại
+            <ArrowLeft size={16} /> Go Back
           </button>
         </div>
       </div>
@@ -186,14 +186,14 @@ export default function SmartRecommendation() {
       <ToastContainer />
       <div className="recommendation-header">
         <button onClick={() => navigate(-1)} className="btn-back">
-          <ArrowLeft size={16} /> Quay lại
+          <ArrowLeft size={16} /> Go Back
         </button>
         <h1 className="recommendation-title">
-          <Sparkles size={24} /> Hôm nay gia đình ăn gì?
+          <Sparkles size={24} /> What should the family eat today?
         </h1>
         {targetMealCalories && (
           <p className="target-calories">
-            Mục tiêu năng lượng: {targetMealCalories} kcal
+            Target calories: {targetMealCalories} kcal
           </p>
         )}
       </div>
@@ -202,9 +202,6 @@ export default function SmartRecommendation() {
         {recipes.map((recipe, index) => {
           const matchScore = recipe.matchScore || 0;
           const scoreColor = getMatchScoreColor(matchScore);
-          const caloriesPercent = targetMealCalories
-            ? Math.min(100, Math.round((recipe.totalCalories / targetMealCalories) * 100))
-            : 0;
 
           return (
             <div key={recipe.id || index} className="recommendation-card">
@@ -216,7 +213,7 @@ export default function SmartRecommendation() {
                   className="recipe-image"
                 />
                 <div className="match-score-circle" style={{ borderColor: scoreColor }}>
-                  <span style={{ color: scoreColor }}>Phù hợp</span>
+                  <span style={{ color: scoreColor }}>Match</span>
 
                 </div>
               </div>
@@ -251,24 +248,37 @@ export default function SmartRecommendation() {
                   </div>
                 )}
 
-                {/* Nutrition Info */}
-                {recipe.totalCalories && targetMealCalories && (
-                  <div className="nutrition-info">
-                    <div className="nutrition-label">
-                      <span>Năng lượng cung cấp</span>
-                      <span className="nutrition-value">
-                        {recipe.totalCalories} / {targetMealCalories} kcal ({caloriesPercent}%)
-                      </span>
+                {/* Instructions */}
+                {recipe.instructions && (
+                  <div className="instructions-info" style={{
+                    marginTop: '12px',
+                    marginBottom: '12px',
+                    padding: '12px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '6px'
+                    }}>
+                      Instructions:
                     </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${caloriesPercent}%`,
-                          backgroundColor: caloriesPercent >= 90 ? "#10b981" : caloriesPercent >= 70 ? "#f59e0b" : "#f97316",
-                        }}
-                      ></div>
-                    </div>
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#6b7280',
+                      lineHeight: '1.5',
+                      margin: 0,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {recipe.instructions}
+                    </p>
                   </div>
                 )}
 
@@ -277,13 +287,13 @@ export default function SmartRecommendation() {
                   <div className="ingredients-info">
                     <div className="ingredients-summary">
                       <span className="ingredients-label">
-                        Bạn có: {recipe.availableIngredients || 0} / {recipe.totalIngredients || recipe.ingredients.length} nguyên liệu
+                        You have: {recipe.availableIngredients || 0} / {recipe.totalIngredients || recipe.ingredients.length} ingredients
                       </span>
                     </div>
                     {recipe.missingIngredients && recipe.missingIngredients.length > 0 && (
                       <div className="missing-ingredients">
                         <small>
-                          Thiếu: {recipe.missingIngredients.join(", ")}
+                          Missing: {recipe.missingIngredients.join(", ")}
                         </small>
                       </div>
                     )}
@@ -294,12 +304,12 @@ export default function SmartRecommendation() {
                 <div className="recipe-meta">
                   {recipe.cookingTimeMinutes && (
                     <span className="meta-item">
-                      <Clock size={14} /> {recipe.cookingTimeMinutes} phút
+                      <Clock size={14} /> {recipe.cookingTimeMinutes} min
                     </span>
                   )}
                   {recipe.servings && (
                     <span className="meta-item">
-                      <Users size={14} /> {recipe.servings} phần
+                      <Users size={14} /> {recipe.servings} servings
                     </span>
                   )}
                 </div>
@@ -328,13 +338,13 @@ export default function SmartRecommendation() {
                     }}
                   >
                     <ChefHat size={16} />
-                    {cookingRecipe === recipe.id ? "Đang nấu..." : "Nấu"}
+                    {cookingRecipe === recipe.id ? "Cooking..." : "Cook"}
                   </button>
                   <button
                     className="btn-view-recipe"
                     onClick={() => navigate(`/manage/recipesdetails/${recipe.id}`)}
                   >
-                    Xem chi tiết
+                    View Details
                   </button>
                 </div>
               </div>

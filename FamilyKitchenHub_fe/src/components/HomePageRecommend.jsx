@@ -24,18 +24,18 @@ const HomePageRecommend = () => {
             {/* Right Column: Text + CTA */}
             <div className="right-col">
                 <h1 className="recommend-title">
-                    Hôm nay gia đình <br /> ăn gì?
+                    What should the family <br /> eat today?
                 </h1>
                 <p className="recommend-subtitle">
-                    Khám phá thực đơn thông minh được cá nhân hóa bởi AI.
-                    Tiết kiệm thời gian, trọn vẹn dinh dưỡng cho cả gia đình.
+                    Discover smart menu recommendations personalized by AI.
+                    Save time, complete nutrition for the whole family.
                 </p>
                 <button
                     className="recommend-btn"
                     onClick={() => navigate('/manage/recommendations')}
                 >
                     <Sparkles size={24} fill="white" />
-                    Gợi ý ngay
+                    Get Recommendations
                 </button>
             </div>
         </div>

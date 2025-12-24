@@ -11,7 +11,8 @@ import {
   ChevronDown,
   ChefHat,
   CookingPot,
-  Bell
+  Bell,
+  Plus
 } from "lucide-react";
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
@@ -977,6 +978,9 @@ export default function RecipeDashboard() {
           <div className="welcome-recipe-text">
             <h1>Make a recipe just for you</h1>
           </div>
+          {/* <button className="btn-add-recipe" onClick={openModal}>
+            <Plus size={18} /> Add Recipe
+          </button> */}
         </div>
       </header>
 
@@ -1013,8 +1017,19 @@ export default function RecipeDashboard() {
       </div>
 
       {/* RECIPES GRID */}
-      <div className="recipes-heading" style={{ textAlign: 'center', marginBottom: '10px' }}>
+      <div className="recipes-heading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginBottom: '10px' }}>
         <h2 className="all-recipes">All Recipes</h2>
+        {/* <button
+          className="add-btn"
+          onClick={openModal}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontSize: '14px'
+          }}
+        >
+          + Add Recipe
+        </button> */}
       </div>
 
       {/* Recipe Filter Buttons - Below "All Recipes" heading */}
@@ -1183,17 +1198,10 @@ export default function RecipeDashboard() {
                     </div>
                   </div>
                 )}
-                  {/* <button
-                    className="btn-add"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCardClick(r.id);
-                    }}
-                    style={{ flex: 1, backgroundColor: "#f3f4f6", color: "#374151" }}
-                  >
-                    👁️ Xem
-                  </button> */}
-                  {/* <button
+                
+                {/* Action Buttons */}
+                {/* <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <button
                     className="btn-add"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1202,11 +1210,22 @@ export default function RecipeDashboard() {
                     style={{
                       flex: 1,
                       backgroundColor: "#3b82f6",
-                      color: "white"
+                      color: "white",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px"
                     }}
                   >
                     ✏️ Cập nhật
-                  </button> */}
+                  </button>
+                </div> */}
               </div>
             </div>
           ))
