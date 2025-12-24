@@ -9,7 +9,7 @@ CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS
 # --- CẤU HÌNH TRỌNG SỐ (WEIGHTS) ---
 SCORE_ALLERGY_VIOLATION = -9999  # Loại ngay lập tức nếu dị ứng
 SCORE_MISSING_MAIN_INGREDIENT = -500  # Phạt nặng nếu thiếu nguyên liệu chính
-SCORE_EXPIRING_SOON_BONUS = 50  # Thưởng lớn nếu dùng đồ sắp hết hạn (< 3 ngày)
+SCORE_EXPIRING_SOON_BONUS = 10  # Thưởng lớn nếu dùng đồ sắp hết hạn (< 3 ngày)
 SCORE_HAS_INGREDIENT = 10  # Điểm cộng cơ bản khi có nguyên liệu
 SCORE_CATEGORY_MATCH = 5  # Điểm cộng khi đúng sở thích (nhân với số người thích)
 SCORE_CALORIE_MATCH = 5  # Điểm cộng nhẹ nếu calo hợp lý

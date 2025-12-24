@@ -15,6 +15,7 @@
 
 .detail-container {
   display: flex;
+  flex-wrap: wrap;
   gap: 32px;
   align-items: flex-start;
   width: 100%;
@@ -26,7 +27,7 @@
 
 .left-content {
   flex: 1;
-  max-width: 30%;
+  max-width: 33.33%;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -240,8 +241,8 @@
 ========================= */
 
 .instructions-section {
-  flex: 1.4;
-  max-width: 40%;
+  flex: 1;
+  width: 87.5%;
   background: linear-gradient(135deg, #fff5f0 0%, #ffffff 100%);
   padding: 32px;
   border-radius: 20px;
@@ -249,6 +250,46 @@
   box-shadow: 0 4px 16px rgba(249, 115, 22, 0.08);
   position: relative;
   overflow: hidden;
+}
+
+/* Lack of Ingredient Section - Below Instructions */
+.lack-ingredient-section {
+  flex: 1 1 100%;
+  width: 87.5%;
+  background: linear-gradient(135deg, #fff5f0 0%, #ffedd5 100%);
+  padding: 32px;
+  border-radius: 20px;
+  border: 2px solid #f97316;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.1);
+  position: relative;
+  overflow: hidden;
+  order: 3;
+}
+
+.lack-ingredient-section h3 {
+  margin: 0 0 8px 0;
+  color: #c2410c;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-missing-ingredients {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.no-missing-ingredients h3 {
+  color: #059669;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.no-missing-ingredients p {
+  color: #6b7280;
+  font-size: 15px;
 }
 
 .instructions-section::before {
@@ -340,14 +381,17 @@
 /* Right Content */
 .right-content {
   flex: 1;
-  max-width: 30%;
+  max-width: 33.33%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 /* IMAGE */
 .right-image {
   position: relative;
-  width: 100%;
-  max-width: 520px;
+  flex: 1;
+  max-width: 33.33%;
   /* tùy chỉnh theo giao diện của bạn */
   margin: auto;
   padding: 18px;
@@ -1425,5 +1469,141 @@
     width: 40px;
     height: 40px;
     font-size: 28px;
+  }
+}
+
+/* =========================
+   MISSING INGREDIENTS STYLES (Used in Lack of Ingredient Section)
+========================= */
+
+.missing-subtitle {
+  margin: 0 0 16px 0;
+  color: #9a3412;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+
+.missing-ingredients-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+/* Custom scrollbar for missing ingredients list */
+.missing-ingredients-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.missing-ingredients-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.missing-ingredients-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border-radius: 10px;
+}
+
+.missing-ingredients-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+}
+
+.missing-ingredient-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #fed7aa;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.missing-ingredient-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 3px 8px rgba(249, 115, 22, 0.15);
+  border-color: #fb923c;
+}
+
+.missing-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.missing-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 16px;
+}
+
+.missing-quantity {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.missing-quantity strong {
+  color: #ea580c;
+  font-weight: 700;
+}
+
+.current-quantity {
+  color: #fb923c;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.btn-buy {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.25);
+  flex-shrink: 0;
+}
+
+.btn-buy:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.35);
+}
+
+.btn-buy:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.25);
+}
+
+/* Responsive design for missing ingredients */
+@media (max-width: 768px) {
+  .missing-ingredient-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-buy {
+    width: 100%;
+    text-align: center;
+  }
+
+  .lack-ingredient-section {
+    max-width: 100%;
+    margin-top: 20px;
   }
 }

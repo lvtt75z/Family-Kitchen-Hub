@@ -34,6 +34,11 @@ export default function FridgeManager() {
   // Ref để ngăn chặn việc tạo notification trùng lặp khi StrictMode chạy effect hai lần
   const isProcessingNotificationsRef = useRef(false);
 
+  // Tag filtering state
+  const [availableTags, setAvailableTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [ingredientsWithTags, setIngredientsWithTags] = useState([]); // Map ingredientId to tags
+
   const [newIngredient, setNewIngredient] = useState({
     ingredientId: "",
     ingredientName: "",
@@ -43,27 +48,7 @@ export default function FridgeManager() {
     purchasedAt: "",
   });
 
-  // Scroll Animation Observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    setTimeout(() => {
-      const elements = document.querySelectorAll(".scroll-reveal");
-      elements.forEach((el) => observer.observe(el));
-    }, 100);
-
-    return () => observer.disconnect();
-  }, [ingredients]);
+  // Removed scroll animation for better performance
 
   // Helper function to check if ingredient is expired
   const checkExpired = (expDate) => {
@@ -107,11 +92,11 @@ export default function FridgeManager() {
     if (!expDate) {
       return false;
     }
-    
+
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       // Xử lý nhiều format date có thể có
       let expiry;
       if (typeof expDate === 'string') {
@@ -121,16 +106,16 @@ export default function FridgeManager() {
       } else {
         expiry = new Date(expDate);
       }
-      
+
       expiry.setHours(0, 0, 0, 0);
-      
+
       const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
-      
+
       // Gần hết hạn: trong vòng 3 ngày và chưa hết hạn
       const isExpiringSoon = diffDays >= 0 && diffDays <= 3;
-      
+
       console.log(`  ⏰ Expiring soon check: ${expDate} -> ${expiry.toISOString().split('T')[0]}, Today: ${today.toISOString().split('T')[0]}, Diff: ${diffDays} days, Expiring Soon: ${isExpiringSoon}`);
-      
+
       return isExpiringSoon;
     } catch (error) {
       console.error("  ❌ Lỗi khi parse expirationDate:", expDate, error);
@@ -216,43 +201,43 @@ export default function FridgeManager() {
             const notificationsRes = await axios.get(`/users/${userId}/notifications`);
             existingNotifications = notificationsRes.data || [];
             console.log(`📋 Đã fetch ${existingNotifications.length} notifications hiện có`);
-            
+
           } catch (error) {
             console.warn("⚠️ Không thể fetch notifications hiện có:", error);
           }
-          
+
           // Tạo Set các inventoryItemId đã có notification
           const existingInventoryIds = new Set(
             existingNotifications
               .filter(n => n.type === 'INVENTORY_EXPIRING' && n.inventoryItemId)
               .map(n => Number(n.inventoryItemId))
           );
-          
+
           console.log(`📋 Có ${existingInventoryIds.size} nguyên liệu đã có notification:`, Array.from(existingInventoryIds));
-          
+
           // Lọc bỏ các nguyên liệu đã có notification (cả trong DB và trong session)
           const itemsNeedingNotification = allNotificationItems.filter(item => {
             const inventoryId = Number(item.id);
             const alreadyHasNotificationInDB = existingInventoryIds.has(inventoryId);
             const alreadyCreatedInSession = notificationCreationTracker.has(inventoryId);
             const shouldSkip = alreadyHasNotificationInDB || alreadyCreatedInSession;
-            
-            
+
+
             if (shouldSkip) {
               console.log(`⏭️ Bỏ qua ${item.ingredientName} (ID: ${inventoryId}) - ${alreadyHasNotificationInDB ? 'đã có notification trong DB' : 'đã tạo trong session này'}`);
             }
             return !shouldSkip;
           });
-          
+
           console.log(`📊 Cần tạo notification cho ${itemsNeedingNotification.length}/${allNotificationItems.length} nguyên liệu`);
 
           if (itemsNeedingNotification.length === 0) {
             console.log("ℹ️ Tất cả nguyên liệu đã có notification, không cần tạo mới");
             return;
           }
-          
+
           console.log(`📊 Bắt đầu tạo notification cho ${itemsNeedingNotification.length} nguyên liệu`);
-          
+
           // Tạo notification cho từng nguyên liệu
           const notificationPromises = itemsNeedingNotification.map(async (item) => {
             const formatDate = (d) => {
@@ -260,14 +245,14 @@ export default function FridgeManager() {
               const dt = new Date(d);
               return dt.toLocaleDateString('vi-VN');
             };
-            
+
             // Tính số ngày còn lại
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const expiry = new Date(item.expirationDate);
             expiry.setHours(0, 0, 0, 0);
             const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
-            
+
             // Tạo message khác nhau tùy theo loại notification
             let notificationMessage;
             if (item.notificationType === 'expired') {
@@ -277,13 +262,13 @@ export default function FridgeManager() {
               const daysText = diffDays === 0 ? 'hôm nay' : diffDays === 1 ? '1 ngày nữa' : `${diffDays} ngày nữa`;
               notificationMessage = `${item.ingredientName} sắp hết hạn (còn ${daysText} - ${formatDate(item.expirationDate)})`;
             }
-            
+
             // Tạo notification qua API backend
             // Backend enum: NotificationType { INVENTORY_EXPIRING, GENERAL }
             // Sử dụng INVENTORY_EXPIRING cho cả nguyên liệu hết hạn và sắp hết hạn
             const inventoryId = Number(item.id);
-            
-            
+
+
             // Sử dụng format đúng: camelCase với inventoryItemId là number
             // Chỉ tạo 1 notification duy nhất, không thử nhiều format
             const notificationPayload = {
@@ -291,8 +276,8 @@ export default function FridgeManager() {
               type: "INVENTORY_EXPIRING",
               inventoryItemId: inventoryId
             };
-            
-            
+
+
             try {
               console.log(`📝 Đang tạo notification cho: ${item.ingredientName}`, {
                 message: notificationMessage,
@@ -305,7 +290,7 @@ export default function FridgeManager() {
 
               // Đảm bảo Content-Type là application/json
               const response = await axios.post(
-                `/users/${userId}/notifications`, 
+                `/users/${userId}/notifications`,
                 notificationPayload,
                 {
                   headers: {
@@ -314,15 +299,15 @@ export default function FridgeManager() {
                   }
                 }
               );
-              
-              
+
+
               // Đánh dấu đã tạo notification cho inventoryId này trong session
               notificationCreationTracker.add(inventoryId);
-              
+
               console.log(`✅ Đã tạo notification thành công cho ${item.ingredientName}:`, response.data);
               return { success: true, item: item.ingredientName, data: response.data };
             } catch (notifError) {
-              
+
               const errorDetails = {
                 status: notifError.response?.status,
                 statusText: notifError.response?.statusText,
@@ -360,7 +345,7 @@ export default function FridgeManager() {
           } else {
             console.warn("⚠️ Không có notification nào được tạo thành công, không refresh sidebar");
           }
-          
+
           // Reset flag sau khi xử lý xong
           isProcessingNotificationsRef.current = false;
         } else {
@@ -378,17 +363,38 @@ export default function FridgeManager() {
     fetchIngredients();
   }, []);
 
-  // Load all ingredients for dropdown
+  // Load all ingredients for dropdown with tags
   useEffect(() => {
     const loadIngredients = async () => {
       try {
-        const res = await axios.get("/ingredients");
-        setAvailableIngredients(Array.isArray(res.data) ? res.data : []);
+        const res = await axios.get("/ingredients/with-tags");
+        const ingredientsData = Array.isArray(res.data) ? res.data : [];
+        setAvailableIngredients(ingredientsData);
+
+        // Create a map of ingredientId -> tags for filtering
+        const tagMap = {};
+        ingredientsData.forEach(ing => {
+          tagMap[ing.id] = ing.tags || [];
+        });
+        setIngredientsWithTags(tagMap);
       } catch (error) {
         console.error("Error loading ingredients:", error);
       }
     };
     loadIngredients();
+  }, []);
+
+  // Load available tags for filtering (all types)
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const res = await axios.get("/tags");
+        setAvailableTags(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.error("Error loading tags:", error);
+      }
+    };
+    loadTags();
   }, []);
 
   // Close dropdown when clicking outside
@@ -662,7 +668,7 @@ export default function FridgeManager() {
       {/* Stats Overview */}
       <div className="stats-overview">
         <Tooltip title={getItemsByStatus("Total")} arrow>
-          <div className="stat-card scroll-reveal" style={{ transitionDelay: '1s' }}>
+          <div className="stat-card">
             <div className="stat-icon total">
               <Package size={28} />
             </div>
@@ -674,7 +680,7 @@ export default function FridgeManager() {
         </Tooltip>
 
         <Tooltip title={getItemsByStatus("Fresh")} arrow>
-          <div className="stat-card scroll-reveal" style={{ transitionDelay: '0.2s' }}>
+          <div className="stat-card">
             <div className="stat-icon fresh">
               <CheckCircle size={28} />
             </div>
@@ -686,7 +692,7 @@ export default function FridgeManager() {
         </Tooltip>
 
         <Tooltip title={getItemsByStatus("Expired")} arrow>
-          <div className="stat-card scroll-reveal" style={{ transitionDelay: '0.3s' }}>
+          <div className="stat-card">
             <div className="stat-icon expiring">
               <AlertCircle size={28} />
             </div>
@@ -706,61 +712,134 @@ export default function FridgeManager() {
         </button>
       </div>
 
+      {/* Tag Filter Section */}
+      {availableTags.length > 0 && (
+        <div className="tag-filter-section" style={{
+          padding: '16px 20px',
+          background: 'white',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
+              Filter:
+            </span>
+            <button
+              onClick={() => setSelectedTags([])}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid ' + (selectedTags.length === 0 ? '#f97316' : '#d1d5db'),
+                background: selectedTags.length === 0 ? '#f97316' : 'white',
+                color: selectedTags.length === 0 ? 'white' : '#6b7280',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+                transition: 'all 0.15s'
+              }}
+            >
+              All
+            </button>
+            <div style={{ width: '1px', height: '20px', background: '#e5e7eb' }}></div>
+            {availableTags.map(tag => (
+              <button
+                key={tag.id}
+                onClick={() => {
+                  if (selectedTags.includes(tag.id)) {
+                    setSelectedTags(selectedTags.filter(id => id !== tag.id));
+                  } else {
+                    setSelectedTags([...selectedTags, tag.id]);
+                  }
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid ' + (selectedTags.includes(tag.id) ? '#f97316' : '#d1d5db'),
+                  background: selectedTags.includes(tag.id) ? '#ffedd5' : 'white',
+                  color: selectedTags.includes(tag.id) ? '#c2410c' : '#6b7280',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: selectedTags.includes(tag.id) ? '600' : '500',
+                  transition: 'all 0.15s',
+                  whiteSpace: 'nowrap'
+                }}
+                title={tag.description || tag.name}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Ingredient Grid */}
       <div className="ingredient-grid">
-        {ingredients.map((item, index) => {
-          const status = getStatus(item.expirationDate);
+        {ingredients
+          .filter(item => {
+            // If no tags selected, show all
+            if (selectedTags.length === 0) return true;
 
-          return (
-            <div
-              key={item.id}
-              className={`ingredient-card scroll-reveal ${status
-                .toLowerCase()
-                .replace(" ", "-")}`}
-              style={{ transitionDelay: `${index * 0.1}s` }}
-            >
-              <div className="card-header">
-                <h3>{item.ingredientName}</h3>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    className="icon-btn"
-                    onClick={() => handleDeleteClick(item)}
-                    style={{ color: '#ef4444', padding: '4px', background: 'none', border: 'none', cursor: 'pointer' }}
-                    title="Xóa"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                  <MoreVertical size={16} />
+            // Get tags for this ingredient
+            const ingredientTags = ingredientsWithTags[item.ingredientId] || [];
+            const ingredientTagIds = ingredientTags.map(t => t.id);
+
+            // Show if ingredient has any of the selected tags
+            return selectedTags.some(tagId => ingredientTagIds.includes(tagId));
+          })
+          .map((item, index) => {
+            const status = getStatus(item.expirationDate);
+
+            return (
+              <div
+                key={item.id}
+                className={`ingredient-card ${status
+                  .toLowerCase()
+                  .replace(" ", "-")}`}
+              >
+                <div className="card-header">
+                  <h3>{item.ingredientName}</h3>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      className="icon-btn"
+                      onClick={() => handleDeleteClick(item)}
+                      style={{ color: '#ef4444', padding: '4px', background: 'none', border: 'none', cursor: 'pointer' }}
+                      title="Xóa"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <MoreVertical size={16} />
+                  </div>
+                </div>
+
+                <p className="info">
+                  <strong>Quantity:</strong> {item.quantity ?? "-"}
+                </p>
+
+                <p className="info">
+                  <strong>Unit:</strong> {item.unit || "-"}
+                </p>
+
+                <p className="info">
+                  <strong>Ingredient ID:</strong> {item.ingredientId ?? "-"}
+                </p>
+
+                <div className="nutrition">
+                  <p className="nutrition-title">Expiration Date:</p>
+                  <p className="nutrition-value">
+                    {formatDate(item.expirationDate)}
+                  </p>
+                </div>
+
+                <div
+                  className={`status ${status.toLowerCase().replace(" ", "-")}`}
+                >
+                  {status}
                 </div>
               </div>
-
-              <p className="info">
-                <strong>Quantity:</strong> {item.quantity ?? "-"}
-              </p>
-
-              <p className="info">
-                <strong>Unit:</strong> {item.unit || "-"}
-              </p>
-
-              <p className="info">
-                <strong>Ingredient ID:</strong> {item.ingredientId ?? "-"}
-              </p>
-
-              <div className="nutrition">
-                <p className="nutrition-title">Expiration Date:</p>
-                <p className="nutrition-value">
-                  {formatDate(item.expirationDate)}
-                </p>
-              </div>
-
-              <div
-                className={`status ${status.toLowerCase().replace(" ", "-")}`}
-              >
-                {status}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
       {/* Modal 1: Add Inventory Item */}

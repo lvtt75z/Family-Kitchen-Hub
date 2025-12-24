@@ -16,6 +16,9 @@ import { CookingPot } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./../../styles/DetailRecipes.css";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -44,6 +47,16 @@ export default function RecipeDetail() {
   const [zoomImage, setZoomImage] = useState(null);
   const [zoomGalleryImages, setZoomGalleryImages] = useState([]);
   const [zoomCurrentIndex, setZoomCurrentIndex] = useState(0);
+
+  // Missing ingredients state
+  const [missingIngredients, setMissingIngredients] = useState([]);
+  const [userInventory, setUserInventory] = useState({});
+  const [loadingInventory, setLoadingInventory] = useState(false);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [selectedMissingIngredient, setSelectedMissingIngredient] = useState(null);
+  const [buyQuantity, setBuyQuantity] = useState("");
+  const [buyExpirationDate, setBuyExpirationDate] = useState("");
+  const [buyPurchaseDate, setBuyPurchaseDate] = useState("");
 
   const formatDateTime = (value) => {
     if (!value) return "";
@@ -80,7 +93,7 @@ export default function RecipeDetail() {
   // =========================
   const handleCookRecipe = async (recipeId, recipeTitle) => {
     let loadingToast = null;
-    
+
     try {
       // Lấy userId từ localStorage
       const userDataString = localStorage.getItem("user");
@@ -103,7 +116,7 @@ export default function RecipeDetail() {
 
       // Kiểm tra nguyên liệu quá hạn TRƯỚC KHI nấu
       loadingToast = toast.loading("Đang kiểm tra nguyên liệu...", { autoClose: false });
-      
+
       try {
         // Lấy recipe details để có danh sách ingredients
         const recipeRes = await axios.get(`/recipes/${recipeId}`, {
@@ -213,28 +226,28 @@ export default function RecipeDetail() {
           toast.dismiss(loadingToast);
           loadingToast = null;
 
-        // Hiển thị thông báo thành công
-        showCookSuccessMessage(response, recipeTitle);
+          // Hiển thị thông báo thành công
+          showCookSuccessMessage(response, recipeTitle);
         } catch (firstError) {
           // Nếu lỗi liên quan đến userId và có userId fallback, thử lại với userId
           const errorMsg = firstError.response?.data?.message || firstError.response?.data?.error || "";
-          const isUserIdError = errorMsg.toLowerCase().includes("userid") || 
-                                errorMsg.toLowerCase().includes("user id") ||
-                                errorMsg.toLowerCase().includes("đăng nhập") ||
-                                errorMsg.toLowerCase().includes("authentication") ||
-                                (errorMsg.toLowerCase().includes("bắt buộc") && errorMsg.toLowerCase().includes("user"));
-          
+          const isUserIdError = errorMsg.toLowerCase().includes("userid") ||
+            errorMsg.toLowerCase().includes("user id") ||
+            errorMsg.toLowerCase().includes("đăng nhập") ||
+            errorMsg.toLowerCase().includes("authentication") ||
+            (errorMsg.toLowerCase().includes("bắt buộc") && errorMsg.toLowerCase().includes("user"));
+
           if (isUserIdError && userIdFallback) {
             console.log("Token không hợp lệ, thử lại với userId:", userIdFallback);
             try {
               const response = await cookRecipe(recipeId, userIdFallback);
-              
+
               // Đóng loading toast
               toast.dismiss(loadingToast);
               loadingToast = null;
 
-        // Hiển thị thông báo thành công
-        showCookSuccessMessage(response, recipeTitle);
+              // Hiển thị thông báo thành công
+              showCookSuccessMessage(response, recipeTitle);
               return; // Thành công, không cần throw error
             } catch {
               // Nếu retry cũng fail, throw error gốc
@@ -251,7 +264,7 @@ export default function RecipeDetail() {
       if (loadingToast) {
         toast.dismiss(loadingToast);
       }
-      
+
       console.error("Lỗi khi nấu recipe:", err);
       console.error("Error details:", {
         message: err.message,
@@ -270,22 +283,22 @@ export default function RecipeDetail() {
 
         // Ưu tiên hiển thị message từ backend nếu có
         const backendMessage = data?.message || data?.error || "";
-        
+
         if (status === 400) {
           // Kiểm tra các loại lỗi 400 khác nhau
           const errorMsg = backendMessage.toLowerCase();
 
           // Kiểm tra message về userId trước (quan trọng nhất)
-          if (errorMsg.includes("userid") || 
-              errorMsg.includes("user id") ||
-              errorMsg.includes("đăng nhập") ||
-              errorMsg.includes("authentication") ||
-              (errorMsg.includes("bắt buộc") && errorMsg.includes("user"))) {
+          if (errorMsg.includes("userid") ||
+            errorMsg.includes("user id") ||
+            errorMsg.includes("đăng nhập") ||
+            errorMsg.includes("authentication") ||
+            (errorMsg.includes("bắt buộc") && errorMsg.includes("user"))) {
             // Hiển thị message từ backend hoặc message mặc định
             errorMessage = backendMessage || "Vui lòng đăng nhập hoặc cung cấp userId để nấu món ăn.";
-          } else if (errorMsg.includes("nullpointerexception") || 
-              errorMsg.includes("null pointer") ||
-              errorMsg.includes("null reference")) {
+          } else if (errorMsg.includes("nullpointerexception") ||
+            errorMsg.includes("null pointer") ||
+            errorMsg.includes("null reference")) {
             errorMessage = backendMessage || "Dữ liệu không hợp lệ. Có thể công thức, nguyên liệu hoặc thông tin người dùng không tồn tại. Vui lòng thử lại hoặc liên hệ hỗ trợ.";
           } else if (errorMsg.includes("query did not return a unique result") ||
             errorMsg.includes("2 results were returned") ||
@@ -306,9 +319,9 @@ export default function RecipeDetail() {
           errorMessage = backendMessage || "Bạn cần đăng nhập để nấu món ăn.";
         } else if (status === 500) {
           const errorMsg = backendMessage.toLowerCase();
-          if (errorMsg.includes("nullpointerexception") || 
-              errorMsg.includes("null pointer") ||
-              errorMsg.includes("null reference")) {
+          if (errorMsg.includes("nullpointerexception") ||
+            errorMsg.includes("null pointer") ||
+            errorMsg.includes("null reference")) {
             errorMessage = backendMessage || "Lỗi server: Dữ liệu không hợp lệ. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.";
           } else if (errorMsg.includes("query did not return a unique result")) {
             errorMessage = "Có nhiều nguyên liệu cùng loại trong tủ lạnh. Vui lòng kiểm tra và xóa các nguyên liệu trùng lặp trước khi nấu.";
@@ -704,6 +717,151 @@ export default function RecipeDetail() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [zoomImage, zoomCurrentIndex, zoomGalleryImages]);
 
+  // =========================
+  //   MISSING INGREDIENTS: Fetch user inventory
+  // =========================
+  const fetchUserInventory = async () => {
+    const userDataString = localStorage.getItem("user");
+    if (!userDataString) return;
+
+    const userData = JSON.parse(userDataString);
+    const userId = userData?.user?.id || userData?.id;
+    if (!userId) return;
+
+    try {
+      setLoadingInventory(true);
+      const res = await axios.get(`/inventory/user/${userId}`);
+      const inventoryMap = {};
+      res.data.forEach(item => {
+        inventoryMap[item.ingredientId] = item;
+      });
+      setUserInventory(inventoryMap);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+    } finally {
+      setLoadingInventory(false);
+    }
+  };
+
+  // =========================
+  //   MISSING INGREDIENTS: Calculate missing items
+  // =========================
+  const calculateMissingIngredients = () => {
+    if (!recipe?.ingredients) return;
+
+    const missing = [];
+    recipe.ingredients.forEach(recipeIng => {
+      const inventoryItem = userInventory[recipeIng.ingredientId];
+
+      // Check if missing or insufficient
+      if (!inventoryItem) {
+        // Completely missing
+        missing.push({
+          ...recipeIng,
+          currentQuantity: 0,
+          deficit: recipeIng.quantity
+        });
+      } else {
+        // Check if expired
+        const isExpired = inventoryItem.expirationDate &&
+          new Date(inventoryItem.expirationDate) < new Date();
+
+        if (isExpired || inventoryItem.quantity < recipeIng.quantity) {
+          missing.push({
+            ...recipeIng,
+            currentQuantity: isExpired ? 0 : inventoryItem.quantity,
+            deficit: recipeIng.quantity - (isExpired ? 0 : inventoryItem.quantity)
+          });
+        }
+      }
+    });
+
+    setMissingIngredients(missing);
+  };
+
+  // =========================
+  //   MISSING INGREDIENTS: Handle buy ingredient
+  // =========================
+  const handleBuyIngredient = (ingredient) => {
+    setSelectedMissingIngredient(ingredient);
+    setBuyQuantity(ingredient.deficit.toString());
+    const today = new Date().toISOString().split('T')[0];
+    setBuyPurchaseDate(today);
+    setShowBuyModal(true);
+  };
+
+  // =========================
+  //   MISSING INGREDIENTS: Confirm buy and add to inventory
+  // =========================
+  const handleConfirmBuy = async () => {
+    const userDataString = localStorage.getItem("user");
+    if (!userDataString) {
+      toast.error("Please log in.");
+      return;
+    }
+
+    const userData = JSON.parse(userDataString);
+    const userId = userData?.user?.id || userData?.id;
+
+    try {
+      const payload = {
+        userId: Number(userId),
+        ingredientId: Number(selectedMissingIngredient.ingredientId),
+        quantity: parseFloat(buyQuantity),
+      };
+
+      if (buyExpirationDate) {
+        payload.expirationDate = buyExpirationDate;
+      }
+
+      if (buyPurchaseDate) {
+        payload.purchasedAt = buyPurchaseDate;
+      } else {
+        payload.purchasedAt = new Date().toISOString().split('T')[0];
+      }
+
+      await axios.post("/inventory", payload);
+
+      // Refresh inventory and recalculate
+      await fetchUserInventory();
+
+      // Close modal
+      setShowBuyModal(false);
+      setBuyQuantity("");
+      setBuyExpirationDate("");
+      setBuyPurchaseDate("");
+      setSelectedMissingIngredient(null);
+
+      toast.success("Ingredient added to fridge!", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error("Error adding ingredient:", error);
+      const errorMessage = error.response?.data?.message || "Cannot add ingredient. Please try again.";
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  // Load recipe
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchRecipe = async () => {
+      try {
+        const res = await axios.get(`/recipes/${id}`);
+        setRecipe(res.data);
+      } catch (err) {
+        console.error("Failed to load recipe", err);
+      }
+    };
+
+    fetchRecipe();
+  }, [id]);
+
   // Load similar recipes – 7.2 Đề xuất món tương tự
   useEffect(() => {
     if (!id) return;
@@ -729,6 +887,18 @@ export default function RecipeDetail() {
 
     fetchSimilar();
   }, [id]);
+
+  // Fetch user inventory on mount
+  useEffect(() => {
+    if (id) {
+      fetchUserInventory();
+    }
+  }, [id]);
+
+  // Recalculate missing ingredients when recipe or inventory changes
+  useEffect(() => {
+    calculateMissingIngredients();
+  }, [recipe, userInventory]);
 
   if (!recipe) return <div>Loading...</div>;
 
@@ -773,38 +943,72 @@ export default function RecipeDetail() {
           </div>
         </div>
 
-        <div className="instructions-section">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h2 className="instruction-title" style={{ margin: 0 }}>Instructions</h2>
-            <button
-              onClick={() => handleCookRecipe(recipe.id, recipe.title)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "12px 24px",
-                backgroundColor: "#f97316",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#ea580c";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f97316";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <CookingPot size={20} /> Nấu món này
-            </button>
+        {/* RIGHT COLUMN - Instructions + Lack of Ingredient */}
+        <div className="right-content">
+          <div className="instructions-section">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 className="instruction-title" style={{ margin: 0 }}>Instructions</h2>
+              <button
+                onClick={() => handleCookRecipe(recipe.id, recipe.title)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "12px 24px",
+                  backgroundColor: "#f97316",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#ea580c";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f97316";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                <CookingPot size={20} /> Cook
+              </button>
+            </div>
+            <span>{recipe.instructions}</span>
           </div>
-          <span>{recipe.instructions}</span>
+
+          {/* Lack of Ingredient Section - Below Instructions */}
+          {!loadingInventory && missingIngredients.length > 0 ? (
+            <div style={{ marginTop: "24px", padding: "20px", background: "linear-gradient(135deg, #fff5f0, #ffedd5)", borderRadius: "16px", border: "2px solid #f97316" }}>
+              <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#c2410c", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                🛒 Lack of Ingredient
+              </h3>
+              <p style={{ fontSize: "14px", color: "#9a3412", marginBottom: "16px" }}>
+                You need {missingIngredients.length} more ingredient{missingIngredients.length > 1 ? 's' : ''}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "400px", overflowY: "auto", paddingRight: "8px" }}>
+                {missingIngredients.map((item, idx) => (
+                  <div key={idx} style={{ padding: "12px 14px", background: "white", borderRadius: "8px", border: "1px solid #fed7aa", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div>
+                      <div style={{ fontWeight: "600", color: "#1f2937", fontSize: "15px" }}>{item.ingredientName}</div>
+                      <div style={{ fontSize: "13px", color: "#6b7280", marginTop: "4px" }}>
+                        Need: <strong style={{ color: "#ea580c" }}>{item.deficit} {item.unit}</strong>
+                        {item.currentQuantity > 0 && <span style={{ color: "#fb923c", fontStyle: "italic", fontSize: "12px" }}> (Current: {item.currentQuantity} {item.unit})</span>}
+                      </div>
+                    </div>
+                    <button onClick={() => handleBuyIngredient(item)} style={{ padding: "8px 16px", background: "linear-gradient(135deg, #f97316, #ea580c)", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", boxShadow: "0 2px 4px rgba(249, 115, 22, 0.25)" }} onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #ea580c, #c2410c)"; e.currentTarget.style.transform = "translateY(-1px)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #f97316, #ea580c)"; e.currentTarget.style.transform = "translateY(0)"; }}>Buy Now</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : !loadingInventory && (
+            <div style={{ marginTop: "24px", textAlign: "center", padding: "20px", background: "linear-gradient(135deg, #f0fdf4, #dcfce7)", borderRadius: "12px", border: "2px solid #86efac" }}>
+              <h3 style={{ color: "#059669", fontSize: "16px", marginBottom: "4px" }}>✅ All Set!</h3>
+              <p style={{ color: "#6b7280", fontSize: "13px", margin: 0 }}>You have all ingredients</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1176,6 +1380,79 @@ export default function RecipeDetail() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Buy Modal */}
+      {showBuyModal && selectedMissingIngredient && (
+        <div className="modal-overlay active">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Add Ingredient to Fridge</h3>
+              <button className="icon-btn" onClick={() => setShowBuyModal(false)}>
+                ✖
+              </button>
+            </div>
+            <form className="modal-form" onSubmit={(e) => {
+              e.preventDefault();
+              handleConfirmBuy();
+            }}>
+              <label>
+                Ingredient
+                <input
+                  type="text"
+                  value={selectedMissingIngredient.ingredientName}
+                  readOnly
+                  style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
+                />
+              </label>
+
+              <label>
+                Quantity ({selectedMissingIngredient.unit})
+                <input
+                  type="number"
+                  step="any"
+                  value={buyQuantity}
+                  onChange={(e) => setBuyQuantity(e.target.value)}
+                  required
+                  placeholder={`Suggested: ${selectedMissingIngredient.deficit}`}
+                />
+                <small style={{ color: "#666", display: "block", marginTop: "4px" }}>
+                  Recommended: {selectedMissingIngredient.deficit} {selectedMissingIngredient.unit}
+                </small>
+              </label>
+
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <div style={{ marginTop: "10px" }}>
+                  <DatePicker
+                    label="Expiration Date"
+                    value={buyExpirationDate ? dayjs(buyExpirationDate) : null}
+                    onChange={(newValue) => setBuyExpirationDate(newValue ? newValue.format('YYYY-MM-DD') : "")}
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
+                </div>
+
+                <div style={{ marginTop: "10px" }}>
+                  <DatePicker
+                    label="Purchase Date"
+                    maxDate={dayjs()}
+                    value={buyPurchaseDate ? dayjs(buyPurchaseDate) : dayjs()}
+                    onChange={(newValue) => setBuyPurchaseDate(newValue ? newValue.format('YYYY-MM-DD') : "")}
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
+                </div>
+              </LocalizationProvider>
+
+              <div className="modal-actions">
+                <button type="button" className="btn ghost" onClick={() => setShowBuyModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn primary">
+                  Add to Fridge
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
