@@ -7,6 +7,7 @@ public class RecipeCommentRequestDTO {
 
     private Long userId;
     private String content;
+    private Long parentCommentId;
     private List<CommentMediaRequestDTO> media = new ArrayList<>();
 
     public Long getUserId() {
@@ -32,5 +33,12 @@ public class RecipeCommentRequestDTO {
     public void setMedia(List<CommentMediaRequestDTO> media) {
         this.media = media;
     }
-}
 
+    public Long getParentCommentId() {
+        return parentCommentId;
+    }
+
+    public void setParentCommentId(Long parentCommentId) {
+        this.parentCommentId = parentCommentId;
+    }
+}

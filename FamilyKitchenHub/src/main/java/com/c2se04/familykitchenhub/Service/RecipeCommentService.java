@@ -30,14 +30,17 @@ public class RecipeCommentService {
     private final RecipeCommentRepository recipeCommentRepository;
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
+    private final CommentReactionService commentReactionService;
 
     @Autowired
     public RecipeCommentService(RecipeCommentRepository recipeCommentRepository,
             RecipeRepository recipeRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            CommentReactionService commentReactionService) {
         this.recipeCommentRepository = recipeCommentRepository;
         this.recipeRepository = recipeRepository;
         this.userRepository = userRepository;
+        this.commentReactionService = commentReactionService;
     }
 
     @Transactional
@@ -59,6 +62,14 @@ public class RecipeCommentService {
         comment.setUser(user);
         comment.setContent(request.getContent().trim());
         comment.setStatus(CommentStatus.PENDING);
+
+        // Set parent comment for replies
+        if (request.getParentCommentId() != null) {
+            RecipeComment parentComment = recipeCommentRepository.findById(request.getParentCommentId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("ParentComment", "id", request.getParentCommentId()));
+            comment.setParent(parentComment);
+        }
 
         if (!CollectionUtils.isEmpty(request.getMedia())) {
             for (CommentMediaRequestDTO mediaRequest : request.getMedia()) {
@@ -90,6 +101,28 @@ public class RecipeCommentService {
         }
 
         return comments.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    // Overloaded method with userId to include currentUserReaction
+    @Transactional(readOnly = true)
+    public List<RecipeCommentResponseDTO> getComments(Long recipeId, CommentStatus status, Long userId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe", "id", recipeId));
+
+        List<RecipeComment> comments;
+        if (status != null) {
+            comments = recipeCommentRepository.findByRecipeAndStatusOrderByCreatedAtDesc(recipe, status);
+        } else {
+            comments = recipeCommentRepository.findByRecipeOrderByCreatedAtDesc(recipe);
+        }
+
+        // If userId is provided, use mapToResponse with userId to include
+        // currentUserReaction
+        if (userId != null) {
+            return comments.stream().map(c -> mapToResponse(c, userId)).collect(Collectors.toList());
+        } else {
+            return comments.stream().map(this::mapToResponse).collect(Collectors.toList());
+        }
     }
 
     @Transactional
@@ -166,16 +199,40 @@ public class RecipeCommentService {
         dto.setId(comment.getId());
         dto.setRecipeId(comment.getRecipe().getId());
         dto.setUserId(comment.getUser().getId());
+        dto.setUsername(comment.getUser().getUsername());
+        dto.setUserFullName(comment.getUser().getFullName());
         dto.setContent(comment.getContent());
         dto.setStatus(comment.getStatus());
         dto.setCreatedAt(comment.getCreatedAt());
         dto.setUpdatedAt(comment.getUpdatedAt());
 
+        // Map media
         List<CommentMediaResponseDTO> mediaResponses = comment.getMedia()
                 .stream()
                 .map(media -> new CommentMediaResponseDTO(media.getId(), media.getUrl(), media.getType()))
                 .collect(Collectors.toList());
         dto.setMedia(mediaResponses);
+
+        // Set parent ID for replies
+        if (comment.getParent() != null) {
+            dto.setParentId(comment.getParent().getId());
+        }
+
+        // Set reply count
+        dto.setReplyCount(comment.getReplies().size());
+
+        // Set reaction counts
+        dto.setReactionCounts(commentReactionService.getReactionCounts(comment.getId()));
+
+        return dto;
+    }
+
+    // Overloaded method to include current user's reaction
+    private RecipeCommentResponseDTO mapToResponse(RecipeComment comment, Long currentUserId) {
+        RecipeCommentResponseDTO dto = mapToResponse(comment);
+        if (currentUserId != null) {
+            dto.setCurrentUserReaction(commentReactionService.getCurrentUserReaction(comment.getId(), currentUserId));
+        }
         return dto;
     }
 }

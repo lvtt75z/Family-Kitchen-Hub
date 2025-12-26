@@ -1,0 +1,32 @@
+/* Smaller reaction buttons for child comments */
+.reaction-btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.reaction-btn-small .reaction-emoji {
+    font-size: 14px;
+}
+
+.reaction-btn-small .reaction-count {
+    font-size: 11px;
+}
+
+.reply-btn-small {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+/* Make child comment content left-aligned */
+.comment-reply-item .comment-content {
+    text-align: left;
+    padding-left: 0;
+    margin-bottom: 4px;
+}
+
+/* Add some spacing for reactions in child comments */
+.comment-reply-item .comment-reactions-section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e0e7ff;
+}

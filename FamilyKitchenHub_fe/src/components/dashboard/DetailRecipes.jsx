@@ -8,14 +8,19 @@ import {
   uploadCommentMedia,
   updateRecipeComment,
   deleteRecipeComment,
+  addCommentReaction,
+  removeCommentReaction,
 } from "../../service/recipesApi";
 import { cookRecipe } from "../../service/recipesApi";
 import { getUsernameById } from "../../service/usersApi";
 import { convertMediaUrl } from "../../utils/mediaUtils";
-import { CookingPot } from "lucide-react";
+import { CookingPot, Share2 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./../../styles/DetailRecipes.css";
+import "./../../styles/reactions.css";
+import "./../../styles/reactions-child.css";
+import "./../../styles/nested-replies.css";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
@@ -57,6 +62,11 @@ export default function RecipeDetail() {
   const [buyQuantity, setBuyQuantity] = useState("");
   const [buyExpirationDate, setBuyExpirationDate] = useState("");
   const [buyPurchaseDate, setBuyPurchaseDate] = useState("");
+
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState(null); // { commentId, userName }
+  const [replyContent, setReplyContent] = useState("");
+
 
   const formatDateTime = (value) => {
     if (!value) return "";
@@ -369,6 +379,49 @@ export default function RecipeDetail() {
     }, 1500);
   };
 
+  // =========================
+  //   SUBMIT RECIPE FOR SHARING
+  // =========================
+  const handleSubmitForSharing = async () => {
+    const userDataString = localStorage.getItem("user");
+    let userId = null;
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        userId = userData?.user?.id || userData?.id;
+      } catch (e) {
+        console.warn("Cannot parse user data:", e);
+      }
+    }
+
+    if (!userId) {
+      toast.error("Please login to submit recipe", { autoClose: 2000 });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Submit "${recipe?.title}" for admin approval to share publicly?`
+    );
+    if (!confirmed) return;
+
+    try {
+      await axios.put(`/user-recipes/${id}/submit`, null, {
+        params: { userId },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+
+      toast.success("Recipe submitted for approval!", { autoClose: 2000 });
+
+      // Refresh recipe data
+      const res = await axios.get(`/recipes/${id}`);
+      setRecipe(res.data);
+    } catch (error) {
+      console.error("Error submitting recipe:", error);
+      const errorMsg = error.response?.data?.message || "Cannot submit recipe";
+      toast.error(errorMsg, { autoClose: 3000 });
+    }
+  };
+
   useEffect(() => {
     const fetchRecipe = async () => {
       const token = localStorage.getItem("token");
@@ -386,12 +439,25 @@ export default function RecipeDetail() {
 
     try {
       setLoadingComments(true);
-      // Gọi API với pagination params
-      const data = await getRecipeComments(id, { page, size: 5 });
+
+      // Get current userId from localStorage
+      const userDataString = localStorage.getItem("user");
+      let userId = null;
+      if (userDataString) {
+        try {
+          const userData = JSON.parse(userDataString);
+          userId = userData?.user?.id || userData?.id;
+        } catch (e) {
+          console.warn("Failed to parse user data:", e);
+        }
+      }
+
+      // Call API with pagination and userId params
+      const data = await getRecipeComments(id, { page, size: 5, userId });
       const allComments = Array.isArray(data) ? data : [];
 
-      // Nếu backend trả về nhiều hơn 5 comments (không hỗ trợ pagination),
-      // FE tự phân trang: chỉ lấy 5 comments cho trang hiện tại
+      // If backend returns more than 5 comments (no pagination support),
+      // FE handles pagination: only get 5 comments for current page
       const startIndex = page * 5;
       const endIndex = startIndex + 5;
       const displayedComments = allComments.slice(startIndex, endIndex);
@@ -399,11 +465,11 @@ export default function RecipeDetail() {
       setComments(displayedComments);
       setCurrentPage(page);
 
-      // Kiểm tra xem còn comment nào sau trang hiện tại không
+      // Check if there are more comments after current page
       const hasMore = allComments.length > endIndex;
       setHasMorePages(hasMore);
 
-      // Tính tổng số trang dựa trên tổng số comments
+      // Calculate total pages based on total comments
       const calculatedTotalPages = Math.ceil(allComments.length / 5) || 1;
       setTotalPages(calculatedTotalPages);
     } catch (err) {
@@ -670,6 +736,67 @@ export default function RecipeDetail() {
     }
   };
 
+  // Handle reaction toggle
+  const handleReactionToggle = async (commentId, reactionType, currentUserReaction) => {
+    try {
+      if (currentUserReaction === reactionType) {
+        // Remove reaction if clicking the same type
+        await removeCommentReaction(commentId);
+      } else {
+        // Add or update reaction
+        await addCommentReaction(commentId, reactionType);
+      }
+      // Reload comments to update reaction counts
+      await loadCommentsForPage(currentPage);
+    } catch (err) {
+      console.error("Failed to toggle reaction", err);
+    }
+  };
+
+  // Handle reply
+  const handleReplyClick = (comment) => {
+    setReplyingTo({
+      commentId: comment.id,
+      userName: comment.username || comment.userFullName || `User #${comment.userId}`
+    });
+    setReplyContent("");
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+    setReplyContent("");
+  };
+
+  const handleSubmitReply = async (e) => {
+    e.preventDefault();
+    if (!replyContent.trim() || !replyingTo) return;
+
+    try {
+      setSubmittingComment(true);
+
+      const userDataString = localStorage.getItem("user");
+      const userData = userDataString ? JSON.parse(userDataString) : null;
+      const userId = userData?.user?.id || userData?.id;
+
+      const payload = {
+        content: replyContent.trim(),
+        userId,
+        parentCommentId: replyingTo.commentId,
+      };
+
+      await createRecipeComment(id, payload);
+      await loadCommentsForPage(currentPage);
+      setReplyContent("");
+      setReplyingTo(null);
+    } catch (err) {
+      console.error("Failed to submit reply", err);
+      alert("Không thể gửi phản hồi. Vui lòng thử lại.");
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+
   // Zoom modal handlers
   const handleImageClick = (imageUrl, allImages, currentIndex) => {
     setZoomImage(imageUrl);
@@ -902,6 +1029,133 @@ export default function RecipeDetail() {
 
   if (!recipe) return <div>Loading...</div>;
 
+
+  // Recursive function to render nested replies
+  const renderReplies = (parentId) => {
+    const replies = comments.filter(reply => reply.parentId === parentId);
+    if (replies.length === 0) return null;
+
+    return replies.map(reply => {
+      const userDataString = localStorage.getItem("user");
+      const userData = userDataString ? JSON.parse(userDataString) : null;
+      const currentUserId = userData?.user?.id || userData?.id;
+      const isReplyOwner = currentUserId && reply.userId && Number(currentUserId) === Number(reply.userId);
+      const hasChildren = comments.some(c => c.parentId === reply.id);
+
+      return (
+        <div key={reply.id} className="comment-reply-wrapper">
+          <div className="comment-reply-item">
+            <div className="comment-avatar">
+              <span>{getUserInitial(reply.username || reply.userFullName, reply.userId)}</span>
+            </div>
+            <div className="comment-body">
+              <div className="comment-header">
+                <div className="comment-meta-left">
+                  <span className="comment-author">
+                    {reply.username || reply.userFullName || `User #${reply.userId}`}
+                  </span>
+                  {reply.createdAt && (
+                    <span className="comment-date">{formatDateTime(reply.createdAt)}</span>
+                  )}
+                </div>
+                {isReplyOwner && (
+                  <div className="comment-actions-topright">
+                    <button
+                      className="btn-icon btn-edit-icon"
+                      onClick={() => handleEditComment(reply)}
+                      title="Edit"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
+                        <path d="M15 5l4 4"></path>
+                      </svg>
+                    </button>
+                    <button
+                      className="btn-icon btn-delete-icon"
+                      onClick={() => handleDeleteComment(reply.id)}
+                      title="Delete"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Edit mode or display mode */}
+              {editingCommentId === reply.id ? (
+                <div className="comment-edit-mode">
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    rows={3}
+                    className="edit-textarea"
+                  />
+                  <div className="edit-actions">
+                    <button
+                      className="btn-save"
+                      onClick={() => handleSaveEdit(reply.id)}
+                      disabled={!editContent.trim()}
+                    >
+                      💾 Save
+                    </button>
+                    <button
+                      className="btn-cancel"
+                      onClick={handleCancelEdit}
+                    >
+                      ✖ Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="comment-content">{reply.content}</p>
+
+                  {/* Reactions and Reply */}
+                  <div className="comment-reactions-section">
+                    <div className="comment-reaction-buttons">
+                      {['LIKE', 'HELPFUL', 'HAHA', 'LOVE', 'SAD'].map((reactionType) => {
+                        const reactionEmojis = { LIKE: '👍', HELPFUL: '💡', HAHA: '😂', LOVE: '❤️', SAD: '😢' };
+                        const count = reply.reactionCounts?.[reactionType] || 0;
+                        const isActive = reply.currentUserReaction === reactionType;
+
+                        return (
+                          <button
+                            key={reactionType}
+                            className={`reaction-btn reaction-btn-small ${isActive ? 'active' : ''}`}
+                            onClick={() => handleReactionToggle(reply.id, reactionType, reply.currentUserReaction)}
+                            title={reactionType}
+                          >
+                            <span className="reaction-emoji">{reactionEmojis[reactionType]}</span>
+                            {count > 0 && <span className="reaction-count">{count}</span>}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        className="reply-btn reply-btn-small"
+                        onClick={() => handleReplyClick(reply)}
+                        title="Reply"
+                      >
+                        💬 Reply
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Recursively render children of this reply */}
+          {hasChildren && (
+            <div className="comment-nested-replies">
+              {renderReplies(reply.id)}
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="recipe-detail-hl">
       <ToastContainer />
@@ -917,6 +1171,82 @@ export default function RecipeDetail() {
           </div>
 
           <h1 className="title_recipe">{recipe.title}</h1>
+
+          {/* Submit for Sharing Button - For DRAFT Recipes */}
+          {(() => {
+            const userDataString = localStorage.getItem("user");
+            const userData = userDataString ? JSON.parse(userDataString) : null;
+            const currentUserId = userData?.user?.id || userData?.id;
+
+            // Only show for DRAFT recipes owned by current user
+            if (recipe?.status === 'DRAFT' && recipe?.submittedByUserId === currentUserId) {
+              return (
+                <div style={{ margin: '16px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button
+                    onClick={handleSubmitForSharing}
+                    style={{
+                      padding: '12px 24px',
+                      borderRadius: '10px',
+                      fontSize: '15px',
+                      fontWeight: '600',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: 'white',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                    }}
+                  >
+                    <Share2 size={20} /> Submit for Sharing
+                  </button>
+
+                  <span style={{
+                    padding: '6px 14px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    background: '#64748b',
+                    color: 'white'
+                  }}>
+                    📝 DRAFT
+                  </span>
+                </div>
+              );
+            }
+
+            // Show status badge for non-DRAFT user recipes
+            if (recipe?.status && recipe.status !== 'ADMIN_CREATED' && recipe?.submittedByUserId === currentUserId) {
+              return (
+                <div style={{ margin: '16px 0' }}>
+                  <span style={{
+                    padding: '6px 14px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    background: recipe.status === 'PENDING_APPROVAL' ? '#f59e0b' :
+                      recipe.status === 'APPROVED' ? '#10b981' : '#ef4444',
+                    color: 'white'
+                  }}>
+                    {recipe.status === 'PENDING_APPROVAL' ? '⏳ PENDING APPROVAL' :
+                      recipe.status === 'APPROVED' ? '✅ APPROVED' : '❌ REJECTED'}
+                  </span>
+                </div>
+              );
+            }
+
+            return null;
+          })()}
 
           {/* <p className="subtitle">Perfect For All Soup Bases</p> */}
 
@@ -1120,214 +1450,287 @@ export default function RecipeDetail() {
           ) : comments.length === 0 ? (
             <p>Chưa có bình luận nào. Hãy là người đầu tiên!</p>
           ) : (
-            comments.map((c) => {
-              const userDataString = localStorage.getItem("user");
-              const userData = userDataString ? JSON.parse(userDataString) : null;
-              const currentUserId = userData?.user?.id || userData?.id;
-              const isOwner = currentUserId && c.userId && Number(currentUserId) === Number(c.userId);
+            comments
+              .filter(c => !c.parentId) // Only show parent comments, not replies
+              .map((c) => {
+                const userDataString = localStorage.getItem("user");
+                const userData = userDataString ? JSON.parse(userDataString) : null;
+                const currentUserId = userData?.user?.id || userData?.id;
+                const isOwner = currentUserId && c.userId && Number(currentUserId) === Number(c.userId);
 
-              return (
-                <div key={c.id} className="comment-item">
-                  <div className="comment-avatar">
-                    <span>
-                      {getUserInitial(c.userName, c.userId)}
-                    </span>
-                  </div>
-                  <div className="comment-body">
-                    <div className="comment-header">
-                      <div className="comment-meta-left">
-                        <span className="comment-author">
-                          {c.userName ||
-                            (typeof usernames[c.userId] === 'string' ? usernames[c.userId] : null) ||
-                            `User #${c.userId || ""}`}
-                        </span>
-                        {c.createdAt && (
-                          <span className="comment-date">
-                            {formatDateTime(c.createdAt)}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Action buttons in top right - SVG icons */}
-                      {isOwner && !editingCommentId && (
-                        <div className="comment-actions-topright">
-                          <button
-                            className="btn-icon btn-edit-icon"
-                            onClick={() => handleEditComment(c)}
-                            title="Sửa"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
-                              <path d="M15 5l4 4"></path>
-                            </svg>
-                          </button>
-                          <button
-                            className="btn-icon btn-delete-icon"
-                            onClick={() => handleDeleteComment(c.id)}
-                            title="Xóa"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"></path>
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              <path d="M10 11v6"></path>
-                              <path d="M14 11v6"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      )}
+                return (
+                  <div key={c.id} className="comment-item">
+                    <div className="comment-avatar">
+                      <span>
+                        {getUserInitial(c.userName, c.userId)}
+                      </span>
                     </div>
-
-                    {/* Edit mode or display mode */}
-                    {editingCommentId === c.id ? (
-                      <div className="comment-edit-mode">
-                        <textarea
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          rows={3}
-                          className="edit-textarea"
-                        />
-
-                        {/* Existing Media Management */}
-                        {editMedia.length > 0 && (
-                          <div className="edit-existing-media">
-                            <h4 className="edit-media-label">Ảnh hiện tại:</h4>
-                            <div className="edit-media-grid">
-                              {editMedia
-                                .filter((m) => !editMediaToDelete.includes(m.id || m.url))
-                                .map((m) => (
-                                  <div key={m.id || m.url} className="edit-media-item">
-                                    {m.type?.startsWith("video") ? (
-                                      <video src={convertMediaUrl(m.url)} />
-                                    ) : (
-                                      <img src={convertMediaUrl(m.url)} alt="" />
-                                    )}
-                                    <button
-                                      type="button"
-                                      className="btn-remove-media"
-                                      onClick={() => {
-                                        setEditMediaToDelete([...editMediaToDelete, m.id || m.url]);
-                                      }}
-                                      title="Xóa ảnh này"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* New Media Upload */}
-                        <div className="edit-new-media">
-                          <label className="edit-upload-label">
-                            <span>📎 Thêm ảnh/video mới</span>
-                            <input
-                              type="file"
-                              accept="image/*,video/*"
-                              multiple
-                              onChange={(e) => {
-                                const files = Array.from(e.target.files || []);
-                                setEditNewFiles([...editNewFiles, ...files]);
-                                setEditNewFilePreviews([
-                                  ...editNewFilePreviews,
-                                  ...files.map((file) => ({
-                                    name: file.name,
-                                    type: file.type,
-                                    url: URL.createObjectURL(file),
-                                  })),
-                                ]);
-                              }}
-                            />
-                          </label>
-
-                          {/* Preview new files */}
-                          {editNewFilePreviews.length > 0 && (
-                            <div className="edit-new-preview">
-                              <h4 className="edit-media-label">Ảnh mới sẽ được thêm:</h4>
-                              <div className="edit-media-grid">
-                                {editNewFilePreviews.map((preview, idx) => (
-                                  <div key={idx} className="edit-media-item">
-                                    {preview.type.startsWith("image") ? (
-                                      <img src={preview.url} alt={preview.name} />
-                                    ) : (
-                                      <video src={preview.url} />
-                                    )}
-                                    <button
-                                      type="button"
-                                      className="btn-remove-media"
-                                      onClick={() => {
-                                        const newFiles = [...editNewFiles];
-                                        const newPreviews = [...editNewFilePreviews];
-                                        newFiles.splice(idx, 1);
-                                        newPreviews.splice(idx, 1);
-                                        setEditNewFiles(newFiles);
-                                        setEditNewFilePreviews(newPreviews);
-                                      }}
-                                      title="Xóa ảnh này"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+                    <div className="comment-body">
+                      <div className="comment-header">
+                        <div className="comment-meta-left">
+                          <span className="comment-author">
+                            {c.userName ||
+                              (typeof usernames[c.userId] === 'string' ? usernames[c.userId] : null) ||
+                              `User #${c.userId || ""}`}
+                          </span>
+                          {c.createdAt && (
+                            <span className="comment-date">
+                              {formatDateTime(c.createdAt)}
+                            </span>
                           )}
                         </div>
 
-                        <div className="edit-actions">
-                          <button
-                            className="btn-save"
-                            onClick={() => handleSaveEdit(c.id)}
-                            disabled={!editContent.trim() || uploadingMedia}
-                          >
-                            {uploadingMedia ? "⏳ Đang tải..." : "💾 Lưu"}
-                          </button>
-                          <button
-                            className="btn-cancel"
-                            onClick={handleCancelEdit}
-                          >
-                            ✖ Hủy
-                          </button>
-                        </div>
+                        {/* Action buttons in top right - SVG icons */}
+                        {isOwner && !editingCommentId && (
+                          <div className="comment-actions-topright">
+                            <button
+                              className="btn-icon btn-edit-icon"
+                              onClick={() => handleEditComment(c)}
+                              title="Sửa"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
+                                <path d="M15 5l4 4"></path>
+                              </svg>
+                            </button>
+                            <button
+                              className="btn-icon btn-delete-icon"
+                              onClick={() => handleDeleteComment(c.id)}
+                              title="Xóa"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <path d="M10 11v6"></path>
+                                <path d="M14 11v6"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <p className="comment-content">{c.content}</p>
-                    )}
 
-                    {/* Media thumbnails - clickable for zoom */}
-                    {!editingCommentId && Array.isArray(c.media) && c.media.length > 0 && (
-                      <div className="comment-media-list">
-                        {c.media.map((m, idx) => (
-                          <div
-                            key={m.id || m.url}
-                            className="comment-media-thumb"
-                            onClick={() => {
-                              if (!m.type?.startsWith("video")) {
-                                const allImages = c.media
-                                  .filter((media) => !media.type?.startsWith("video"))
-                                  .map((media) => convertMediaUrl(media.url));
-                                const imageIndex = c.media
-                                  .filter((media) => !media.type?.startsWith("video"))
-                                  .findIndex((media) => media.id === m.id || media.url === m.url);
-                                handleImageClick(convertMediaUrl(m.url), allImages, imageIndex);
-                              }
-                            }}
-                            style={{ cursor: m.type?.startsWith("video") ? "default" : "pointer" }}
-                          >
-                            {m.type?.startsWith("video") ? (
-                              <video src={convertMediaUrl(m.url)} controls />
-                            ) : (
-                              <img src={convertMediaUrl(m.url)} alt="" />
+                      {/* Edit mode or display mode */}
+                      {editingCommentId === c.id ? (
+                        <div className="comment-edit-mode">
+                          <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            rows={3}
+                            className="edit-textarea"
+                          />
+
+                          {/* Existing Media Management */}
+                          {editMedia.length > 0 && (
+                            <div className="edit-existing-media">
+                              <h4 className="edit-media-label">Ảnh hiện tại:</h4>
+                              <div className="edit-media-grid">
+                                {editMedia
+                                  .filter((m) => !editMediaToDelete.includes(m.id || m.url))
+                                  .map((m) => (
+                                    <div key={m.id || m.url} className="edit-media-item">
+                                      {m.type?.startsWith("video") ? (
+                                        <video src={convertMediaUrl(m.url)} />
+                                      ) : (
+                                        <img src={convertMediaUrl(m.url)} alt="" />
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="btn-remove-media"
+                                        onClick={() => {
+                                          setEditMediaToDelete([...editMediaToDelete, m.id || m.url]);
+                                        }}
+                                        title="Xóa ảnh này"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* New Media Upload */}
+                          <div className="edit-new-media">
+                            <label className="edit-upload-label">
+                              <span>📎 Thêm ảnh/video mới</span>
+                              <input
+                                type="file"
+                                accept="image/*,video/*"
+                                multiple
+                                onChange={(e) => {
+                                  const files = Array.from(e.target.files || []);
+                                  setEditNewFiles([...editNewFiles, ...files]);
+                                  setEditNewFilePreviews([
+                                    ...editNewFilePreviews,
+                                    ...files.map((file) => ({
+                                      name: file.name,
+                                      type: file.type,
+                                      url: URL.createObjectURL(file),
+                                    })),
+                                  ]);
+                                }}
+                              />
+                            </label>
+
+                            {/* Preview new files */}
+                            {editNewFilePreviews.length > 0 && (
+                              <div className="edit-new-preview">
+                                <h4 className="edit-media-label">Ảnh mới sẽ được thêm:</h4>
+                                <div className="edit-media-grid">
+                                  {editNewFilePreviews.map((preview, idx) => (
+                                    <div key={idx} className="edit-media-item">
+                                      {preview.type.startsWith("image") ? (
+                                        <img src={preview.url} alt={preview.name} />
+                                      ) : (
+                                        <video src={preview.url} />
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="btn-remove-media"
+                                        onClick={() => {
+                                          const newFiles = [...editNewFiles];
+                                          const newPreviews = [...editNewFilePreviews];
+                                          newFiles.splice(idx, 1);
+                                          newPreviews.splice(idx, 1);
+                                          setEditNewFiles(newFiles);
+                                          setEditNewFilePreviews(newPreviews);
+                                        }}
+                                        title="Xóa ảnh này"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                           </div>
-                        ))}
-                      </div>
-                    )}
+
+                          <div className="edit-actions">
+                            <button
+                              className="btn-save"
+                              onClick={() => handleSaveEdit(c.id)}
+                              disabled={!editContent.trim() || uploadingMedia}
+                            >
+                              {uploadingMedia ? "⏳ Đang tải..." : "💾 Lưu"}
+                            </button>
+                            <button
+                              className="btn-cancel"
+                              onClick={handleCancelEdit}
+                            >
+                              ✖ Hủy
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="comment-content">{c.content}</p>
+                      )}
+
+                      {/* Media thumbnails - clickable for zoom */}
+                      {!editingCommentId && Array.isArray(c.media) && c.media.length > 0 && (
+                        <div className="comment-media-list">
+                          {c.media.map((m, idx) => (
+                            <div
+                              key={m.id || m.url}
+                              className="comment-media-thumb"
+                              onClick={() => {
+                                if (!m.type?.startsWith("video")) {
+                                  const allImages = c.media
+                                    .filter((media) => !media.type?.startsWith("video"))
+                                    .map((media) => convertMediaUrl(media.url));
+                                  const imageIndex = c.media
+                                    .filter((media) => !media.type?.startsWith("video"))
+                                    .findIndex((media) => media.id === m.id || media.url === m.url);
+                                  handleImageClick(convertMediaUrl(m.url), allImages, imageIndex);
+                                }
+                              }}
+                              style={{ cursor: m.type?.startsWith("video") ? "default" : "pointer" }}
+                            >
+                              {m.type?.startsWith("video") ? (
+                                <video src={convertMediaUrl(m.url)} controls />
+                              ) : (
+                                <img src={convertMediaUrl(m.url)} alt="" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reactions and Reply Section */}
+                      {!editingCommentId && (
+                        <div className="comment-reactions-section">
+                          <div className="comment-reaction-buttons">
+                            {['LIKE', 'HELPFUL', 'HAHA', 'LOVE', 'SAD'].map((reactionType) => {
+                              const reactionEmojis = {
+                                LIKE: '👍',
+                                HELPFUL: '💡',
+                                HAHA: '😂',
+                                LOVE: '❤️',
+                                SAD: '😢'
+                              };
+                              const count = c.reactionCounts?.[reactionType] || 0;
+                              const isActive = c.currentUserReaction === reactionType;
+
+                              return (
+                                <button
+                                  key={reactionType}
+                                  className={`reaction-btn ${isActive ? 'active' : ''}`}
+                                  onClick={() => handleReactionToggle(c.id, reactionType, c.currentUserReaction)}
+                                  title={reactionType}
+                                >
+                                  <span className="reaction-emoji">{reactionEmojis[reactionType]}</span>
+                                  {count > 0 && <span className="reaction-count">{count}</span>}
+                                </button>
+                              );
+                            })}
+
+                            <button
+                              className="reply-btn"
+                              onClick={() => handleReplyClick(c)}
+                              title="Phản hồi"
+                            >
+                              💬 Reply {c.replyCount > 0 && `(${c.replyCount})`}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Nested Replies - Recursive */}
+                      {!c.parentId && c.replyCount > 0 && (
+                        <div className="comment-replies">
+                          {renderReplies(c.id)}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })
+          )}
+
+          {/* Reply Form - shown when replying */}
+          {replyingTo && (
+            <div className="reply-form-container">
+              <div className="reply-form-header">
+                <span>Reply to <strong>{replyingTo.userName}</strong></span>
+                <button className="btn-cancel-reply" onClick={handleCancelReply}>✕</button>
+              </div>
+              <form onSubmit={handleSubmitReply} className="reply-form">
+                <textarea
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  placeholder="Write your reply..."
+                  rows={3}
+                  disabled={submittingComment}
+                />
+                <button
+                  type="submit"
+                  disabled={submittingComment || !replyContent.trim()}
+                >
+                  {submittingComment ? "Sending..." : "Send Reply"}
+                </button>
+              </form>
+            </div>
           )}
 
 

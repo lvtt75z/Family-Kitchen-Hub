@@ -1,4 +1,5 @@
 package com.c2se04.familykitchenhub.Repository;
+
 import com.c2se04.familykitchenhub.Repository.projection.RecipeEngagementProjection;
 import com.c2se04.familykitchenhub.enums.MealType;
 import com.c2se04.familykitchenhub.model.Recipe;
@@ -15,79 +16,105 @@ import java.util.Optional;
 
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
-    // Tìm kiếm công thức theo kiểu món ăn
-    List<Recipe> findByMealType(MealType mealType);
-    
-    // Fetch recipe with images and recipeIngredients
-    @EntityGraph(attributePaths = {"images", "recipeIngredients", "recipeIngredients.ingredient"})
-    Optional<Recipe> findById(Long id);
-    
-    // Tìm kiếm công thức theo tên (không phân biệt hoa thường)
-    @Query("SELECT r FROM Recipe r WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :name, '%'))")
-    List<Recipe> findByTitleContainingIgnoreCase(@Param("name") String name);
+        // Tìm kiếm công thức theo kiểu món ăn
+        List<Recipe> findByMealType(MealType mealType);
 
-    @Query(
-            value = "SELECT r.id AS recipeId, " +
-                    "       r.title AS title, " +
-                    "       r.image_url AS imageUrl, " +
-                    "       COALESCE(c.comment_count, 0) AS commentCount, " +
-                    "       COALESCE(m.photo_count, 0) AS photoCount, " +
-                    "       COALESCE(b.bookmark_count, 0) AS bookmarkCount, " +
-                    "       (COALESCE(c.comment_count, 0) * 1.0 " +
-                    "        + COALESCE(m.photo_count, 0) * 1.5 " +
-                    "        + COALESCE(b.bookmark_count, 0) * 2.0) AS engagementScore " +
-                    "FROM recipes r " +
-                    "LEFT JOIN ( " +
-                    "    SELECT recipe_id, COUNT(*) AS comment_count " +
-                    "    FROM recipe_comments " +
-                    "    WHERE status = 'APPROVED' " +
-                    "    GROUP BY recipe_id " +
-                    ") c ON c.recipe_id = r.id " +
-                    "LEFT JOIN ( " +
-                    "    SELECT rc.recipe_id, COUNT(cm.id) AS photo_count " +
-                    "    FROM recipe_comments rc " +
-                    "    JOIN comment_media cm ON rc.id = cm.comment_id " +
-                    "    WHERE rc.status = 'APPROVED' " +
-                    "    GROUP BY rc.recipe_id " +
-                    ") m ON m.recipe_id = r.id " +
-                    "LEFT JOIN ( " +
-                    "    SELECT recipe_id, COUNT(*) AS bookmark_count " +
-                    "    FROM recipe_bookmarks " +
-                    "    GROUP BY recipe_id " +
-                    ") b ON b.recipe_id = r.id " +
-                    "WHERE (COALESCE(c.comment_count, 0) * 1.0 " +
-                    "       + COALESCE(m.photo_count, 0) * 1.5 " +
-                    "       + COALESCE(b.bookmark_count, 0) * 2.0) > 0 " +
-                    "ORDER BY engagementScore DESC, r.id DESC",
-            countQuery = "SELECT COUNT(*) FROM ( " +
-                    "    SELECT r.id " +
-                    "    FROM recipes r " +
-                    "    LEFT JOIN ( " +
-                    "        SELECT recipe_id, COUNT(*) AS comment_count " +
-                    "        FROM recipe_comments " +
-                    "        WHERE status = 'APPROVED' " +
-                    "        GROUP BY recipe_id " +
-                    "    ) c ON c.recipe_id = r.id " +
-                    "    LEFT JOIN ( " +
-                    "        SELECT rc.recipe_id, COUNT(cm.id) AS photo_count " +
-                    "        FROM recipe_comments rc " +
-                    "        JOIN comment_media cm ON rc.id = cm.comment_id " +
-                    "        WHERE rc.status = 'APPROVED' " +
-                    "        GROUP BY rc.recipe_id " +
-                    "    ) m ON m.recipe_id = r.id " +
-                    "    LEFT JOIN ( " +
-                    "        SELECT recipe_id, COUNT(*) AS bookmark_count " +
-                    "        FROM recipe_bookmarks " +
-                    "        GROUP BY recipe_id " +
-                    "    ) b ON b.recipe_id = r.id " +
-                    "    WHERE (COALESCE(c.comment_count, 0) * 1.0 " +
-                    "           + COALESCE(m.photo_count, 0) * 1.5 " +
-                    "           + COALESCE(b.bookmark_count, 0) * 2.0) > 0 " +
-                    ") engaged_recipes",
-            nativeQuery = true)
-    Page<RecipeEngagementProjection> findRecipesByEngagement(Pageable pageable);
-    
-    // Fetch all recipes with images
-    @EntityGraph(attributePaths = {"images"})
-    List<Recipe> findAll();
+        // Fetch recipe with images and recipeIngredients
+        @EntityGraph(attributePaths = { "images", "recipeIngredients", "recipeIngredients.ingredient" })
+        Optional<Recipe> findById(Long id);
+
+        // Tìm kiếm công thức theo tên (không phân biệt hoa thường)
+        @Query("SELECT r FROM Recipe r WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :name, '%'))")
+        List<Recipe> findByTitleContainingIgnoreCase(@Param("name") String name);
+
+        @Query(value = "SELECT r.id AS recipeId, " +
+                        "       r.title AS title, " +
+                        "       r.image_url AS imageUrl, " +
+                        "       COALESCE(c.comment_count, 0) AS commentCount, " +
+                        "       COALESCE(m.photo_count, 0) AS photoCount, " +
+                        "       COALESCE(b.bookmark_count, 0) AS bookmarkCount, " +
+                        "       (COALESCE(c.comment_count, 0) * 1.0 " +
+                        "        + COALESCE(m.photo_count, 0) * 1.5 " +
+                        "        + COALESCE(b.bookmark_count, 0) * 2.0) AS engagementScore " +
+                        "FROM recipes r " +
+                        "LEFT JOIN ( " +
+                        "    SELECT recipe_id, COUNT(*) AS comment_count " +
+                        "    FROM recipe_comments " +
+                        "    WHERE status = 'APPROVED' " +
+                        "    GROUP BY recipe_id " +
+                        ") c ON c.recipe_id = r.id " +
+                        "LEFT JOIN ( " +
+                        "    SELECT rc.recipe_id, COUNT(cm.id) AS photo_count " +
+                        "    FROM recipe_comments rc " +
+                        "    JOIN comment_media cm ON rc.id = cm.comment_id " +
+                        "    WHERE rc.status = 'APPROVED' " +
+                        "    GROUP BY rc.recipe_id " +
+                        ") m ON m.recipe_id = r.id " +
+                        "LEFT JOIN ( " +
+                        "    SELECT recipe_id, COUNT(*) AS bookmark_count " +
+                        "    FROM recipe_bookmarks " +
+                        "    GROUP BY recipe_id " +
+                        ") b ON b.recipe_id = r.id " +
+                        "WHERE (COALESCE(c.comment_count, 0) * 1.0 " +
+                        "       + COALESCE(m.photo_count, 0) * 1.5 " +
+                        "       + COALESCE(b.bookmark_count, 0) * 2.0) > 0 " +
+                        "ORDER BY engagementScore DESC, r.id DESC", countQuery = "SELECT COUNT(*) FROM ( " +
+                                        "    SELECT r.id " +
+                                        "    FROM recipes r " +
+                                        "    LEFT JOIN ( " +
+                                        "        SELECT recipe_id, COUNT(*) AS comment_count " +
+                                        "        FROM recipe_comments " +
+                                        "        WHERE status = 'APPROVED' " +
+                                        "        GROUP BY recipe_id " +
+                                        "    ) c ON c.recipe_id = r.id " +
+                                        "    LEFT JOIN ( " +
+                                        "        SELECT rc.recipe_id, COUNT(cm.id) AS photo_count " +
+                                        "        FROM recipe_comments rc " +
+                                        "        JOIN comment_media cm ON rc.id = cm.comment_id " +
+                                        "        WHERE rc.status = 'APPROVED' " +
+                                        "        GROUP BY rc.recipe_id " +
+                                        "    ) m ON m.recipe_id = r.id " +
+                                        "    LEFT JOIN ( " +
+                                        "        SELECT recipe_id, COUNT(*) AS bookmark_count " +
+                                        "        FROM recipe_bookmarks " +
+                                        "        GROUP BY recipe_id " +
+                                        "    ) b ON b.recipe_id = r.id " +
+                                        "    WHERE (COALESCE(c.comment_count, 0) * 1.0 " +
+                                        "           + COALESCE(m.photo_count, 0) * 1.5 " +
+                                        "           + COALESCE(b.bookmark_count, 0) * 2.0) > 0 " +
+                                        ") engaged_recipes", nativeQuery = true)
+        Page<RecipeEngagementProjection> findRecipesByEngagement(Pageable pageable);
+
+        // Fetch all recipes with images
+        @EntityGraph(attributePaths = { "images" })
+        List<Recipe> findAll();
+
+        // ====== USER SUBMISSION METHODS ======
+
+        /**
+         * Find all recipes with specific status
+         */
+        List<Recipe> findByStatus(com.c2se04.familykitchenhub.enums.RecipeStatus status);
+
+        /**
+         * Find recipes by status, ordered by submission date (newest first)
+         */
+        List<Recipe> findByStatusOrderBySubmittedAtDesc(com.c2se04.familykitchenhub.enums.RecipeStatus status);
+
+        /**
+         * Find all recipes submitted by a specific user
+         */
+        List<Recipe> findBySubmittedByUserIdOrderBySubmittedAtDesc(Long userId);
+
+        /**
+         * Find all publicly visible recipes (APPROVED or ADMIN_CREATED)
+         */
+        @Query("SELECT r FROM Recipe r WHERE r.status IN ('APPROVED', 'ADMIN_CREATED') ORDER BY r.createdAt DESC")
+        List<Recipe> findAllPublicRecipes();
+
+        /**
+         * Find publicly visible recipes by meal type
+         */
+        @Query("SELECT r FROM Recipe r WHERE r.status IN ('APPROVED', 'ADMIN_CREATED') AND r.mealType = :mealType ORDER BY r.createdAt DESC")
+        List<Recipe> findPublicRecipesByMealType(@Param("mealType") MealType mealType);
 }

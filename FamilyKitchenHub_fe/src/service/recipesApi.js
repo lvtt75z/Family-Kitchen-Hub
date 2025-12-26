@@ -68,12 +68,15 @@ export const getTopBookmarkedRecipes = async (limit = 5) => {
 // ============================
 
 // GET /api/recipes/{id}/comments?status=&page=&size=
-// Backend: optional CommentStatus filter, pagination support
-export const getRecipeComments = async (recipeId, { status, page, size } = {}) => {
+// GET /api/recipes/{id}/comments
+// opts: { status?, page?, size?, userId? }
+export const getRecipeComments = async (recipeId, opts = {}) => {
+  const { status, page, size, userId } = opts;
   const params = {};
   if (status) params.status = status;
   if (page !== undefined) params.page = page;
   if (size !== undefined) params.size = size;
+  if (userId) params.userId = userId;
 
   const res = await axios.get(`/recipes/${recipeId}/comments`, { params });
   return res.data;
@@ -135,6 +138,36 @@ export const deleteRecipeComment = async (commentId, userId) => {
     params: { userId }
   });
 };
+
+// ============================
+// Comment Reactions
+// ============================
+
+// POST /api/comments/{commentId}/reactions - Add or update reaction
+export const addCommentReaction = async (commentId, reactionType) => {
+  const res = await axios.post(`/comments/${commentId}/reactions`, {
+    reactionType
+  });
+  return res.data;
+};
+
+// DELETE /api/comments/{commentId}/reactions - Remove reaction
+export const removeCommentReaction = async (commentId) => {
+  await axios.delete(`/comments/${commentId}/reactions`);
+};
+
+// GET /api/comments/{commentId}/reactions - Get all reactions for a comment
+export const getCommentReactions = async (commentId) => {
+  const res = await axios.get(`/comments/${commentId}/reactions`);
+  return res.data;
+};
+
+// GET /api/comments/{commentId}/reactions/counts - Get reaction counts
+export const getCommentReactionCounts = async (commentId) => {
+  const res = await axios.get(`/comments/${commentId}/reactions/counts`);
+  return res.data;
+};
+
 
 // ============================
 // Posts sorted by engagement
@@ -206,6 +239,10 @@ export default {
   uploadCommentMedia,
   updateRecipeComment,
   deleteRecipeComment,
+  addCommentReaction,
+  removeCommentReaction,
+  getCommentReactions,
+  getCommentReactionCounts,
   getPostsByEngagement,
   cookRecipe,
   getCookableRecipes,

@@ -1,0 +1,71 @@
+/* Nested reply wrapper */
+.comment-reply-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Deeper nested replies */
+.comment-nested-replies {
+    margin-left: 32px;
+    margin-top: 12px;
+    padding-left: 16px;
+    border-left: 3px solid #fdba74;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Left-align date for child comments */
+.comment-reply-item .comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.comment-reply-item .comment-meta-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+}
+
+.comment-reply-item .comment-author {
+    font-weight: 700;
+    color: #7c2d12;
+    font-size: 14px;
+}
+
+.comment-reply-item .comment-date {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+/* Edit/delete icons for child comments */
+.comment-reply-item .comment-actions-topright {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.comment-reply-item .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #9ca3af;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comment-reply-item .btn-edit-icon:hover {
+    color: #f97316;
+}
+
+.comment-reply-item .btn-delete-icon:hover {
+    color: #ef4444;
+}

@@ -29,8 +29,9 @@ public class RecipeCommentController {
 
     @GetMapping("/{recipeId}/comments")
     public ResponseEntity<List<RecipeCommentResponseDTO>> listComments(@PathVariable Long recipeId,
-            @RequestParam(required = false) CommentStatus status) {
-        return ResponseEntity.ok(recipeCommentService.getComments(recipeId, status));
+            @RequestParam(required = false) CommentStatus status,
+            @RequestParam(required = false) Long userId) {
+        return ResponseEntity.ok(recipeCommentService.getComments(recipeId, status, userId));
     }
 
     @PatchMapping("/comments/{commentId}/status")

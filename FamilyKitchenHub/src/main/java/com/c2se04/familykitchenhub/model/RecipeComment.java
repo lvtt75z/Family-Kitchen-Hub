@@ -40,6 +40,16 @@ public class RecipeComment {
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CommentMedia> media = new HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private RecipeComment parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RecipeComment> replies = new HashSet<>();
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CommentReaction> reactions = new HashSet<>();
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -111,5 +121,20 @@ public class RecipeComment {
     public Set<CommentMedia> getMedia() {
         return media;
     }
-}
 
+    public RecipeComment getParent() {
+        return parent;
+    }
+
+    public void setParent(RecipeComment parent) {
+        this.parent = parent;
+    }
+
+    public Set<RecipeComment> getReplies() {
+        return replies;
+    }
+
+    public Set<CommentReaction> getReactions() {
+        return reactions;
+    }
+}

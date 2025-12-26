@@ -414,9 +414,20 @@
 }
 
 .fh-recipe-image {
-  width: 50%;
+  max-width: 400px;
+  /* Fixed max width */
+  max-height: 300px;
+  /* Fixed max height */
+  width: auto;
+  /* Allow natural width within max */
+  height: auto;
+  /* Allow natural height within max */
+  object-fit: contain;
+  /* Keep full image visible */
   border-radius: 12px;
   margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  /* Add subtle border */
 }
 
 /* ===========================
@@ -591,8 +602,12 @@
 =================================*/
 .card-image-side {
   width: 100%;
-  height: 180px;
-  /* ⬅ chỉnh hình cao kiểu Pinterest */
+  aspect-ratio: 4 / 3;
+  /* Fixed 4:3 aspect ratio */
+  min-height: 200px;
+  /* Minimum height for consistency */
+  max-height: 250px;
+  /* Maximum height to prevent oversized images */
   overflow: hidden;
   background: #e5e7eb;
   position: relative;
@@ -603,6 +618,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Crop to fill container while maintaining aspect ratio */
+  object-position: center;
+  /* Center the image */
   transition: transform 0.3s ease;
 }
 

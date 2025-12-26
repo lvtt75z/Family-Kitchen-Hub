@@ -12,7 +12,9 @@ import {
   ChefHat,
   CookingPot,
   Bell,
-  Plus
+  Plus,
+  Trash2,
+  Share2
 } from "lucide-react";
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
@@ -64,6 +66,7 @@ export default function RecipeDashboard() {
   const [filterCookable, setFilterCookable] = useState(false);
   const [filterBookmarked, setFilterBookmarked] = useState(false);
   const [filterReminders, setFilterReminders] = useState(false);
+  const [filterMyRecipes, setFilterMyRecipes] = useState(false);
   const [loadingFilters, setLoadingFilters] = useState(false);
 
   // Bookmark states
@@ -291,12 +294,7 @@ export default function RecipeDashboard() {
 
         if (currentFilters.reminders) {
           const reminderRecipeIds = Array.from(recipesWithReminders.keys());
-
-          if (currentFilters.cookable || currentFilters.bookmarked) {
-            result = result.filter(r => reminderRecipeIds.includes(r.id));
-          } else {
-            result = recipes.filter(r => reminderRecipeIds.includes(r.id));
-          }
+          result = result.filter(r => reminderRecipeIds.includes(r.id));
         }
 
         return result;
@@ -306,12 +304,46 @@ export default function RecipeDashboard() {
         const newValue = !filterCookable;
         setFilterCookable(newValue);
 
-        const filtered = await applyFilters({
-          cookable: newValue,
-          bookmarked: filterBookmarked,
-          reminders: filterReminders,
-        });
-        setSearchResults(filtered);
+        // If My Recipes is also active, combine the filters
+        if (filterMyRecipes && newValue) {
+          const myRecipesRes = await axios.get(`/user-recipes/my-submissions`, {
+            params: { userId }
+          });
+
+          // Check which of user's recipes are cookable
+          const cookabilityPromises = myRecipesRes.data.map(async (recipe) => {
+            try {
+              const response = await axios.get(`/recipes/${recipe.id}/cookable`, {
+                params: { userId },
+              });
+              return { recipeId: recipe.id, canCook: response.data };
+            } catch (error) {
+              return { recipeId: recipe.id, canCook: false };
+            }
+          });
+
+          const cookabilityResults = await Promise.all(cookabilityPromises);
+          const cookableIds = cookabilityResults
+            .filter(result => result.canCook)
+            .map(result => result.recipeId);
+
+          const combined = myRecipesRes.data.filter(recipe => cookableIds.includes(recipe.id));
+          setSearchResults(combined);
+        } else if (filterMyRecipes && !newValue) {
+          // Just my recipes without cookable filter
+          const res = await axios.get(`/user-recipes/my-submissions`, {
+            params: { userId }
+          });
+          setSearchResults(res.data || []);
+        } else {
+          // Just cookable filter
+          const filtered = await applyFilters({
+            cookable: newValue,
+            bookmarked: filterBookmarked,
+            reminders: filterReminders,
+          });
+          setSearchResults(filtered);
+        }
       } else if (filterType === "bookmarked") {
         const newValue = !filterBookmarked;
         setFilterBookmarked(newValue);
@@ -332,6 +364,66 @@ export default function RecipeDashboard() {
           reminders: newValue,
         });
         setSearchResults(filtered);
+      } else if (filterType === "myRecipes") {
+        const newValue = !filterMyRecipes;
+        setFilterMyRecipes(newValue);
+
+        if (newValue) {
+          try {
+            const res = await axios.get(`/user-recipes/my-submissions`, {
+              params: { userId }
+            });
+
+            // If cookable filter is also active, combine them
+            if (filterCookable) {
+              // Check which of user's recipes are cookable
+              const cookabilityPromises = res.data.map(async (recipe) => {
+                try {
+                  const response = await axios.get(`/recipes/${recipe.id}/cookable`, {
+                    params: { userId },
+                  });
+                  return { recipeId: recipe.id, canCook: response.data };
+                } catch (error) {
+                  return { recipeId: recipe.id, canCook: false };
+                }
+              });
+
+              const cookabilityResults = await Promise.all(cookabilityPromises);
+              const cookableIds = cookabilityResults
+                .filter(result => result.canCook)
+                .map(result => result.recipeId);
+
+              const combined = res.data.filter(recipe => cookableIds.includes(recipe.id));
+              setSearchResults(combined);
+            } else {
+              setSearchResults(res.data || []);
+            }
+          } catch (error) {
+            console.error("Error fetching my recipes:", error);
+            toast.error("Could not load your recipes", { autoClose: 2000 });
+            setSearchResults([]);
+          }
+        } else {
+          // Reload all recipes when turning off the filter
+          try {
+            const res = await axios.get("/recipes");
+            setRecipes(res.data);
+
+            // Apply cookable filter if still active
+            if (filterCookable) {
+              const filtered = await applyFilters({
+                cookable: true,
+                bookmarked: filterBookmarked,
+                reminders: filterReminders,
+              });
+              setSearchResults(filtered);
+            } else {
+              setSearchResults(res.data);
+            }
+          } catch (error) {
+            console.error("Error reloading recipes:", error);
+          }
+        }
       }
 
       // Clear search and category when using filters
@@ -349,6 +441,7 @@ export default function RecipeDashboard() {
     setFilterCookable(false);
     setFilterBookmarked(false);
     setFilterReminders(false);
+    setFilterMyRecipes(false);
     setSearchResults(recipes);
     setSearch("");
     setSelectedCategory(null);
@@ -874,8 +967,26 @@ export default function RecipeDashboard() {
 
         toast.success("Cập nhật công thức thành công!", { autoClose: 2000 });
       } else {
-        // CREATE new recipe
-        const res = await axios.post("/recipes", payload, {
+        // CREATE new recipe - use user-recipes endpoint
+        // Get userId from localStorage
+        const userDataString = localStorage.getItem("user");
+        let userId = null;
+        if (userDataString) {
+          try {
+            const userData = JSON.parse(userDataString);
+            userId = userData?.user?.id || userData?.id;
+          } catch (e) {
+            console.warn("Cannot parse user data:", e);
+          }
+        }
+
+        if (!userId) {
+          toast.error("Please login to create a recipe", { autoClose: 2000 });
+          return;
+        }
+
+        const res = await axios.post("/user-recipes/draft", payload, {
+          params: { userId }, // Pass userId as query parameter
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -886,7 +997,7 @@ export default function RecipeDashboard() {
         setRecipes((prev) => [updatedRecipe, ...prev]);
         setSearchResults((prev) => [updatedRecipe, ...prev]);
 
-        toast.success("Thêm công thức thành công!", { autoClose: 2000 });
+        toast.success("Recipe created as draft!", { autoClose: 2000 });
       }
 
       setForm(defaultForm);
@@ -900,6 +1011,96 @@ export default function RecipeDashboard() {
         (editingRecipeId ? "Không thể cập nhật công thức." : "Không thể thêm công thức."),
         { autoClose: 3000 }
       );
+    }
+  };
+
+  // =========================
+  //   DELETE USER RECIPE
+  // =========================
+  const handleDeleteMyRecipe = async (e, recipeId) => {
+    e.stopPropagation(); // Prevent card click
+
+    const userDataString = localStorage.getItem("user");
+    let userId = null;
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        userId = userData?.user?.id || userData?.id;
+      } catch (error) {
+        console.warn("Cannot parse user data:", error);
+      }
+    }
+
+    if (!userId) {
+      toast.error("Please login to delete recipe", { autoClose: 2000 });
+      return;
+    }
+
+    const confirmed = window.confirm("Are you sure you want to delete this recipe?");
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`/user-recipes/${recipeId}`, {
+        params: { userId },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      // Remove from local state
+      setRecipes(prev => prev.filter(r => r.id !== recipeId));
+      setSearchResults(prev => prev.filter(r => r.id !== recipeId));
+
+      toast.success("Recipe deleted successfully!", { autoClose: 2000 });
+    } catch (error) {
+      console.error("Error sharing recipe:", error);
+      const errorMsg = error.response?.data?.message || "Cannot submit recipe";
+      toast.error(errorMsg, { autoClose: 3000 });
+    }
+  };
+
+  // =========================
+  //   SHARE/SUBMIT RECIPE FOR APPROVAL
+  // =========================
+  const handleShareRecipe = async (e, recipeId, recipeTitle) => {
+    e.stopPropagation(); // Prevent card click
+
+    const userDataString = localStorage.getItem("user");
+    let userId = null;
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        userId = userData?.user?.id || userData?.id;
+      } catch (error) {
+        console.warn("Cannot parse user data:", error);
+      }
+    }
+
+    if (!userId) {
+      toast.error("Please login to submit recipe", { autoClose: 2000 });
+      return;
+    }
+
+    const confirmed = window.confirm(`Submit "${recipeTitle}" for admin approval to share publicly?`);
+    if (!confirmed) return;
+
+    try {
+      await axios.put(`/user-recipes/${recipeId}/submit`, null, {
+        params: { userId },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      // Update recipe status in local state
+      setRecipes(prev => prev.map(r =>
+        r.id === recipeId ? { ...r, status: 'PENDING_APPROVAL' } : r
+      ));
+      setSearchResults(prev => prev.map(r =>
+        r.id === recipeId ? { ...r, status: 'PENDING_APPROVAL' } : r
+      ));
+
+      toast.success("Recipe submitted for approval!", { autoClose: 2000 });
+    } catch (error) {
+      console.error("Error sharing recipe:", error);
+      const errorMsg = error.response?.data?.message || "Cannot submit recipe";
+      toast.error(errorMsg, { autoClose: 3000 });
     }
   };
 
@@ -1019,21 +1220,28 @@ export default function RecipeDashboard() {
       {/* RECIPES GRID */}
       <div className="recipes-heading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginBottom: '10px' }}>
         <h2 className="all-recipes">All Recipes</h2>
-        {/* <button
+        <button
           className="add-btn"
           onClick={openModal}
           style={{
             padding: '10px 20px',
             borderRadius: '8px',
-            fontSize: '14px'
+            fontSize: '14px',
+            background: '#10b981',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
-          + Add Recipe
-        </button> */}
+          <Plus size={18} /> Add Recipe
+        </button>
       </div>
 
       {/* Recipe Filter Buttons - Below "All Recipes" heading */}
-      <div style={{ display: 'flex', gap: '22px', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
         <button
           className={`category-chip ${filterCookable ? 'active' : ''}`}
           onClick={() => handleFilterToggle("cookable")}
@@ -1045,6 +1253,18 @@ export default function RecipeDashboard() {
           }}
         >
           <CookingPot size={16} /> I Can Cook
+        </button>
+        <button
+          className={`category-chip ${filterMyRecipes ? 'active' : ''}`}
+          onClick={() => handleFilterToggle("myRecipes")}
+          disabled={loadingFilters}
+          style={{
+            backgroundColor: filterMyRecipes ? '#3b82f6' : 'transparent',
+            color: filterMyRecipes ? 'white' : '#666',
+            border: filterMyRecipes ? 'none' : '1px solid #ddd',
+          }}
+        >
+          <ChefHat size={16} /> My Recipes
         </button>
         <button
           className={`category-chip ${filterBookmarked ? 'active' : ''}`}
@@ -1070,7 +1290,7 @@ export default function RecipeDashboard() {
         >
           <Bell size={16} /> Reminders
         </button>
-        {(filterCookable || filterBookmarked || filterReminders) && (
+        {(filterCookable || filterBookmarked || filterReminders || filterMyRecipes) && (
           <button
             className="category-chip"
             onClick={clearAllFilters}
@@ -1152,6 +1372,23 @@ export default function RecipeDashboard() {
                         <Bell size={18} color="gray" />
                       )}
                     </button>
+                    {/* Delete button - only show for user-created recipes */}
+                    {filterMyRecipes && r.submittedByUserId && (
+                      <button
+                        onClick={(e) => handleDeleteMyRecipe(e, r.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                        title="Delete recipe"
+                      >
+                        <Trash2 size={18} color="#ef4444" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="card-meta">
@@ -1160,8 +1397,107 @@ export default function RecipeDashboard() {
                 </div>
                 <p className="card-desc">{r.instructions}</p>
 
+                {/* Share button or Status badge - bottom of card */}
+                {filterMyRecipes && (
+                  <>
+                    {/* Show REJECTED badge with reason if rejected */}
+                    {r.status === 'REJECTED' && (
+                      <div style={{ marginTop: '12px' }}>
+                        <div style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          textAlign: 'center',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                          color: 'white',
+                          boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)'
+                        }}>
+                          ❌ REJECTED
+                        </div>
+                        {r.rejectionReason && (
+                          <div style={{
+                            marginTop: '8px',
+                            padding: '8px 12px',
+                            background: '#fee2e2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            color: '#991b1b',
+                            lineHeight: '1.4',
+                            textAlign: 'left'
+                          }}>
+                            <strong>Reason:</strong> {r.rejectionReason}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Show Share button only for DRAFT, REJECTED, or no status */}
+                    {(!r.status || r.status === 'DRAFT' || r.status === 'REJECTED') && (
+                      <button
+                        onClick={(e) => handleShareRecipe(e, r.id, r.title)}
+                        style={{
+                          width: '100%',
+                          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                          color: 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          marginTop: '12px',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)'
+                        }}
+                        title="Submit for sharing"
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(249, 115, 22, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.3)';
+                        }}
+                      >
+                        📤 {r.status === 'REJECTED' ? 'RE-SUBMIT FOR APPROVAL' : 'SHARE FOR APPROVAL'}
+                      </button>
+                    )}
+
+                    {/* Show Status badge for PENDING_APPROVAL or APPROVED */}
+                    {(r.status === 'PENDING_APPROVAL' || r.status === 'APPROVED') && (
+                      <div style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        marginTop: '12px',
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: r.status === 'PENDING_APPROVAL'
+                          ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                          : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        boxShadow: r.status === 'PENDING_APPROVAL'
+                          ? '0 2px 8px rgba(245, 158, 11, 0.3)'
+                          : '0 2px 8px rgba(16, 185, 129, 0.3)'
+                      }}>
+                        {r.status === 'PENDING_APPROVAL' ? '⏳ PENDING APPROVAL' : '✅ APPROVED'}
+                      </div>
+                    )}
+                  </>
+                )}
+
                 {/* Nút Nấu đã được chuyển vào trang DetailRecipes */}
-                
+
                 {/* Reminder Information */}
                 {recipesWithReminders.has(r.id) && (
                   <div style={{
@@ -1198,7 +1534,7 @@ export default function RecipeDashboard() {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Action Buttons */}
                 {/* <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button

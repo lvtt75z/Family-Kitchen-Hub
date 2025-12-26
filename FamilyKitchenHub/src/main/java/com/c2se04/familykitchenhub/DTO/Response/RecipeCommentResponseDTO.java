@@ -5,17 +5,25 @@ import com.c2se04.familykitchenhub.enums.CommentStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class RecipeCommentResponseDTO {
 
     private Long id;
     private Long recipeId;
     private Long userId;
+    private String username;
+    private String userFullName;
     private String content;
     private CommentStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<CommentMediaResponseDTO> media = new ArrayList<>();
+
+    private Long parentId;
+    private int replyCount;
+    private Map<String, Long> reactionCounts;
+    private String currentUserReaction;
 
     public Long getId() {
         return id;
@@ -80,5 +88,52 @@ public class RecipeCommentResponseDTO {
     public void setMedia(List<CommentMediaResponseDTO> media) {
         this.media = media;
     }
-}
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUserFullName() {
+        return userFullName;
+    }
+
+    public void setUserFullName(String userFullName) {
+        this.userFullName = userFullName;
+    }
+
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
+    }
+
+    public int getReplyCount() {
+        return replyCount;
+    }
+
+    public void setReplyCount(int replyCount) {
+        this.replyCount = replyCount;
+    }
+
+    public Map<String, Long> getReactionCounts() {
+        return reactionCounts;
+    }
+
+    public void setReactionCounts(Map<String, Long> reactionCounts) {
+        this.reactionCounts = reactionCounts;
+    }
+
+    public String getCurrentUserReaction() {
+        return currentUserReaction;
+    }
+
+    public void setCurrentUserReaction(String currentUserReaction) {
+        this.currentUserReaction = currentUserReaction;
+    }
+}

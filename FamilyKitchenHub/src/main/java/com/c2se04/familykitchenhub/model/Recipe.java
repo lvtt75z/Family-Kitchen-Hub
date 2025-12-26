@@ -55,6 +55,27 @@ public class Recipe {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    // --- USER SUBMISSION FIELDS ---
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 50)
+    private com.c2se04.familykitchenhub.enums.RecipeStatus status = com.c2se04.familykitchenhub.enums.RecipeStatus.ADMIN_CREATED;
+
+    @Column(name = "submitted_by_user_id")
+    private Long submittedByUserId;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
+    @Column(name = "reviewed_by_admin_id")
+    private Long reviewedByAdminId;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     // --- RELATIONSHIPS ---
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -208,5 +229,55 @@ public class Recipe {
 
     public void setImages(List<RecipeImage> images) {
         this.images = images;
+    }
+
+    // --- USER SUBMISSION GETTERS/SETTERS ---
+
+    public com.c2se04.familykitchenhub.enums.RecipeStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(com.c2se04.familykitchenhub.enums.RecipeStatus status) {
+        this.status = status;
+    }
+
+    public Long getSubmittedByUserId() {
+        return submittedByUserId;
+    }
+
+    public void setSubmittedByUserId(Long submittedByUserId) {
+        this.submittedByUserId = submittedByUserId;
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public Long getReviewedByAdminId() {
+        return reviewedByAdminId;
+    }
+
+    public void setReviewedByAdminId(Long reviewedByAdminId) {
+        this.reviewedByAdminId = reviewedByAdminId;
+    }
+
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public void setReviewedAt(LocalDateTime reviewedAt) {
+        this.reviewedAt = reviewedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 }

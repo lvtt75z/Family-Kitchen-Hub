@@ -80,7 +80,9 @@ public class RecipeService {
     }
 
     public List<Recipe> getAllRecipes() {
-        return recipeRepository.findAll();
+        // Only return public recipes (APPROVED or ADMIN_CREATED)
+        // Hide DRAFT, PENDING_APPROVAL, and REJECTED recipes
+        return recipeRepository.findAllPublicRecipes();
     }
 
     public Optional<Recipe> getRecipeById(Long id) {
@@ -88,7 +90,8 @@ public class RecipeService {
     }
 
     public List<Recipe> getRecipesByMealType(MealType mealType) {
-        return recipeRepository.findByMealType(mealType);
+        // Only return public recipes for this meal type
+        return recipeRepository.findPublicRecipesByMealType(mealType);
     }
 
     public List<Recipe> searchRecipesByTitle(String title) {
@@ -319,5 +322,36 @@ public class RecipeService {
         }
 
         return bookmarkedRecipes;
+    }
+
+    // ====== USER SUBMISSION METHODS ======
+
+    /**
+     * Get all pending recipes waiting for admin approval
+     */
+    public List<Recipe> getPendingRecipes() {
+        return recipeRepository.findByStatusOrderBySubmittedAtDesc(
+                com.c2se04.familykitchenhub.enums.RecipeStatus.PENDING_APPROVAL);
+    }
+
+    /**
+     * Get all recipes submitted by a specific user (all statuses)
+     */
+    public List<Recipe> getUserSubmittedRecipes(Long userId) {
+        return recipeRepository.findBySubmittedByUserIdOrderBySubmittedAtDesc(userId);
+    }
+
+    /**
+     * Get all user-submitted recipes (excludes ADMIN_CREATED)
+     */
+    public List<Recipe> getAllUserSubmissions() {
+        List<Recipe> allRecipes = recipeRepository.findAll();
+        List<Recipe> userSubmissions = new ArrayList<>();
+        for (Recipe recipe : allRecipes) {
+            if (recipe.getStatus() != com.c2se04.familykitchenhub.enums.RecipeStatus.ADMIN_CREATED) {
+                userSubmissions.add(recipe);
+            }
+        }
+        return userSubmissions;
     }
 }

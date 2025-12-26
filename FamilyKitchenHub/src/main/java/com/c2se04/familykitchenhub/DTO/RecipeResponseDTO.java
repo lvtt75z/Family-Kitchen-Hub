@@ -2,6 +2,8 @@ package com.c2se04.familykitchenhub.DTO;
 
 import com.c2se04.familykitchenhub.enums.DifficultyLevel;
 import com.c2se04.familykitchenhub.enums.MealType;
+import com.c2se04.familykitchenhub.enums.RecipeStatus;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +20,14 @@ public class RecipeResponseDTO {
     private DifficultyLevel difficultyLevel;
     private MealType mealType;
     private Set<RecipeIngredientResponseDTO> ingredients;
+
+    // Recipe submission fields
+    private RecipeStatus status;
+    private Long submittedByUserId;
+    private LocalDateTime submittedAt;
+    private Long reviewedByAdminId;
+    private LocalDateTime reviewedAt;
+    private String rejectionReason;
 
     public RecipeResponseDTO() {
     }
@@ -116,5 +126,54 @@ public class RecipeResponseDTO {
 
     public void setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
+    }
+
+    // Getters and Setters for submission fields
+    public RecipeStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RecipeStatus status) {
+        this.status = status;
+    }
+
+    public Long getSubmittedByUserId() {
+        return submittedByUserId;
+    }
+
+    public void setSubmittedByUserId(Long submittedByUserId) {
+        this.submittedByUserId = submittedByUserId;
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public Long getReviewedByAdminId() {
+        return reviewedByAdminId;
+    }
+
+    public void setReviewedByAdminId(Long reviewedByAdminId) {
+        this.reviewedByAdminId = reviewedByAdminId;
+    }
+
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public void setReviewedAt(LocalDateTime reviewedAt) {
+        this.reviewedAt = reviewedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 }
