@@ -3,6 +3,7 @@ package com.c2se04.familykitchenhub.Controller;
 import com.c2se04.familykitchenhub.DTO.RecipeRequestDTO;
 import com.c2se04.familykitchenhub.DTO.RecipeResponseDTO;
 import com.c2se04.familykitchenhub.Mapper.RecipeMapper;
+import com.c2se04.familykitchenhub.Repository.RecipeRepository;
 import com.c2se04.familykitchenhub.Service.RecipeService;
 import com.c2se04.familykitchenhub.enums.RecipeStatus;
 import com.c2se04.familykitchenhub.model.Recipe;
@@ -24,11 +25,14 @@ public class UserRecipeController {
 
     private final RecipeService recipeService;
     private final RecipeMapper recipeMapper;
+    private final RecipeRepository recipeRepository;
 
     @Autowired
-    public UserRecipeController(RecipeService recipeService, RecipeMapper recipeMapper) {
+    public UserRecipeController(RecipeService recipeService, RecipeMapper recipeMapper,
+            RecipeRepository recipeRepository) {
         this.recipeService = recipeService;
         this.recipeMapper = recipeMapper;
+        this.recipeRepository = recipeRepository;
     }
 
     /**
@@ -145,9 +149,12 @@ public class UserRecipeController {
                     .body(null); // Already submitted or approved
         }
 
+        // Update only the status fields without affecting ingredients
         recipe.setStatus(RecipeStatus.PENDING_APPROVAL);
         recipe.setSubmittedAt(LocalDateTime.now());
-        Recipe savedRecipe = recipeService.updateRecipe(id, recipe);
+
+        // Save directly without calling updateRecipe to preserve ingredients
+        Recipe savedRecipe = recipeRepository.save(recipe);
 
         return ResponseEntity.ok(recipeMapper.toResponseDTO(savedRecipe));
     }

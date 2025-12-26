@@ -14,7 +14,8 @@ import {
   Bell,
   Plus,
   Trash2,
-  Share2
+  Share2,
+  Pencil
 } from "lucide-react";
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
@@ -949,13 +950,46 @@ export default function RecipeDashboard() {
       let updatedRecipe;
       if (editingRecipeId) {
         // UPDATE existing recipe
-        const res = await axios.put(`/recipes/${editingRecipeId}`, payload, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        updatedRecipe = res.data;
+        // Check if it's a user recipe (has submittedByUserId)
+        const existingRecipe = recipes.find(r => r.id === editingRecipeId);
+        const isUserRecipe = existingRecipe?.submittedByUserId;
+
+        if (isUserRecipe) {
+          // Use user-recipes endpoint for user-submitted recipes
+          const userDataString = localStorage.getItem("user");
+          let userId = null;
+          if (userDataString) {
+            try {
+              const userData = JSON.parse(userDataString);
+              userId = userData?.user?.id || userData?.id;
+            } catch (e) {
+              console.warn("Cannot parse user data:", e);
+            }
+          }
+
+          if (!userId) {
+            toast.error("Please login to edit recipe", { autoClose: 2000 });
+            return;
+          }
+
+          const res = await axios.put(`/user-recipes/${editingRecipeId}`, payload, {
+            params: { userId },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          updatedRecipe = res.data;
+        } else {
+          // Use regular recipes endpoint for admin recipes
+          const res = await axios.put(`/recipes/${editingRecipeId}`, payload, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          updatedRecipe = res.data;
+        }
 
         // Update in recipes list
         setRecipes((prev) =>
@@ -1105,7 +1139,42 @@ export default function RecipeDashboard() {
   };
 
   // =========================
-  //   DELETE RECIPE
+  //   EDIT USER RECIPE (DRAFT/REJECTED)
+  // =========================
+  const handleEditMyRecipe = async (e, recipeId) => {
+    e.stopPropagation(); // Prevent card click
+
+    try {
+      // Fetch full recipe details
+      const res = await axios.get(`/recipes/${recipeId}`);
+      const recipe = res.data;
+
+      // Populate form with recipe data
+      setForm({
+        title: recipe.title || "",
+        instructions: recipe.instructions || "",
+        cookingTimeMinutes: recipe.cookingTimeMinutes || "",
+        servings: recipe.servings || "",
+        mealType: recipe.mealType || "",
+        imageUrl: recipe.imageUrl || "",
+        ingredients: recipe.ingredients?.map(ing => ({
+          ingredientId: ing.ingredientId,
+          ingredientName: ing.ingredientName,
+          quantity: ing.quantity,
+          unit: ing.unit
+        })) || [],
+        categoryIds: []
+      });
+
+      setPreview(recipe.imageUrl ? convertMediaUrl(recipe.imageUrl) : null);
+      setEditingRecipeId(recipeId);
+      setIsOpen(true);
+    } catch (error) {
+      console.error("Error loading recipe for edit:", error);
+      toast.error("Could not load recipe data", { autoClose: 2000 });
+    }
+  };
+
   // =========================
   const handleDeleteClick = (recipe) => {
 
@@ -1372,23 +1441,42 @@ export default function RecipeDashboard() {
                         <Bell size={18} color="gray" />
                       )}
                     </button>
-                    {/* Delete button - only show for user-created recipes */}
-                    {filterMyRecipes && r.submittedByUserId && (
-                      <button
-                        onClick={(e) => handleDeleteMyRecipe(e, r.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                        title="Delete recipe"
-                      >
-                        <Trash2 size={18} color="#ef4444" />
-                      </button>
-                    )}
+                    {/* Edit button - only show for DRAFT/REJECTED user recipes */}
+                    {filterMyRecipes && r.submittedByUserId &&
+                      (r.status === 'DRAFT' || r.status === 'REJECTED') && (
+                        <button
+                          onClick={(e) => handleEditMyRecipe(e, r.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                          title="Edit recipe"
+                        >
+                          <Pencil size={18} color="#3b82f6" />
+                        </button>
+                      )}
+                    {/* Delete button - only show for DRAFT/REJECTED user recipes */}
+                    {filterMyRecipes && r.submittedByUserId &&
+                      (r.status === 'DRAFT' || r.status === 'REJECTED') && (
+                        <button
+                          onClick={(e) => handleDeleteMyRecipe(e, r.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                          title="Delete recipe"
+                        >
+                          <Trash2 size={18} color="#ef4444" />
+                        </button>
+                      )}
                   </div>
                 </div>
                 <div className="card-meta">

@@ -30,6 +30,7 @@ import DashboardPage from "./pages/admin/DashboardPage";
 import TagsPage from "./pages/admin/TagsPage";
 import IngredientsPage from "./pages/admin/IngredientsPage";
 import RecipesPage from "./pages/admin/RecipesPage";
+import UserRecipesPage from "./pages/admin/UserRecipesPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
 import AllergiesPage from "./pages/admin/AllergiesPage";
 import UsersPage from "./pages/admin/UsersPage";
@@ -65,6 +66,7 @@ function App() {
           <Route path="tags" element={<TagsPage />} />
           <Route path="ingredients" element={<IngredientsPage />} />
           <Route path="recipes" element={<RecipesPage />} />
+          <Route path="user-recipes" element={<UserRecipesPage />} />
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="allergies" element={<AllergiesPage />} />
           <Route path="users" element={<UsersPage />} />
