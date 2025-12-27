@@ -5,7 +5,8 @@ const notificationCreationTracker = new Set();
 import axios from "../../hooks/axios";
 import "./../../styles/FridgeManager.css";
 import bgIngredients from "../../assets/bgIg3.jpg";
-import { Plus, MoreVertical, Package, CheckCircle, AlertCircle, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Package, CheckCircle, AlertCircle, Trash2, Camera } from "lucide-react";
+import BillScanner from "../BillScanner";
 import ConfirmModal from "../ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,6 +19,7 @@ import { Tooltip } from "@mui/material";
 export default function FridgeManager() {
   const [ingredients, setIngredients] = useState([]); // Inventory items
   const [showModal, setShowModal] = useState(false);
+  const [showBillScanner, setShowBillScanner] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -707,9 +709,14 @@ export default function FridgeManager() {
       {/* Header */}
       <div className="header-fridge">
         <h2>Your Ingredients</h2>
-        <button className="btn primary" onClick={() => setShowModal(true)}>
-          <Plus size={18} /> Add Ingredient
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn primary" onClick={() => setShowBillScanner(true)}>
+            <Camera size={18} /> Scan Bill
+          </button>
+          <button className="btn primary" onClick={() => setShowModal(true)}>
+            <Plus size={18} /> Add Ingredient
+          </button>
+        </div>
       </div>
 
       {/* Tag Filter Section */}
@@ -985,6 +992,18 @@ export default function FridgeManager() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Bill Scanner Modal */}
+      {showBillScanner && (
+        <BillScanner
+          onClose={() => setShowBillScanner(false)}
+          onSuccess={() => {
+            // Refresh the page to reload ingredients
+            window.location.reload();
+          }}
+          userId={localStorage.getItem("userId")}
+        />
       )}
 
     </div>

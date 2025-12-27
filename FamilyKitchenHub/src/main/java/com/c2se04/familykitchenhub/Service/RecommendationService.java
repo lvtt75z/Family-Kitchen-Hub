@@ -28,7 +28,7 @@ public class RecommendationService {
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
 
-    @Value("${ai.service.url}")
+    @Value("${ai.recommendation.service.url}")
     private String pythonApiUrl;
 
     public RecommendationResponse getRecommendations(Long userId) {
@@ -36,10 +36,12 @@ public class RecommendationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        // 2. [CẬP NHẬT] Lấy Inventory Items bằng userId (theo code Repository mới của bạn)
+        // 2. [CẬP NHẬT] Lấy Inventory Items bằng userId (theo code Repository mới của
+        // bạn)
         List<InventoryItem> inventoryItems = inventoryItemRepository.findByUserId(userId);
 
-        // 3. Lấy Family Members (Giả sử repo này vẫn dùng findByUser, nếu nó cũng dùng Id thì sửa tương tự)
+        // 3. Lấy Family Members (Giả sử repo này vẫn dùng findByUser, nếu nó cũng dùng
+        // Id thì sửa tương tự)
         List<FamilyMember> familyMembers = familyMemberRepository.findByUserId(userId);
 
         // 4. Lấy tất cả công thức
@@ -70,10 +72,10 @@ public class RecommendationService {
                 .ingredientId(item.getIngredient().getId())
                 .quantity(item.getQuantity())
                 .unit(item.getUnit())
-                // Lưu ý: Kiểm tra kỹ tên biến Date trong InventoryItem của bạn là 'expirationDate' hay 'expiryDate'
+                // Lưu ý: Kiểm tra kỹ tên biến Date trong InventoryItem của bạn là
+                // 'expirationDate' hay 'expiryDate'
                 .expiryDate(item.getExpirationDate() != null ? item.getExpirationDate().toString() : null)
-                .build()
-        ).collect(Collectors.toList());
+                .build()).collect(Collectors.toList());
     }
 
     private List<RecommendationRequest.FamilyProfileDTO> mapFamily(List<FamilyMember> members) {
@@ -87,7 +89,8 @@ public class RecommendationService {
 
             // Xử lý Dị ứng (Giả sử bạn chưa kịp làm bảng quan hệ, để list rỗng tạm thời)
             List<Long> allergyIds = new ArrayList<>();
-            // Nếu đã có quan hệ, dùng: member.getAllergies().stream().map(Allergy::getId).toList();
+            // Nếu đã có quan hệ, dùng:
+            // member.getAllergies().stream().map(Allergy::getId).toList();
 
             return RecommendationRequest.FamilyProfileDTO.builder()
                     .age(member.getAge())
